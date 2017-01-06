@@ -1,49 +1,43 @@
 #ifndef LOG2KAFKA_KAFKA_KAFKACLIENT_H
 #define LOG2KAFKA_KAFKA_KAFKACLIENT_H
 
-#include <map>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "rdkafka.h"
-#ifdef __cplusplus
-}
-#endif
-
-#include "log2kafka/util/logger.h"
+#include <string>
 
 namespace log2kafka {
 
 namespace kafka {
 
-class RdKafkaClient {
+typedef rd_kafka_message_t kafka_message_t;
+
+class KafkaClient {
+ public:
+  
+  KafkaClient(LoggerPtr logger): logger_(logger) {}
+  virtual ~KafkaClient() {}
+
+  static const char *get_topic_from_msg(const kafka_message_t *msg);
+  static const char *get_err_from_msg(const kafka_message_t *msg);
+  static const char *get_payload_from_msg(const kafka_message_t *msg);
+
+ protected:
+
+  LoggerPtr logger_;
+}
+
+class KafkaProducer: public KafkaClient {
  public:
 
-  static shared_ptr<KafkaClient> Make(const char *brokers, 
-                                      std::map<std::string, std::string> confs,
-                                      shared_ptr<Logger> logger);
+
  private:
+};
 
-  kafkaclient(const char *brokers, std::map<std::string, std::string> confs, 
-              shared_ptr<Logger> logger);
-
-  rd_kafka_t *rk;
+class KafkaConsumer: public KafkaClient {
+ public:
 
 };
 
-class RdKafkaProducer: public kafkaclient {
-
-};
-
-class RdKafkaConsumer: public kafkaclient {
-
-};
-
-}   // namespace kafka
+}   // kafka
 
 }   // namespace log2kafka
 
 #endif  // LOG2KAFKA_KAFKA_KAFKACLIENT_H
-
-

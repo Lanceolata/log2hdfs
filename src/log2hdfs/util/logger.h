@@ -28,6 +28,8 @@ class Logger {
   virtual void info(const char *fmt, ...) const = 0;
 };
 
+typedef std::shared_ptr<Logger> LoggerPtr;
+
 class SimpleLogger : public Logger {
  public:
 
