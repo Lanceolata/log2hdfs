@@ -1,3 +1,5 @@
+// Copyright (c) 2017 Lanceolata
+
 #ifndef LOG2HDFS_UTIL_MUTEX_H
 #define LOG2HDFS_UTIL_MUTEX_H
 
@@ -10,32 +12,33 @@ namespace util {
 
 class Mutex {
  public:
-
   Mutex() {
-    if ((pthread_mutex_init(&m_lock, NULL) != 0)) {
+    if ((pthread_mutex_init(&mutex_, NULL) != 0)) {
       throw "init spin lock failed!!!";
     }
-  }  
+  }
+
+  Mutex(const Mutex& mutex) = delete;
+  Mutex& operator=(const Mutex& mutex) = delete;
 
   ~Mutex() {
-    pthread_mutex_destroy(&m_lock);
+    pthread_mutex_destroy(&mutex_);
   }
 
-  void lock() {
-    pthread_mutex_lock(&m_lock);
+  void Lock() {
+    pthread_mutex_lock(&mutex_);
   }
 
-  void unlock() {
-    pthread_mutex_unlock(&m_lock);
+  void Unlock() {
+    pthread_mutex_unlock(&mutex_);
   }
 
   pthread_mutex_t& mutex() {
-    return m_lock;
+    return mutex_;
   }
 
  private:
-
-  pthread_mutex_t m_lock;
+  pthread_mutex_t mutex_;
 };
 
 }   // namespace util

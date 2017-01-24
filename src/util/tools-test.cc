@@ -1,18 +1,20 @@
 #include "tools.h"
-
+#include <string>
 #include <iostream>
 
 int main()
 {
     std::string a = "   111111  ";
-    log2hdfs::util::trim(a);
+    log2hdfs::util::Trim(&a);
     std::cout << a << ":trim" << std::endl;
 
     std::string b = " \n\n\n\ni222\r\r\r";
-    std::cout << log2hdfs::util::trim(b) << ":trim" << std::endl;
+    log2hdfs::util::Trim(&b);
+    std::cout << b << ":trim" << std::endl;
 
     std::string c = "";
-    std::cout << log2hdfs::util::trim(c) << std::endl;
+    log2hdfs::util::Trim(&c);
+    std::cout << c << std::endl;
     if (c.empty())
         std::cout << "empty" << std::endl;
 
