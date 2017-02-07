@@ -13,7 +13,7 @@ namespace kafka {
 // GlobalConfImp
 
 class GlobalConfImp : public GlobalConf {
- public: 
+ public:
   explicit GlobalConfImp(rd_kafka_conf_t *rk_conf): rk_conf_(rk_conf) {}
 
   GlobalConfImp(const GlobalConfImp &gci) = delete;
@@ -48,7 +48,7 @@ class GlobalConsumerConf : public GlobalConfImp {
     if (rk_conf == NULL) {
       return std::unique_ptr<GlobalConf>(new GlobalConsumerConf());
     } else {
-      return std::unique_ptr<GlobalConf>(new GlobalConsumerConf(rk_conf)); 
+      return std::unique_ptr<GlobalConf>(new GlobalConsumerConf(rk_conf));
     }
   }
 
@@ -66,7 +66,8 @@ class GlobalConsumerConf : public GlobalConfImp {
                        void *opaque);
 
  private:
-  GlobalConsumerConf(rd_kafka_conf_t *rk_conf): GlobalConfImp(rk_conf) {
+  explicit GlobalConsumerConf(rd_kafka_conf_t *rk_conf):
+      GlobalConfImp(rk_conf) {
     rd_kafka_conf_set_error_cb(rk_conf_, &(GlobalConsumerConf::error_cb));
   }
 
