@@ -1,5 +1,7 @@
-#ifndef LOG2KAFKA_KAFKA_CONF_H
-#define LOG2KAFKA_KAFKA_CONF_H
+// Copyright (c) 2017 Lanceolata
+
+#ifndef LOG2KAFKA_KAFKA_CONF_H_
+#define LOG2KAFKA_KAFKA_CONF_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,48 +11,75 @@ extern "C" {
 }
 #endif
 
+#include <string>
 #include <memory>
 
 namespace log2hdfs {
 
 namespace kafka {
 
-class GlobalConf;
-typedef std::unique_ptr<GlobalConf> GlobalConfPtr;
+// Conf Set() result code
+enum ConfResult {
+  kConfEmpty = -3,      // Empty configuration property
+  kConfUnknown = -2,    // Unknown configuration property
+  kConfInvalid = -1,    // Invalid configuration value
+  kConfOk = 0           // Configuration property was succesfully set
+};
+
+// ------------------------------------------------------------------
+// GlobalConf
 
 class GlobalConf {
  public:
-
-  enum ConfResult {
-    CONF_UNKNOWN = -2,  /**< Unknown configuration property */
-    CONF_INVALID = -1,  /**< Invalid configuration value */
-    CONF_OK = 0         /**< Configuration property was succesfully set */
+  // Configuration object type
+  enum ConfType {
+    kConfProducer,    // Global producer default configuration
+    kConfConsumer    // Global consumer default configuration
   };
 
-  static GlobalConf create();
+  static std::unique_ptr<GlobalConf> Create(GlobalConf::ConfType type);
 
   virtual ~GlobalConf() {}
 
-  virtual ConfResult set(const std::string& name, const std::string& value,
-                         std::string& errstr) = 0;
+  virtual std::unique_ptr<GlobalConf> Copy() const = 0;
 
+  virtual ConfResult Set(const std::string &name, const std::string &value,
+                         std::string *errstr) = 0;
+
+  virtual ConfResult Get(const std::string &name,
+                         std::string *value) const = 0;
+
+  virtual rd_kafka_conf_t *conf() = 0;
 };
 
-class TopicConf;
-typedef std::unique_ptr<TopicConf> TopicConfPtr;
-
+// ------------------------------------------------------------------
+// TopicConf
+/*
 class TopicConf {
  public:
+  // Configuration object type
+  enum ConfType {
+    kConfProducer,  // Topic producer default configuration
+    kConfConsumer   // Topic consumer default configuration
+  };
 
-  
-  
-  static TopicConfPtr create();
+  static std::unique_ptr<TopicConf> Create(GlobalConf::ConfType type);
 
+  virtual ~TopicConf() {}
 
+  virtual std::unique_ptr<TopicConf> Copy() const = 0;
+
+  virtual ConfResult Set(const std::string &name, const std::string &value,
+                         std::string *errstr) = 0;
+
+  virtual ConfResult Get(const std::string &name,
+                         std::string *value) const = 0;
+
+  virtual rd_kafka_topic_conf_t *conf() = 0;
 };
-
+*/
 }   // namespace kafka
 
 }   // namespace log2hdfs
 
-#endif  // LOG2KAFKA_KAFKA_RDKAFKACONF_H
+#endif  // LOG2KAFKA_KAFKA_CONF_H_

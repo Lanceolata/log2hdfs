@@ -12,7 +12,7 @@ namespace util {
 // ------------------------------------------------------------------
 // Parser
 
-bool Parser::Load(const std::string& filepath,
+bool Parser::Load(const std::string &filepath,
                   std::vector<std::string> *lines) {
   // Try to open file
   std::ifstream ifs(filepath);
@@ -36,7 +36,7 @@ bool Parser::Load(const std::string& filepath,
   return true;
 }
 
-bool Parser::Parse(const std::string& line, std::string *key,
+bool Parser::Parse(const std::string &line, std::string *key,
                    std::string *value) const {
   std::size_t equal = line.find(separator_);
 
@@ -60,14 +60,14 @@ SectionPtr Section::Create() {
   return SectionImp::Init();
 }
 
-SectionPtr Section::Create(const std::string& separator) {
+SectionPtr Section::Create(const std::string &separator) {
   return SectionImp::Init(separator);
 }
 
 // ------------------------------------------------------------------
 // SectionImp
 
-bool SectionImp::Read(const std::string& filepath) {
+bool SectionImp::Read(const std::string &filepath) {
   std::vector<std::string> lines;
   if (!Parser::Load(filepath, &lines)) {
     return false;
@@ -87,12 +87,12 @@ void SectionImp::Parse(std::vector<std::string> *lines) {
   }
 }
 
-bool SectionImp::Write(const std::string& filepath) const {
+bool SectionImp::Write(const std::string &filepath) const {
   return Write(filepath, separator_);
 }
 
-bool SectionImp::Write(const std::string& filepath,
-                     const std::string& separator) const {
+bool SectionImp::Write(const std::string &filepath,
+                       const std::string &separator) const {
   if (filepath.empty()) {
     return false;
   }
@@ -105,12 +105,12 @@ bool SectionImp::Write(const std::string& filepath,
   return res;
 }
 
-bool SectionImp::Write(std::ofstream& ofs) const {
+bool SectionImp::Write(std::ofstream &ofs) const {
   return Write(ofs, separator_);
 }
 
-bool SectionImp::Write(std::ofstream& ofs,
-                       const std::string& separator) const {
+bool SectionImp::Write(std::ofstream &ofs,
+                       const std::string &separator) const {
   if (!ofs.is_open()) {
     return false;
   }
@@ -130,14 +130,14 @@ IniConfigPtr IniConfigParser::Create() {
   return IniConfigParserImp::Init();
 }
 
-IniConfigPtr IniConfigParser::Create(const std::string& separator) {
+IniConfigPtr IniConfigParser::Create(const std::string &separator) {
   return IniConfigParserImp::Init(separator);
 }
 
 // ------------------------------------------------------------------
 // IniConfigParserImp
 
-bool IniConfigParserImp::Read(const std::string& filepath) {
+bool IniConfigParserImp::Read(const std::string &filepath) {
   std::vector<std::string> lines;
   if (!Parser::Load(filepath, &lines)) {
     return false;
@@ -171,12 +171,12 @@ void IniConfigParserImp::Parse(std::vector<std::string> *lines) {
   }
 }
 
-bool IniConfigParserImp::Write(const std::string& filepath) const {
+bool IniConfigParserImp::Write(const std::string &filepath) const {
   return Write(filepath, separator_);
 }
 
-bool IniConfigParserImp::Write(const std::string& filepath,
-                            const std::string& separator) const {
+bool IniConfigParserImp::Write(const std::string &filepath,
+                               const std::string &separator) const {
   if (filepath.empty()) {
     return false;
   }

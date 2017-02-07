@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Lanceolata
 
-#ifndef LOG2HDFS_UTIL_LOGGERIMP_H
-#define LOG2HDFS_UTIL_LOGGERIMP_H
+#ifndef LOG2HDFS_UTIL_LOGGERIMP_H_
+#define LOG2HDFS_UTIL_LOGGERIMP_H_
 
 #include <stdio.h>      // include for fclose
 #include <sys/types.h>  // include for getpid
@@ -18,17 +18,17 @@ namespace util {
 class SimpleLogger : public Logger {
  public:
   // init SimpleLogger
-  static LoggerPtr Init(const std::string& log_path, int max_length);
+  static LoggerPtr Init(const std::string &log_path, int max_length);
 
   ~SimpleLogger() {
-    if (fp_ == NULL) {
+    if (fp_ != NULL) {
         fclose(fp_);
         fp_ = NULL;
     }
   }
 
-  SimpleLogger(const SimpleLogger& logger) = delete;
-  SimpleLogger& operator=(const SimpleLogger& logger) = delete;
+  SimpleLogger(const SimpleLogger &logger) = delete;
+  SimpleLogger &operator=(const SimpleLogger &logger) = delete;
 
   int max_length() const {
     return max_length_;
@@ -42,7 +42,7 @@ class SimpleLogger : public Logger {
 
  private:
   // constructor
-  SimpleLogger(const std::string& log_path, FILE *fp, int max_length):
+  SimpleLogger(const std::string &log_path, FILE *fp, int max_length):
       log_path_(log_path), fp_(fp), max_length_(max_length) {}
 
   std::string log_path_;
@@ -54,4 +54,4 @@ class SimpleLogger : public Logger {
 
 }   // namespace log2hdfs
 
-#endif  // LOG2HDFS_UTIL_LOGGERIMP_H
+#endif  // LOG2HDFS_UTIL_LOGGERIMP_H_

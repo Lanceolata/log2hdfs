@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Lanceolata
 
-#ifndef LOG2HDFS_UTIL_CONFIGPARSERIMP_H
-#define LOG2HDFS_UTIL_CONFIGPARSERIMP_H
+#ifndef LOG2HDFS_UTIL_CONFIGPARSERIMP_H_
+#define LOG2HDFS_UTIL_CONFIGPARSERIMP_H_
 
 #include <string>
 #include <vector>
@@ -27,20 +27,21 @@ const char SPACE = ' ';
 
 class Parser {
  public:
-  explicit Parser(const std::string& separator): separator_(separator) {}
+  Parser(): separator_("=") {}
+  explicit Parser(const std::string &separator): separator_(separator) {}
 
-  Parser(const Parser& p): separator_(p.separator_) {}
-  Parser& operator=(const Parser& p) {
+  Parser(const Parser &p): separator_(p.separator_) {}
+  Parser &operator=(const Parser &p) {
     if (this != &p) {
       separator_ = p.separator_;
     }
     return *this;
   }
 
-  static bool Load(const std::string& filepath,
+  static bool Load(const std::string &filepath,
                    std::vector<std::string> *lines);
 
-  bool IsSection(const std::string& line) const {
+  bool IsSection(const std::string &line) const {
     if (line.length() < 3 || line[0] != constants::SECTION_START
             || line[line.length() - 1] != constants::SECTION_END) {
       return false;
@@ -48,12 +49,12 @@ class Parser {
     return true;
   }
 
-  std::string GetSection(const std::string& line) const {
+  std::string GetSection(const std::string &line) const {
     std::string section = line.substr(1, line.length()-2);
     return section;
   }
 
-  bool Parse(const std::string& line, std::string *key,
+  bool Parse(const std::string &line, std::string *key,
              std::string *value) const;
 
  private:
@@ -68,20 +69,20 @@ class SectionImp: public Section {
   static SectionPtr Init() {
     return SectionPtr(new SectionImp());
   }
-  static SectionPtr Init(const std::string& separator) {
+  static SectionPtr Init(const std::string &separator) {
     return SectionPtr(new SectionImp(separator));
   }
 
   SectionImp(): separator_("=") {}
-  explicit SectionImp(const std::string& separator): separator_(separator) {}
-  SectionImp(const std::string& separator, const OptionMap& options):
+  explicit SectionImp(const std::string &separator): separator_(separator) {}
+  SectionImp(const std::string &separator, const OptionMap &options):
       separator_(separator), options_(options) {}
 
   ~SectionImp() {}
 
-  SectionImp(const SectionImp& si): separator_(si.separator_),
+  SectionImp(const SectionImp &si): separator_(si.separator_),
     options_(si.options_) {}
-  SectionImp& operator=(const SectionImp& si) {
+  SectionImp &operator=(const SectionImp &si) {
     if (this != &si) {
       separator_ = si.separator_;
       options_ = si.options_;
@@ -89,10 +90,10 @@ class SectionImp: public Section {
     return *this;
   }
 
-  const std::string& separator() const {
+  const std::string &separator() const {
     return separator_;
   }
-  bool set_separator(const std::string& separator) {
+  bool set_separator(const std::string &separator) {
     if (separator.empty()) {
       return false;
     }
@@ -100,18 +101,18 @@ class SectionImp: public Section {
     return true;
   }
 
-  bool Read(const std::string& filepath);
+  bool Read(const std::string &filepath);
 
-  bool Has(const std::string& option) const {
+  bool Has(const std::string &option) const {
     OptionConstIter it = options_.find(option);
     return it != options_.end();
   }
 
-  bool Remove(const std::string& option) {
+  bool Remove(const std::string &option) {
     return options_.erase(option);
   }
 
-  const std::string *Get(const std::string& option) const {
+  const std::string *Get(const std::string &option) const {
     OptionConstIter it = options_.find(option);
     if (it == options_.end()) {
       return nullptr;
@@ -119,7 +120,7 @@ class SectionImp: public Section {
     return &(it->second);
   }
 
-  bool Set(const std::string& option, const std::string& value) {
+  bool Set(const std::string &option, const std::string &value) {
     options_[option] = value;
     return true;
   }
@@ -161,11 +162,11 @@ class SectionImp: public Section {
     options_.clear();
   }
 
-  bool Write(const std::string& filepath) const;
-  bool Write(const std::string& filepath, const std::string& separator) const;
+  bool Write(const std::string &filepath) const;
+  bool Write(const std::string &filepath, const std::string &separator) const;
 
-  bool Write(std::ofstream& ofs) const;
-  bool Write(std::ofstream& ofs, const std::string& separator) const;
+  bool Write(std::ofstream &ofs) const;
+  bool Write(std::ofstream &ofs, const std::string &separator) const;
 
  private:
   void Parse(std::vector<std::string> *lines);
@@ -183,21 +184,21 @@ class IniConfigParserImp: public IniConfigParser {
   static IniConfigPtr Init() {
     return IniConfigPtr(new IniConfigParserImp());
   }
-  static IniConfigPtr Init(const std::string& separator) {
+  static IniConfigPtr Init(const std::string &separator) {
     return IniConfigPtr(new IniConfigParserImp(separator));
   }
 
   IniConfigParserImp(): separator_("=") {}
-  explicit IniConfigParserImp(const std::string& separator):
+  explicit IniConfigParserImp(const std::string &separator):
       separator_(separator) {}
-  IniConfigParserImp(const std::string& separator, const SectionMap& sections):
+  IniConfigParserImp(const std::string &separator, const SectionMap &sections):
       separator_(separator), sections_(sections) {}
 
   ~IniConfigParserImp() {}
 
-  IniConfigParserImp(const IniConfigParserImp& icpi):
+  IniConfigParserImp(const IniConfigParserImp &icpi):
       separator_(icpi.separator_), sections_(icpi.CopySections()) {}
-  IniConfigParserImp& operator=(const IniConfigParserImp& icpi) {
+  IniConfigParserImp &operator=(const IniConfigParserImp &icpi) {
     if (this != &icpi) {
       separator_ = icpi.separator_;
       sections_ = icpi.CopySections();
@@ -205,10 +206,10 @@ class IniConfigParserImp: public IniConfigParser {
     return *this;
   }
 
-  const std::string& separator() const {
+  const std::string &separator() const {
     return separator_;
   }
-  bool set_separator(const std::string& separator) {
+  bool set_separator(const std::string &separator) {
     if (separator.empty()) {
       return false;
     }
@@ -216,14 +217,14 @@ class IniConfigParserImp: public IniConfigParser {
     return true;
   }
 
-  bool Read(const std::string& filepath);
+  bool Read(const std::string &filepath);
 
-  bool HasSection(const std::string& section) const {
+  bool HasSection(const std::string &section) const {
     SectionConstIter it = sections_.find(section);
     return it != sections_.end();
   }
 
-  bool AddSection(const std::string& section) {
+  bool AddSection(const std::string &section) {
     if (HasSection(section)) {
       return false;
     }
@@ -231,11 +232,11 @@ class IniConfigParserImp: public IniConfigParser {
     return true;
   }
 
-  bool RemoveSection(const std::string& section) {
+  bool RemoveSection(const std::string &section) {
     return sections_.erase(section);
   }
 
-  SectionPtr GetSection(const std::string& section) {
+  SectionPtr GetSection(const std::string &section) {
     SectionIter it = sections_.find(section);
     if (it == sections_.end()) {
       return nullptr;
@@ -243,8 +244,8 @@ class IniConfigParserImp: public IniConfigParser {
     return it->second;
   }
 
-  bool HasOption(const std::string& section,
-                  const std::string& option) const {
+  bool HasOption(const std::string &section,
+                 const std::string &option) const {
     SectionConstIter it = sections_.find(section);
     if (it == sections_.end()) {
       return false;
@@ -252,7 +253,7 @@ class IniConfigParserImp: public IniConfigParser {
     return (it->second)->Has(option);
   }
 
-  bool RemoveOption(const std::string& section, const std::string& option) {
+  bool RemoveOption(const std::string &section, const std::string &option) {
     SectionIter it = sections_.find(section);
     if (it == sections_.end()) {
       return false;
@@ -260,8 +261,8 @@ class IniConfigParserImp: public IniConfigParser {
     return (it->second)->Remove(option);
   }
 
-  const std::string *Get(const std::string& section,
-                         const std::string& option) const {
+  const std::string *Get(const std::string &section,
+                         const std::string &option) const {
     SectionConstIter it = sections_.find(section);
     if (it == sections_.end()) {
       return nullptr;
@@ -269,8 +270,8 @@ class IniConfigParserImp: public IniConfigParser {
     return (it->second)->Get(option);
   }
 
-  bool Set(const std::string& section, const std::string& option,
-           const std::string& value) {
+  bool Set(const std::string &section, const std::string &option,
+           const std::string &value) {
     SectionIter it = sections_.find(section);
     if (it == sections_.end()) {
       return false;
@@ -303,7 +304,7 @@ class IniConfigParserImp: public IniConfigParser {
     return true;
   }
 
-  bool Options(const std::string& section, OptionIter *begin,
+  bool Options(const std::string &section, OptionIter *begin,
                OptionIter *end) {
     SectionIter it = sections_.find(section);
     if (it == sections_.end()) {
@@ -313,7 +314,7 @@ class IniConfigParserImp: public IniConfigParser {
     *end = (it->second)->End();
     return true;
   }
-  bool Options(const std::string& section, OptionConstIter *begin,
+  bool Options(const std::string &section, OptionConstIter *begin,
                OptionConstIter *end) const {
     SectionConstIter it = sections_.find(section);
     if (it == sections_.end()) {
@@ -337,8 +338,8 @@ class IniConfigParserImp: public IniConfigParser {
     sections_.clear();
   }
 
-  bool Write(const std::string& filepath) const;
-  bool Write(const std::string& filepath, const std::string& separator) const;
+  bool Write(const std::string &filepath) const;
+  bool Write(const std::string &filepath, const std::string &separator) const;
 
  private:
   SectionMap CopySections() const {

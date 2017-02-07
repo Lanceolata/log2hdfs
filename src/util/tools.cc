@@ -9,7 +9,7 @@ namespace log2hdfs {
 
 namespace util {
 
-void Split(const std::string& str, char separator,
+void Split(const std::string &str, char separator,
            std::vector<std::string> *vec) {
   if (str.empty() || vec == NULL)
       return;

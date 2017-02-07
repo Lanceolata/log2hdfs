@@ -14,7 +14,7 @@ namespace util {
 // ------------------------------------------------------------------
 // Logger
 
-LoggerPtr Logger::Create(const std::string& log_path, int log_max_length) {
+LoggerPtr Logger::Create(const std::string &log_path, int log_max_length) {
     return SimpleLogger::Init(log_path, log_max_length);
 }
 
@@ -49,7 +49,7 @@ void Log(LogLevel level, const char *fmt, ...) {
 // ------------------------------------------------------------------
 // SimpleLogger
 
-LoggerPtr SimpleLogger::Init(const std::string& log_path,
+LoggerPtr SimpleLogger::Init(const std::string &log_path,
                              int max_length) {
   if (log_path.empty() || max_length < 1) {
     return nullptr;
