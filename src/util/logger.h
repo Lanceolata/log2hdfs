@@ -3,44 +3,57 @@
 #ifndef LOG2HDFS_UTIL_LOGGER_H_
 #define LOG2HDFS_UTIL_LOGGER_H_
 
+#include <stdio.h>
 #include <string>
 #include <memory>
 
 namespace log2hdfs {
 
-namespace util {
-
-class Logger;
-typedef std::shared_ptr<Logger> LoggerPtr;
-
 class Logger {
  public:
   enum Level {
-    kLogInfo = 0,
-    kLogWarn = 1,
-    kLogError = 2
+    kLogInfo,
+    kLogWarn,
+    kLogError
   };
 
-  static LoggerPtr Create(const std::string &log_path,
-                          int max_length = 2048);
-  virtual ~Logger() {}
+  static std::shared_ptr<Logger> Init(const std::string &log_path,
+                                      size_t max_length = 2048);
 
-  virtual int max_length() const = 0;
+  Logger(const Logger &other) = delete;
+  Logger &operator=(const Logger &other) = delete;
 
-  virtual void Log(Level level, const char *msg) const = 0;
+  ~Logger() {
+    if (fp_ != NULL) {
+      fclose(fp_);
+      fp_ = NULL;
+    }
+  }
 
-  virtual void Error(const char *fmt, ...) const = 0;
-  virtual void Warn(const char *fmt, ...) const = 0;
-  virtual void Info(const char *fmt, ...) const = 0;
+  size_t max_length() const {
+    return max_length_;
+  }
+
+  void Log(Level level, const char *msg) const;
+
+  void Error(const char *fmt, ...) const;
+  void Warn(const char *fmt, ...) const;
+  void Info(const char *fmt, ...) const;
+
+ private:
+  Logger(const std::string &log_path, FILE *fp, size_t max_length):
+      log_path_(log_path), fp_(fp), max_length_(max_length) {}
+
+  std::string log_path_;
+  FILE *fp_;
+  size_t max_length_;
 };
 
 typedef Logger::Level LogLevel;
 
-extern bool LogInit(LoggerPtr logger);
+extern bool LogInit(std::shared_ptr<Logger> logger);
 
 extern void Log(LogLevel level, const char *fmt, ...);
-
-}   // namespace util
 
 }   // namespace log2hdfs
 

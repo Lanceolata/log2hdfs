@@ -1,7 +1,6 @@
 // Copyright (c) 2017 Lanceolata
 
-// #include "util/tools.h"
-#include "tools.h"
+#include "util/tools.h"
 
 #include <sstream>
 
