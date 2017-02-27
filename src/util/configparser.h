@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
+#include <utility>
 #include <unordered_map>
 #include "util/optional.h"
 
@@ -60,7 +61,7 @@ class Section {
     return *this;
   }
 
-  const std::string &separator() const {
+  const std::string &delimiters() const {
     return delimiters_;
   }
 
@@ -129,8 +130,6 @@ class Section {
   bool Write(std::ofstream &ofs, const std::string &delimiters) const;
 
  private:
-  void Parse(std::vector<std::string> *lines);
-
   std::string delimiters_;
   std::unordered_map<std::string, std::string> options_;
 };
@@ -143,20 +142,13 @@ typedef Section KvConfigParser;
 // ------------------------------------------------------------------
 // IniConfigParser
 
-class IniConfigParser;
-
-typedef std::shared_ptr<IniConfigParser> IniConfigPtr;
-typedef std::unordered_map<std::string, std::shared_ptr<Section>> SectionMap;
-typedef SectionMap::iterator SectionIter;
-typedef SectionMap::const_iterator SectionConstIter;
-
 class IniConfigParser {
  public:
   typedef std::unordered_map<std::string, std::shared_ptr<Section> >::iterator
       iterator;
 
-  typedef std::unordered_map<std::string, std::shared_ptr<Section> >::const_iterator
-      const_iterator;
+  typedef std::unordered_map<std::string, std::shared_ptr<Section> >
+      ::const_iterator const_iterator;
 
   static std::shared_ptr<IniConfigParser> Init() {
     return std::make_shared<IniConfigParser>();
@@ -170,10 +162,140 @@ class IniConfigParser {
     return std::make_shared<IniConfigParser>(delimiters);
   }
 
+  IniConfigParser(): delimiters_("=") {}
+
+  explicit IniConfigParser(const std::string &delimiters):
+      delimiters_(delimiters) {}
+
+  IniConfigParser(const IniConfigParser &other):
+      delimiters_(other.delimiters_), sections_(other.sections_) {}
+
+  IniConfigParser(IniConfigParser &&other) {
+    delimiters_ = std::move(other.delimiters_);
+    sections_ = std::move(other.sections_);
+  }
+
+  ~IniConfigParser() {}
+
+  IniConfigParser &operator=(const IniConfigParser &other) {
+    if (this != &other) {
+      delimiters_ = other.delimiters_;
+      sections_ = other.sections_;
+    }
+    return *this;
+  }
+
+  IniConfigParser &operator=(IniConfigParser &&other) {
+    if (this != &other) {
+      delimiters_ = std::move(other.delimiters_);
+      sections_ = std::move(other.sections_);
+    }
+    return *this;
+  }
+
+  const std::string &delimiters() const {
+    return delimiters_;
+  }
+
+  bool set_delimiters(const std::string &delimiters) {
+    if (delimiters.empty()) {
+      return false;
+    }
+    delimiters_.assign(delimiters);
+    return true;
+  }
+
+  bool HasSection(const std::string &section) const {
+    IniConfigParser::const_iterator it = sections_.find(section);
+    return it != sections_.end();
+  }
+
+  bool AddSection(const std::string &section) {
+    if (HasSection(section)) {
+      return false;
+    }
+    sections_[section] = Section::Init(delimiters_);
+    return true;
+  }
+
+  bool RemoveSection(const std::string &section) {
+    return sections_.erase(section);
+  }
+
+  std::shared_ptr<Section> GetSection(const std::string &section) {
+    IniConfigParser::const_iterator it = sections_.find(section);
+    if (it == sections_.end()) {
+      return nullptr;
+    }
+    return it->second;
+  }
+
+  bool HasOption(const std::string &section,
+      const std::string &option) const {
+    IniConfigParser::const_iterator it = sections_.find(section);
+    if (it == sections_.end()) {
+      return false;
+    }
+    return (it->second)->Has(option);
+  }
+
+  bool RemoveOption(const std::string &section, const std::string &option) {
+    IniConfigParser::const_iterator it = sections_.find(section);
+    if (it == sections_.end()) {
+      return false;
+    }
+    return (it->second)->Remove(option);
+  }
+
+  Optional<std::string> Get(const std::string &section,
+      const std::string &option) const {
+    IniConfigParser::const_iterator it = sections_.find(section);
+    if (it == sections_.end()) {
+      return Optional<std::string>::Invalid();
+    }
+    return std::move((it->second)->Get(option));
+  }
+
+  bool Set(const std::string &section, const std::string &option,
+           const std::string &value) {
+    IniConfigParser::iterator it = sections_.find(section);
+    if (it == sections_.end()) {
+      return false;
+    }
+    return (it->second)->Set(option, value);
+  }
+
+  IniConfigParser::iterator Begin() {
+    return sections_.begin();
+  }
+
+  IniConfigParser::iterator End() {
+    return sections_.end();
+  }
+
+  IniConfigParser::const_iterator Begin() const {
+    return sections_.begin();
+  }
+
+  IniConfigParser::const_iterator End() const {
+    return sections_.end();
+  }
+
+  bool Empty() const {
+    return sections_.empty();
+  }
+
+  void Clear() {
+    sections_.clear();
+  }
+
+  bool Read(const std::string &filepath);
+
+  bool Write(const std::string &filepath) const;
+
+  bool Write(const std::string &filepath, const std::string &delimiters) const;
 
  private:
-  void Parse(std::vector<std::string> *lines);
-
   std::string delimiters_;
   std::unordered_map<std::string, std::shared_ptr<Section> > sections_;
 };
