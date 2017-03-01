@@ -7,9 +7,9 @@ g++ -g -W -Wall -std=c++11 \
 -L /data/users/data-infra/log2hdfs/thirdparty/installed/lib \
 -L /usr/java/jdk1.8.0_77/jre/lib/amd64/server \
 -L /usr/hdp/2.4.0.0-169/usr/lib \
--o kafka2hdfs src/kafka2hdfs.cc src/kafka2hdfs/hdfs_handle.cc \
-src/util/configparser.cc src/util/logger.cc src/util/string_utils.cc \
--l pthread -l hdfs -l jvm -l hdfs
+-o kafka2hdfs src/kafka2hdfs.cc src/kafka2hdfs/*.cc \
+src/util/*.cc src/kafka/*.cc \
+-l pthread -l hdfs -l jvm -l hdfs -l rdkafka
 
 concat_jar_paths()
 {
