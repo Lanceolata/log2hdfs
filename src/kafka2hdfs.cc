@@ -6,6 +6,7 @@
 #include <iostream>
 #include "kafka2hdfs/hdfs_handle.h"
 #include "kafka/kafka_conf.h"
+#include "kafka/kafka_consumer.h"
 #include "util/logger.h"
 #include "util/configparser.h"
 
@@ -95,8 +96,8 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // Init kafka consumer
-  
+  std::string errstr;
+
   // Init kafka consumer conf
   std::unique_ptr<GlobalConf> consumer_conf = GlobalConf::Init(
       GlobalConf::ConfType::kConfConsumer);
@@ -109,7 +110,6 @@ int main(int argc, char *argv[]) {
   if (!section_kafka) {
     Log(LogLevel::kLogWarn, "Get section[kafka] failed");
   } else {
-    std::string errstr;
     for (auto it = section_kafka->Begin(); it != section_kafka->End(); ++it) {
       if (consumer_conf->Set(it->first, it->second, &errstr)
               == ConfResult::kConfOk) {
@@ -123,6 +123,18 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Init kafka consumer
   Log(LogLevel::kLogInfo, "Init kafka consumer");
+  std::unique_ptr<Consumer> consumer = Consumer::Init(consumer_conf.get(),
+                                                      &errstr);
+  if (!consumer) {
+    Log(LogLevel::kLogError, "Init kafka consumer failed with error[%s]",
+        errstr.c_str());
+    exit(EXIT_FAILURE);
+  }
+
+
+
+
   return 0;
 }

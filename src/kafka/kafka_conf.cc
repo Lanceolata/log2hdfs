@@ -46,7 +46,6 @@ void GlobalConsumerConf::error_cb(rd_kafka_t *rk, int err,
 
 std::unique_ptr<GlobalConf> GlobalConf::Init(GlobalConf::ConfType type) {
   std::unique_ptr<GlobalConf> res;
-
   switch (type) {
     case kConfProducer:
       res = nullptr;
@@ -57,7 +56,6 @@ std::unique_ptr<GlobalConf> GlobalConf::Init(GlobalConf::ConfType type) {
     default:
       res = nullptr;
   }
-
   return res;
 }
 
