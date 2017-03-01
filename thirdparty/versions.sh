@@ -1,4 +1,4 @@
-LIBRDKAFKA_VERSION="0.9.2"
+LIBRDKAFKA_VERSION="0.9.4"
 LIBRDKAFKA_URL="https://github.com/edenhill/librdkafka/archive/v${LIBRDKAFKA_VERSION}.tar.gz"
 LIBRDKAFKA_BASEDIR="librdkafka-${LIBRDKAFKA_VERSION}"
 
