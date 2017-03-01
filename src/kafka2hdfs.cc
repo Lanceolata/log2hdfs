@@ -72,9 +72,9 @@ int main(int argc, char *argv[]) {
 
   // Init HDFS handle
   Log(LogLevel::kLogInfo, "Init hdfs handle");
-  Optional<std::string> opt_namenode = conf->Get("global", "namenode");
-  Optional<std::string> opt_port = conf->Get("global", "port");
-  Optional<std::string> opt_user = conf->Get("global", "user");
+  Optional<std::string> opt_namenode = conf->Get("hdfs", "namenode");
+  Optional<std::string> opt_port = conf->Get("hdfs", "port");
+  Optional<std::string> opt_user = conf->Get("hdfs", "user");
 
   if (!opt_namenode.valid() || !opt_port.valid() || !opt_user.valid()) {
     Log(LogLevel::kLogError, "Get hdfs info failed namenode[%s] port[%s] "
@@ -93,6 +93,12 @@ int main(int argc, char *argv[]) {
         opt_user.value().c_str());
     exit(EXIT_FAILURE);
   }
+
+  std::cout << "/user/data-infra/express_bid" << std::endl;
+  std::cout << hdfs_handle->FileExists("/user/data-infra/express_bid") << std::endl;
+
+  std::cout << "/user/data-infra/log2hdfs_test/unbid" << std::endl;
+  std::cout <<  hdfs_handle->CreateDirectory("/user/data-infra/log2hdfs_test/unbid") << std::endl;
 
   // Init kafka consumer
   //Log(LogLevel::kLogInfo, "Init kafka consumer");
