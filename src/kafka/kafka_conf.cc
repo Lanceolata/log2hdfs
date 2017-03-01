@@ -65,6 +65,7 @@ std::unique_ptr<GlobalConf> GlobalConf::Init(GlobalConf::ConfType type) {
 ConfResult GlobalConf::Set(const std::string &name, const std::string &value,
                            std::string *errstr) {
   if (name.empty() || value.empty()) {
+    *errstr = "config empty";
     return ConfResult::kConfEmpty;
   }
 
@@ -149,6 +150,7 @@ std::unique_ptr<TopicConf> TopicConf::Init(TopicConf::ConfType type) {
 ConfResult TopicConf::Set(const std::string &name, const std::string &value,
                           std::string *errstr) {
   if (name.empty() || value.empty()) {
+    *errstr = "config empty";
     return ConfResult::kConfEmpty;
   }
 

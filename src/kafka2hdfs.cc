@@ -95,12 +95,6 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  std::cout << "/user/data-infra/express_bid" << std::endl;
-  std::cout << hdfs_handle->FileExists("/user/data-infra/express_bid") << std::endl;
-
-  std::cout << "/user/data-infra/log2hdfs_test/unbid" << std::endl;
-  std::cout <<  hdfs_handle->CreateDirectory("/user/data-infra/log2hdfs_test/unbid") << std::endl;
-
   // Init kafka consumer
   
   // Init kafka consumer conf
@@ -109,6 +103,24 @@ int main(int argc, char *argv[]) {
   if (!consumer_conf) {
     Log(LogLevel::kLogError, "Init consumer global conf failed");
     exit(EXIT_FAILURE);
+  }
+
+  std::shared_ptr<Section> section_kafka = conf->GetSection("kafka");
+  if (!section_kafka) {
+    Log(LogLevel::kLogWarn, "Get section[kafka] failed");
+  } else {
+    std::string errstr;
+    for (auto it = section_kafka->Begin(); it != section_kafka->End(); ++it) {
+      if (consumer_conf->Set(it->first, it->second, &errstr)
+              == ConfResult::kConfOk) {
+        Log(LogLevel::kLogInfo, "Set configuration key[%s] value[%s] "
+            "successed", it->first.c_str(), it->second.c_str());
+      } else {
+        Log(LogLevel::kLogInfo, "Set configuration key[%s] value[%s] "
+            "failed with error[%s]", it->first.c_str(), it->second.c_str(),
+            errstr.c_str());
+      }
+    }
   }
 
   Log(LogLevel::kLogInfo, "Init kafka consumer");
