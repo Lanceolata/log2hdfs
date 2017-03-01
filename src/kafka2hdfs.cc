@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <iostream>
 #include "kafka2hdfs/hdfs_handle.h"
+#include "kafka/kafka_conf.h"
 #include "util/logger.h"
 #include "util/configparser.h"
 
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
 
   // Init Conf
   std::shared_ptr<IniConfigParser> conf = IniConfigParser::Init("=");
-  if (!conf || !conf.get()) {
+  if (!conf) {
     std::cerr << "IniConfigParser init failed" << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -101,6 +102,15 @@ int main(int argc, char *argv[]) {
   std::cout <<  hdfs_handle->CreateDirectory("/user/data-infra/log2hdfs_test/unbid") << std::endl;
 
   // Init kafka consumer
-  //Log(LogLevel::kLogInfo, "Init kafka consumer");
+  
+  // Init kafka consumer conf
+  std::unique_ptr<GlobalConf> consumer_conf = GlobalConf::Init(
+      GlobalConf::ConfType::kConfConsumer);
+  if (!consumer_conf) {
+    Log(LogLevel::kLogError, "Init consumer global conf failed");
+    exit(EXIT_FAILURE);
+  }
+
+  Log(LogLevel::kLogInfo, "Init kafka consumer");
   return 0;
 }

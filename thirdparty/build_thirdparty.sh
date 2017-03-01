@@ -36,6 +36,8 @@ if [ -n "$F_ALL" -o -n "$F_LIBRDKAFKA" ]; then
     ./configure --prefix=$PREFIX
     make
     make install
+    cd $TP_DIR
+    rm -rf $TP_DIR/$LIBRDKAFKA_BASEDIR
 fi
 
 # build jemalloc
