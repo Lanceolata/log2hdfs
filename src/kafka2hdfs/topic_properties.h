@@ -43,7 +43,6 @@ class TopicConf {
   }
 
  private:
-
   std::string topic_;
   std::vector<int> partitions_;
   std::unordered_map<std::string, std::string> kafka_confs_;

@@ -3,9 +3,9 @@
 #ifndef LOG2HDFS_KAFKA2HDFS_HDFS_HANDLE_H_
 #define LOG2HDFS_KAFKA2HDFS_HDFS_HANDLE_H_
 
-#include "hdfs.h"
 #include <memory>
 #include <string>
+#include "hdfs.h"
 
 namespace log2hdfs {
 

@@ -3,6 +3,8 @@
 #ifndef LOG2HDFS_KAFKA2HDFS_CONSUME_CALLBACK_H_
 #define LOG2HDFS_KAFKA2HDFS_CONSUME_CALLBACK_H_
 
+#include <memory>
+#include <string>
 #include "kafka/kafka_consumer.h"
 #include "util/fp_cache.h"
 
@@ -81,6 +83,6 @@ class EfConsumeCallback : public ConsumeCb {
 extern void ConsumeThreadWrap(
     std::shared_ptr<TopicPartitionConsumer> tp_consumer);
 
-}
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_KAFKA2HDFS_CONSUME_CALLBACK_H_

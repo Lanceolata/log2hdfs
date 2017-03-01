@@ -23,7 +23,7 @@ std::shared_ptr<ConsumeCb> ReportConsumeCallback::Init(
 
 void ReportConsumeCallback::Consume(Message *msg) {
   std::string topic = msg->TopicName();
-  char *payload = (char *)msg->Payload();
+  char *payload = static_cast<char *>(msg->Payload());
   size_t len = msg->Len();
 
   Optional<std::string> local_path = format_->BuildLocalPathFromMsg(msg);
@@ -69,7 +69,7 @@ std::shared_ptr<ConsumeCb> V6ConsumeCallback::Init(
 
 void V6ConsumeCallback::Consume(Message *msg) {
   std::string topic = msg->TopicName();
-  char *payload = (char *)msg->Payload();
+  char *payload = static_cast<char *>(msg->Payload());
   size_t len = msg->Len();
 
   Optional<std::string> local_path = format_->BuildLocalPathFromMsg(msg);
@@ -111,7 +111,7 @@ std::shared_ptr<ConsumeCb> EfConsumeCallback::Init(
 
 void EfConsumeCallback::Consume(Message *msg) {
   std::string topic = msg->TopicName();
-  char *payload = (char *)msg->Payload();
+  char *payload = static_cast<char *>(msg->Payload());
   size_t len = msg->Len();
 
   Optional<std::string> local_path = format_->BuildLocalPathFromMsg(msg);

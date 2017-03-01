@@ -90,6 +90,15 @@ class Section {
     return Optional<std::string>(it->second);
   }
 
+  std::string Get(const std::string &option,
+      const std::string &default_value) const {
+    Section::const_iterator it = options_.find(option);
+    if (it == options_.end()) {
+      return default_value;
+    }
+    return it->second;
+  }
+
   bool Set(const std::string &option, const std::string &value) {
     options_[option] = value;
     return true;
@@ -254,6 +263,15 @@ class IniConfigParser {
       return Optional<std::string>::Invalid();
     }
     return std::move((it->second)->Get(option));
+  }
+
+  std::string Get(const std::string &section, const std::string &option,
+      const std::string &default_value) const {
+    IniConfigParser::const_iterator it = sections_.find(section);
+    if (it == sections_.end()) {
+      return default_value;
+    }
+    return it->second->Get(option, default_value);
   }
 
   bool Set(const std::string &section, const std::string &option,

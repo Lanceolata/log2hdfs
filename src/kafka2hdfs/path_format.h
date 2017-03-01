@@ -35,6 +35,6 @@ class PathFormat {
       const std::string &filepath) const = 0;
 };
 
-}
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_KAFKA2HDFS_PATH_FORMAT_H_
