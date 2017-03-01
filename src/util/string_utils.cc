@@ -70,6 +70,9 @@ std::string RemoveComments(const std::string &input,
                            const std::string &comment) {
   auto end = input.find(comment);
   if (end != std::string::npos) {
+    if (end == 0) {
+      return "";
+    }
     return input.substr(0, end - 1);
   }
   return input;
