@@ -16,18 +16,20 @@ extern "C" {
 
 namespace log2hdfs {
 
-class Producer;
-class Consumer;
-class TopicPartitionConsumer;
+class KafkaProducer;
+class KafkaConsumer;
+class KafkaPartitionConsumer;
 
-class Topic {
+class KafkaTopic {
  public:
-  static std::shared_ptr<Topic> Init(rd_kafka_topic_t *rkt);
+  static std::shared_ptr<KafkaTopic> Init(rd_kafka_topic_t *rkt);
 
-  Topic(const Topic &t) = delete;
-  Topic &operator=(const Topic &t) = delete;
+  explicit KafkaTopic(rd_kafka_topic_t *rkt): rkt_(rkt) {}
 
-  ~Topic() {
+  KafkaTopic(const KafkaTopic &other) = delete;
+  KafkaTopic &operator=(const KafkaTopic &other) = delete;
+
+  ~KafkaTopic() {
     if (rkt_) {
       rd_kafka_topic_destroy(rkt_);
     }
@@ -38,11 +40,9 @@ class Topic {
   }
 
  private:
-  friend class Producer;
-  friend class Consumer;
-  friend class TopicPartitionConsumer;
-
-  explicit Topic(rd_kafka_topic_t *rkt): rkt_(rkt) {}
+  friend class KafkaProducer;
+  friend class KafkaConsumer;
+  friend class KafkaPartitionConsumer;
 
   rd_kafka_topic_t *rkt_;
 };

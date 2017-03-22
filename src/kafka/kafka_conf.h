@@ -14,6 +14,8 @@ extern "C" {
 }
 #endif
 
+#include "util/optional.h"
+
 namespace log2hdfs {
 
 // Conf Set() result code
@@ -24,26 +26,36 @@ enum ConfResult {
   kConfOk = 0           // Configuration property was succesfully set
 };
 
-class Producer;
-class Consumer;
+class KafkaProducer;
+class KafkaConsumer;
 
 // ------------------------------------------------------------------
-// GlobalConf
+// KafkaGlobalConf
 
-class GlobalConf {
+class KafkaGlobalConf {
  public:
   // Configuration object type
-  enum ConfType {
-    kConfProducer,    // Global producer default configuration
-    kConfConsumer    // Global consumer default configuration
+  enum Type {
+    kProducer,    // Global producer default configuration
+    kConsumer    // Global consumer default configuration
   };
 
-  static std::unique_ptr<GlobalConf> Init(GlobalConf::ConfType type);
+  static Optional<KafkaGlobalConf::Type> GetTypeFromString(
+      const std::string &type);
 
-  GlobalConf(const GlobalConf &gc) = delete;
-  GlobalConf &operator=(const GlobalConf &gc) = delete;
+  static std::unique_ptr<KafkaGlobalConf> Init(KafkaGlobalConf::Type type);
 
-  ~GlobalConf() {
+  explicit KafkaGlobalConf(rd_kafka_conf_t *rk_conf = NULL):
+      rk_conf_(rk_conf) {
+    if (!rk_conf_) {
+      rk_conf_ = rd_kafka_conf_new();
+    }
+  }
+
+  KafkaGlobalConf(const KafkaGlobalConf &other) = delete;
+  KafkaGlobalConf &operator=(const KafkaGlobalConf &other) = delete;
+
+  ~KafkaGlobalConf() {
     if (rk_conf_) {
       rd_kafka_conf_destroy(rk_conf_);
     }
@@ -54,42 +66,45 @@ class GlobalConf {
 
   ConfResult Get(const std::string &name, std::string *value) const;
 
-  std::unique_ptr<GlobalConf> Copy() const {
-    return std::unique_ptr<GlobalConf>(
-            new GlobalConf(rd_kafka_conf_dup(rk_conf_)));
+  std::unique_ptr<KafkaGlobalConf> Copy() const {
+    return std::unique_ptr<KafkaGlobalConf>(
+               new KafkaGlobalConf(rd_kafka_conf_dup(rk_conf_)));
   }
 
  protected:
-  friend class Producer;
-  friend class Consumer;
-
-  explicit GlobalConf(rd_kafka_conf_t *rk_conf): rk_conf_(rk_conf) {
-    if (!rk_conf_) {
-      rk_conf_ = rd_kafka_conf_new();
-    }
-  }
+  friend class KafkaProducer;
+  friend class KafkaConsumer;
 
   rd_kafka_conf_t *rk_conf_;
 };
 
-
 // ------------------------------------------------------------------
-// TopicConf
+// KafkaTopicConf
 
-class TopicConf {
+class KafkaTopicConf {
  public:
   // Configuration object type
-  enum ConfType {
-    kConfProducer,  // Topic producer default configuration
-    kConfConsumer   // Topic consumer default configuration
+  enum Type {
+    kProducer,  // Topic producer default configuration
+    kConsumer   // Topic consumer default configuration
   };
 
-  static std::unique_ptr<TopicConf> Init(TopicConf::ConfType type);
+  static Optional<KafkaTopicConf::Type> GetTypeFromString(
+      const std::string &type);
 
-  TopicConf(const TopicConf &tc) = delete;
-  TopicConf &operator=(const TopicConf &tc) = delete;
+  static std::unique_ptr<KafkaTopicConf> Init(KafkaTopicConf::Type type);
 
-  ~TopicConf() {
+  explicit KafkaTopicConf(rd_kafka_topic_conf_t *rkt_conf = NULL):
+      rkt_conf_(rkt_conf) {
+    if (!rkt_conf_) {
+      rkt_conf_ = rd_kafka_topic_conf_new();
+    }
+  }
+
+  KafkaTopicConf(const KafkaTopicConf &other) = delete;
+  KafkaTopicConf &operator=(const KafkaTopicConf &other) = delete;
+
+  ~KafkaTopicConf() {
     if (rkt_conf_) {
       rd_kafka_topic_conf_destroy(rkt_conf_);
     }
@@ -100,20 +115,14 @@ class TopicConf {
 
   ConfResult Get(const std::string &name, std::string *value) const;
 
-  std::unique_ptr<TopicConf> Copy() const {
-    return std::unique_ptr<TopicConf>(
-            new TopicConf(rd_kafka_topic_conf_dup(rkt_conf_)));
+  std::unique_ptr<KafkaTopicConf> Copy() const {
+    return std::unique_ptr<KafkaTopicConf>(
+               new KafkaTopicConf(rd_kafka_topic_conf_dup(rkt_conf_)));
   }
 
  protected:
-  friend class Producer;
-  friend class Consumer;
-
-  explicit TopicConf(rd_kafka_topic_conf_t *rkt_conf): rkt_conf_(rkt_conf) {
-    if (!rkt_conf_) {
-      rkt_conf_ = rd_kafka_topic_conf_new();
-    }
-  }
+  friend class KafkaProducer;
+  friend class KafkaConsumer;
 
   rd_kafka_topic_conf_t *rkt_conf_;
 };

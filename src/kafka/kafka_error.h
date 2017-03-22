@@ -4,6 +4,7 @@
 #define LOG2HDFS_KAFKA_KAFKA_ERROR_H_
 
 #include <string>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,15 +15,17 @@ extern "C" {
 
 namespace log2hdfs {
 
-typedef rd_kafka_resp_err_t ErrorCode;
+typedef rd_kafka_resp_err_t KafkaErrorCode;
 
-extern const std::string ErrorToStr(ErrorCode err);
+extern const std::string KafkaErrorToStr(KafkaErrorCode err);
 
-extern const std::string ErrorToName(ErrorCode err);
+extern const std::string KafkaErrorToName(KafkaErrorCode err);
 
-extern ErrorCode LastError();
+extern KafkaErrorCode KafkaLastError();
 
-extern ErrorCode ErrnoToError(int errnox);
+extern KafkaErrorCode KafkaErrnoToError(int errnox);
+
+extern const std::string KafkaErrnoToStr(int errnox);
 
 extern int KafkaErrno();
 

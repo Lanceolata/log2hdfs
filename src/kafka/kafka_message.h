@@ -30,14 +30,17 @@ struct MessageTimestamp {
   int64_t timestamp;
 };
 
-class Message {
+class KafkaMessage {
  public:
-  static std::unique_ptr<Message> Init(rd_kafka_message_t *rkmessage);
+  static std::unique_ptr<KafkaMessage> Init(rd_kafka_message_t *rkmessage);
 
-  Message(const Message &m) = delete;
-  Message &operator=(const Message &m) = delete;
+  explicit KafkaMessage(rd_kafka_message_t *rkmessage):
+      rkmessage_(rkmessage) {}
 
-  ~Message() {
+  KafkaMessage(const KafkaMessage &m) = delete;
+  KafkaMessage &operator=(const KafkaMessage &m) = delete;
+
+  ~KafkaMessage() {
     if (rkmessage_) {
       rd_kafka_message_destroy(rkmessage_);
     }
@@ -52,10 +55,10 @@ class Message {
   }
 
   const std::string ErrStr() const {
-    return ErrorToStr(rkmessage_->err);
+    return KafkaErrorToStr(rkmessage_->err);
   }
 
-  ErrorCode Error() const {
+  KafkaErrorCode Error() const {
     return rkmessage_->err;
   }
 
@@ -90,9 +93,6 @@ class Message {
   }
 
  private:
-  explicit Message(rd_kafka_message_t *rkmessage):
-      rkmessage_(rkmessage) {}
-
   rd_kafka_message_t *rkmessage_;
 };
 

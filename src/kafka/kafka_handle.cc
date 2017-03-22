@@ -4,14 +4,14 @@
 
 namespace log2hdfs {
 
-std::shared_ptr<Handle> Handle::Init(rd_kafka_t *rk) {
+std::shared_ptr<KafkaHandle> KafkaHandle::Init(rd_kafka_t *rk) {
   if (!rk) {
     return nullptr;
   }
-  return std::shared_ptr<Handle>(new Handle(rk));
+  return std::make_shared<KafkaHandle>(rk);
 }
 
-const std::string Handle::MemberId() const {
+const std::string KafkaHandle::MemberId() const {
   char *str = rd_kafka_memberid(rk_);
   std::string memberid = str ? str : "";
   if (str) {

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <iostream>
 #include "kafka2hdfs/hdfs_handle.h"
+#include "kafka2hdfs/kafka2hdfs_topic_conf.h"
 #include "kafka/kafka_conf.h"
 #include "kafka/kafka_consumer.h"
 #include "util/logger.h"
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
 
   // Init kafka consumer
   Log(LogLevel::kLogInfo, "Init kafka consumer");
-  std::unique_ptr<Consumer> consumer = Consumer::Init(consumer_conf.get(),
+  std::shared_ptr<Consumer> consumer = Consumer::Init(consumer_conf.get(),
                                                       &errstr);
   if (!consumer) {
     Log(LogLevel::kLogError, "Init kafka consumer failed with error[%s]",
@@ -133,8 +134,32 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  //std::vector<std::unique_ptr<Kafka2hdfsTopic> >  k2h_topics;
+  IniConfigParser::const_iterator it;
+  for (it = conf->Begin() ;it != conf->End(); ++it) {
+    if (it->first == "global" || it->first == "hdfs" || it->first == "kafka") {
+      continue;
+    }
 
+    // Init kafka2hdfs topic conf
+    std::unique_ptr<Kafka2hdfsTopicConf> k2h_topic_conf =
+        Kafka2hdfsTopicConf::Init(consumer, hdfs_handle, it->second);
+    if (!k2h_topic_conf) {
+      Log(LogLevel::kLogError, "Init kafka2hdfs topic conf failed[%s]",
+          it->first.c_str());
+      exit(EXIT_FAILURE);
+    }
 
+    //k2h_topics.push_back(Kafka2hdfsTopic::Init(std::move(k2h_topic_conf)));
+  }
+
+  //for (std::unique_ptr<Kafka2hdfsTopic> ptr : k2h_topics) {
+  //  ptr->Start();
+  //}
+
+  //for (std::unique_ptr<Kafka2hdfsTopic> ptr : k2h_topics) {
+  //  ptr->join();
+  //}
 
   return 0;
 }

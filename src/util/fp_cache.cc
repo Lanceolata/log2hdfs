@@ -64,7 +64,7 @@ std::shared_ptr<FILE> FpCache::Get(const std::string &key,
 
 bool FpCache::Remove(const std::string &key) {
   bool res = true;
-  std::shared_ptr<FILE> fptr;
+  std::shared_ptr<FILE> fptr = nullptr;
   std::unordered_map<std::string, std::shared_ptr<FILE> >::const_iterator it;
 
   pthread_rwlock_wrlock(&lock_);
@@ -81,7 +81,7 @@ bool FpCache::Remove(const std::string &key) {
   pthread_rwlock_unlock(&lock_);
 
   if (!fptr) {
-    return false;
+    return res;
   }
 
   int count = 0;

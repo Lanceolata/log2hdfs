@@ -1,121 +1,20 @@
 // Copyright (c) 2017 Lanceolata
 
 #include "kafka/kafka_consumer.h"
+#include <thread>
+#include <utility>
 #include "kafka/kafka_conf.h"
+#include "kafka/kafka_handle.h"
 #include "kafka/kafka_topic.h"
-#include "kafka/kafka_message.h"
+#include "kafka/kafka_partition_consumer.h"
 #include "kafka/kafka_error.h"
 #include "util/logger.h"
 
 namespace log2hdfs {
 
-// ------------------------------------------------------------------
-// TopicPartitionConsumer
-
-std::shared_ptr<TopicPartitionConsumer> TopicPartitionConsumer::Init(
-        std::shared_ptr<Handle> handle, std::shared_ptr<Topic> topic,
-        int32_t partition, int64_t offset, std::shared_ptr<ConsumeCb> cb) {
-  if (!handle || !topic || partition < 0) {
-    return nullptr;
-  }
-
-  return std::shared_ptr<TopicPartitionConsumer>(
-          new TopicPartitionConsumer(handle, topic, partition, offset, cb));
-}
-
-#define CONSUME_BATCH_SIZE 1000
-#define CONSUME_BATCH_TIMEOUT_MS 5000
-#define POLL_TIMEOUT_MS 5000
-
-bool TopicPartitionConsumer::Start(std::string *errstr) {
-  running = true;
-  rd_kafka_message_t **messages = static_cast<rd_kafka_message_t **>(malloc(
-          CONSUME_BATCH_SIZE * sizeof(rd_kafka_message_t *)));
-  if (messages == NULL) {
-    *errstr = "calloc failed for messages to be consumed";
-    running = false;
-    return false;
-  }
-
-  if (rd_kafka_consume_start(topic_->rkt_, partition_, offset_) == -1) {
-    char errbuf[256];
-    snprintf(errbuf, sizeof(errbuf), "rd_kafka_consume_start "
-             "failed with errno[%d]", errno);
-    *errstr = errbuf;
-    running = false;
-    return false;
-  }
-
-  const std::string topic_name = Name();
-
-  while (true) {
-    ssize_t n = rd_kafka_consume_batch(topic_->rkt_, partition_,
-                                       CONSUME_BATCH_TIMEOUT_MS, messages,
-                                       CONSUME_BATCH_SIZE);
-
-    if (n == -1) {
-      Log(LogLevel::kLogError, "rd_kafka_consume_batch "
-          "failed with errno[%d] errstr[%s]", errno,
-          ErrorToStr(ErrnoToError(errno)).c_str());
-      continue;
-    } else if (n == 0) {
-      if (!running) {
-        Log(LogLevel::kLogInfo, "topic[%s]-partition[%d] ",
-            "stopping", topic_name.c_str(), partition_);
-        break;
-      }
-      Log(LogLevel::kLogInfo, "topic[%s]-partition[%d] "
-          "no new message", topic_name.c_str(), partition_);
-      continue;
-    }
-
-    for (int i = 0; i < n; ++i) {
-      rd_kafka_message_t *message = messages[i];
-      switch (message->err) {
-        case RD_KAFKA_RESP_ERR_NO_ERROR: {
-          std::unique_ptr<Message> msg = Message::Init(message);
-          cb_->Consume(msg.get());
-          break;
-        }
-        case RD_KAFKA_RESP_ERR__PARTITION_EOF:
-          Log(LogLevel::kLogInfo, "topic[%s]-partition[%d] end",
-              topic_name.c_str(), partition_);
-          Poll(POLL_TIMEOUT_MS);
-          break;
-        default:
-          Log(LogLevel::kLogWarn, "topic[%s]-partition[%d] "
-              "error[%d][%s]", topic_name.c_str(), partition_,
-              messages[i]->err, message->payload);
-      }
-      std::unique_ptr<Message> msg = Message::Init(message);
-      cb_->Consume(msg.get());
-    }
-    Poll();
-  }
-
-  return true;
-}
-
-void TopicPartitionConsumer::Stop() {
-  if (running) {
-    if (rd_kafka_consume_stop(topic_->rkt_, partition_) == -1) {
-        Log(LogLevel::kLogError, "rd_kafka_consume_stop "
-            "failed with errno[%d], errstr[%s]", errno,
-            ErrorToStr(ErrnoToError(errno)).c_str());
-    }
-    running = false;
-  }
-}
-
-// ------------------------------------------------------------------
-// Consumer
-
-std::unique_ptr<Consumer> Consumer::Init(GlobalConf *conf,
-                                         std::string *errstr) {
+std::shared_ptr<KafkaConsumer> KafkaConsumer::Init(KafkaGlobalConf *conf) {
   if (!conf || !conf->rk_conf_) {
-    if (errstr) {
-      *errstr = "Requires log2hdfs::kafka::GlobalConf pointer";
-    }
+    Log(LogLevel::kLogError, "KafkaConsumer init failed with invalid conf");
     return nullptr;
   }
 
@@ -124,32 +23,99 @@ std::unique_ptr<Consumer> Consumer::Init(GlobalConf *conf,
   rd_kafka_t *rk = rd_kafka_new(RD_KAFKA_CONSUMER, rk_conf,
                                 errbuf, sizeof(errbuf));
   if (!rk) {
-    *errstr = errbuf;
+    Log(LogLevel::kLogError, "KafkaConsumer init failed with error[%s]",
+        errbuf);
     rd_kafka_conf_destroy(rk_conf);
     return nullptr;
   }
 
-  return std::unique_ptr<Consumer>(new Consumer(rk));
+  return std::make_shared<KafkaConsumer>(rk);
 }
 
-std::shared_ptr<Topic> Consumer::CreateTopic(const std::string &topic,
-                                             TopicConf *conf,
-                                             std::string *errstr) {
+std::shared_ptr<KafkaTopic> KafkaConsumer::CreateTopic(
+    const std::string &topic, KafkaTopicConf *conf) {
   if (topic.empty() || !conf || !conf->rkt_conf_) {
-    *errstr = "Requires topic name and log2hdfs::kafka::TopicConf pointer";
+    Log(LogLevel::kLogError, "CreateTopic topic[%s] failed with invalid conf",
+        topic.c_str());
     return nullptr;
+  }
+
+  std::lock_guard<std::mutex> guard(mutex_);
+
+  auto it = topics_.find(topic);
+  if (it != topics_.end()) {
+    return it->second;
   }
 
   rd_kafka_topic_conf_t *rkt_conf = rd_kafka_topic_conf_dup(conf->rkt_conf_);
   rd_kafka_topic_t *rkt = rd_kafka_topic_new(handle_->rk_, topic.c_str(),
                                              rkt_conf);
-
   if (!rkt) {
-    *errstr = ErrorToStr(ErrnoToError(errno));
+    Log(LogLevel::kLogError, "KafkaConsumer init failed with error[%s]",
+        KafkaErrnoToStr(errno).c_str());
     rd_kafka_topic_conf_destroy(rkt_conf);
     return nullptr;
   }
-  return Topic::Init(rkt);
+
+  std::shared_ptr<KafkaTopic> kt = KafkaTopic::Init(rkt);
+  if (kt) {
+    Log(LogLevel::kLogInfo, "CreateTopic success topic[%s]",
+        topic.c_str());
+    topics_.insert(std::make_pair(topic, kt));
+  }
+  return kt;
+}
+
+std::shared_ptr<KafkaPartitionConsumer> KafkaConsumer::CreatePartitionConsumer(
+    const std::string &topic, int32_t partition,
+    int64_t offset, std::shared_ptr<KafkaPartitionConsumerCb> cb) {
+  std::lock_guard<std::mutex> guard(mutex_);
+
+  auto it = topics_.find(topic);
+  if (it == topics_.end()) {
+    Log(LogLevel::kLogError, "CreatePartitionConsumer failed invalid "
+        "topic[%s]", topic.c_str());
+    return nullptr;
+  }
+
+  std::shared_ptr<KafkaTopic> kt = it->second;
+  std::shared_ptr<KafkaPartitionConsumer> kpc;
+  kpc = KafkaPartitionConsumer::Init(handle_, kt, partition,
+                                     offset, cb);
+  if (kpc) {
+    Log(LogLevel::kLogInfo, "CreatePartitionConsumer success topic[%s] "
+        "partition[%d] offset[%ld]", topic.c_str(), partition, offset);
+    consumers_.insert(std::make_pair(topic, kpc));
+  }
+  return kpc;
+}
+
+bool KafkaConsumer::StartTopic(const std::string &topic) {
+  std::lock_guard<std::mutex> guard(mutex_);
+  auto range = consumers_.equal_range(topic);
+  if (range.first == range.second) {
+    Log(LogLevel::kLogError, "StartTopic failed invalid topic[%s]",
+        topic.c_str());
+    return false;
+  }
+  for (auto it = range.first; it != range.second; ++it) {
+    std::shared_ptr<KafkaPartitionConsumer> kpc = it->second;
+    if (!kpc->running()) {
+      std::thread t(&KafkaPartitionConsumer::Start, kpc.get());
+      t.detach();
+    }
+  }
+  return true;
+}
+
+void KafkaConsumer::StopAll(int milli) {
+  std::lock_guard<std::mutex> guard(mutex_);
+  for (auto it = consumers_.begin(); it != consumers_.end(); ++it) {
+    it->second->Stop();
+  }
+  while (handle_->OutqLen() > 0) {
+    handle_->Poll(milli);
+  }
 }
 
 }   // namespace log2hdfs

@@ -4,11 +4,11 @@
 
 namespace log2hdfs {
 
-std::shared_ptr<Topic> Topic::Init(rd_kafka_topic_t *rkt) {
+std::shared_ptr<KafkaTopic> KafkaTopic::Init(rd_kafka_topic_t *rkt) {
   if (!rkt) {
     return nullptr;
   }
-  return std::shared_ptr<Topic>(new Topic(rkt));
+  return std::make_shared<KafkaTopic>(rkt);
 }
 
 }   // namespace log2hdfs

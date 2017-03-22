@@ -4,14 +4,15 @@
 
 namespace log2hdfs {
 
-std::unique_ptr<Message> Message::Init(rd_kafka_message_t *rkmessage) {
+std::unique_ptr<KafkaMessage> KafkaMessage::Init(
+    rd_kafka_message_t *rkmessage) {
   if (!rkmessage) {
     return nullptr;
   }
-  return std::unique_ptr<Message>(new Message(rkmessage));
+  return std::unique_ptr<KafkaMessage>(new KafkaMessage(rkmessage));
 }
 
-MessageTimestamp Message::Timestamp() const {
+MessageTimestamp KafkaMessage::Timestamp() const {
   MessageTimestamp ts;
   rd_kafka_timestamp_type_t tstype;
   ts.timestamp = rd_kafka_message_timestamp(rkmessage_, &tstype);

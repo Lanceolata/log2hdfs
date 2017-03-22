@@ -18,7 +18,7 @@ class Logger {
   };
 
   static std::shared_ptr<Logger> Init(const std::string &log_path,
-                                      size_t max_length = 2048);
+                                      size_t max_length);
 
   Logger(const Logger &other) = delete;
   Logger &operator=(const Logger &other) = delete;

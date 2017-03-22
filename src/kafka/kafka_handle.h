@@ -16,41 +16,58 @@ extern "C" {
 
 namespace log2hdfs {
 
-class Producer;
-class Consumer;
+class KafkaProducer;
+class KafkaConsumer;
 
-class Handle {
+class KafkaHandle {
  public:
-  static std::shared_ptr<Handle> Init(rd_kafka_t *rk);
+  static std::shared_ptr<KafkaHandle> Init(rd_kafka_t *rk);
 
-  Handle(const Handle &h) = delete;
-  Handle &operator=(const Handle &h) = delete;
+  explicit KafkaHandle(rd_kafka_t *rk): rk_(rk) {}
 
-  ~Handle() {
+  KafkaHandle(const KafkaHandle &other) = delete;
+  KafkaHandle &operator=(const KafkaHandle &other) = delete;
+
+  ~KafkaHandle() {
     if (rk_) {
       rd_kafka_destroy(rk_);
     }
   }
 
   const std::string Name() const {
-    return std::string(rd_kafka_name(rk_));
+    return std::string(rk_ ? rd_kafka_name(rk_) : "");
   }
 
   const std::string MemberId() const;
 
-  int Poll(int timeout_ms) {
+  int Poll(int timeout_ms = 200) {
+    if (!rk_) {
+      return -1;
+    }
     return rd_kafka_poll(rk_, timeout_ms);
   }
 
   int OutqLen() {
+    if (!rk_) {
+      return -1;
+    }
     return rd_kafka_outq_len(rk_);
   }
 
- private:
-  friend class Producer;
-  friend class Consumer;
+  int PollOutq(int length = 2000, int timeout_ms = 200) {
+    if (!rk_) {
+      return -1;
+    }
+    int n = 0;
+    while (rd_kafka_outq_len(rk_) > length) {
+      n += rd_kafka_poll(rk_, timeout_ms);
+    }
+    return n;
+  }
 
-  explicit Handle(rd_kafka_t *rk): rk_(rk) {}
+ private:
+  friend class KafkaProducer;
+  friend class KafkaConsumer;
 
   rd_kafka_t *rk_;
 };
