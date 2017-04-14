@@ -14,20 +14,19 @@ extern "C" {
 }
 #endif
 
-#include "util/optional.h"
-
 namespace log2hdfs {
 
+class KafkaProducer;
+class KafkaConsumer;
+
 // Conf Set() result code
-enum ConfResult {
+enum KafkaConfResult {
   kConfEmpty = -3,      // Empty configuration property
   kConfUnknown = -2,    // Unknown configuration property
   kConfInvalid = -1,    // Invalid configuration value
   kConfOk = 0           // Configuration property was succesfully set
 };
 
-class KafkaProducer;
-class KafkaConsumer;
 
 // ------------------------------------------------------------------
 // KafkaGlobalConf
@@ -40,9 +39,6 @@ class KafkaGlobalConf {
     kConsumer    // Global consumer default configuration
   };
 
-  static Optional<KafkaGlobalConf::Type> GetTypeFromString(
-      const std::string &type);
-
   static std::unique_ptr<KafkaGlobalConf> Init(KafkaGlobalConf::Type type);
 
   explicit KafkaGlobalConf(rd_kafka_conf_t *rk_conf = NULL):
@@ -52,19 +48,19 @@ class KafkaGlobalConf {
     }
   }
 
-  KafkaGlobalConf(const KafkaGlobalConf &other) = delete;
-  KafkaGlobalConf &operator=(const KafkaGlobalConf &other) = delete;
-
   ~KafkaGlobalConf() {
     if (rk_conf_) {
       rd_kafka_conf_destroy(rk_conf_);
     }
   }
 
-  ConfResult Set(const std::string &name, const std::string &value,
-                 std::string *errstr);
+  KafkaGlobalConf(const KafkaGlobalConf &other) = delete;
+  KafkaGlobalConf &operator=(const KafkaGlobalConf &other) = delete;
 
-  ConfResult Get(const std::string &name, std::string *value) const;
+  KafkaConfResult Set(const std::string &name, const std::string &value,
+                      std::string *errstr);
+
+  KafkaConfResult Get(const std::string &name, std::string *value) const;
 
   std::unique_ptr<KafkaGlobalConf> Copy() const {
     return std::unique_ptr<KafkaGlobalConf>(
@@ -78,6 +74,7 @@ class KafkaGlobalConf {
   rd_kafka_conf_t *rk_conf_;
 };
 
+
 // ------------------------------------------------------------------
 // KafkaTopicConf
 
@@ -89,9 +86,6 @@ class KafkaTopicConf {
     kConsumer   // Topic consumer default configuration
   };
 
-  static Optional<KafkaTopicConf::Type> GetTypeFromString(
-      const std::string &type);
-
   static std::unique_ptr<KafkaTopicConf> Init(KafkaTopicConf::Type type);
 
   explicit KafkaTopicConf(rd_kafka_topic_conf_t *rkt_conf = NULL):
@@ -101,19 +95,19 @@ class KafkaTopicConf {
     }
   }
 
-  KafkaTopicConf(const KafkaTopicConf &other) = delete;
-  KafkaTopicConf &operator=(const KafkaTopicConf &other) = delete;
-
   ~KafkaTopicConf() {
     if (rkt_conf_) {
       rd_kafka_topic_conf_destroy(rkt_conf_);
     }
   }
 
-  ConfResult Set(const std::string &name, const std::string &value,
-                 std::string *errstr);
+  KafkaTopicConf(const KafkaTopicConf &other) = delete;
+  KafkaTopicConf &operator=(const KafkaTopicConf &other) = delete;
 
-  ConfResult Get(const std::string &name, std::string *value) const;
+  KafkaConfResult Set(const std::string &name, const std::string &value,
+                      std::string *errstr);
+
+  KafkaConfResult Get(const std::string &name, std::string *value) const;
 
   std::unique_ptr<KafkaTopicConf> Copy() const {
     return std::unique_ptr<KafkaTopicConf>(

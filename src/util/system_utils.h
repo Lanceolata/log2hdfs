@@ -38,6 +38,16 @@ extern Optional<time_t> FileMtime(const std::string &path);
 
 extern Optional<time_t> FileMtime(const char *path);
 
+extern Optional<std::string> BaseName(const std::string &filepath);
+
+extern Optional<std::string> BaseName(const char *filepath);
+
+extern Optional<time_t> StrToTs(const std::string &str,
+                                const std::string &format);
+
+extern Optional<time_t> StrToTs(const char *str,
+                                const char *format);
+
 extern Optional<std::vector<std::string> > ScanDirFile(
     const std::string &path,
     int (*filter)(const struct dirent *),

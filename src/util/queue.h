@@ -10,9 +10,18 @@
 
 namespace log2hdfs {
 
+/*
+ * Thread safe queue.
+ * 
+ * */
+
 template<typename T>
 class Queue {
  public:
+  static std::shared_ptr<Queue<T>> Init() {
+    return nullptr;
+  }
+
   Queue() {}
 
   Queue(const Queue &q) {
@@ -34,6 +43,7 @@ class Queue {
     cond_.notify_one();
   }
 
+  // 阻塞直到可以从queue_中取出值
   void WaitPop(T *value) {
     if (!value) {
       return;

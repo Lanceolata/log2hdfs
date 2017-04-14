@@ -8,10 +8,11 @@ namespace log2hdfs {
 // ------------------------------------------------------------------
 // KafkaGlobalProduerConf
 
+
 // ------------------------------------------------------------------
 // KafkaGlobalConsumerConf
 
-class KafkaGlobalConsumerConf : KafkaGlobalConf {
+class KafkaGlobalConsumerConf : public KafkaGlobalConf {
  public:
   static std::unique_ptr<KafkaGlobalConf> Init() {
     return std::unique_ptr<KafkaGlobalConf>(new KafkaGlobalConsumerConf());
@@ -19,18 +20,18 @@ class KafkaGlobalConsumerConf : KafkaGlobalConf {
 
   explicit KafkaGlobalConsumerConf(rd_kafka_conf_t *rk_conf = NULL):
       KafkaGlobalConf(rk_conf) {
-      rd_kafka_conf_set_error_cb(rk_conf_,
-                                 &(KafkaGlobalConsumerConf::error_cb));
+    rd_kafka_conf_set_error_cb(
+        rk_conf_, &(KafkaGlobalConsumerConf::error_cb));
   }
+
+  ~KafkaGlobalConsumerConf() {}
 
   KafkaGlobalConsumerConf(const KafkaGlobalConsumerConf &other) = delete;
   KafkaGlobalConsumerConf &operator=(
       const KafkaGlobalConsumerConf &other) = delete;
 
-  ~KafkaGlobalConsumerConf() {}
-
-  static void error_cb(rd_kafka_t *rk, int err, const char *reason,
-                       void *opaque);
+  static void error_cb(rd_kafka_t *rk, int err,
+                       const char *reason, void *opaque);
 };
 
 void KafkaGlobalConsumerConf::error_cb(rd_kafka_t *rk, int err,
@@ -40,6 +41,7 @@ void KafkaGlobalConsumerConf::error_cb(rd_kafka_t *rk, int err,
       rd_kafka_name(rk), rd_kafka_err2str((rd_kafka_resp_err_t)err),
       reason);
 }
+
 
 // ------------------------------------------------------------------
 // KafkaGlobalConf
@@ -60,54 +62,55 @@ std::unique_ptr<KafkaGlobalConf> KafkaGlobalConf::Init(
   return res;
 }
 
-ConfResult KafkaGlobalConf::Set(const std::string &name,
-                                const std::string &value,
-                                std::string *errstr) {
+KafkaConfResult KafkaGlobalConf::Set(const std::string &name,
+                                     const std::string &value,
+                                     std::string *errstr) {
   if (name.empty() || value.empty()) {
     *errstr = "config empty";
-    return ConfResult::kConfEmpty;
+    return KafkaConfResult::kConfEmpty;
   }
 
   rd_kafka_conf_res_t res;
   char errbuf[512];
-
   res = rd_kafka_conf_set(rk_conf_, name.c_str(), value.c_str(),
                           errbuf, sizeof(errbuf));
   if (res != RD_KAFKA_CONF_OK && errstr != NULL) {
     *errstr = errbuf;
   }
-
-  return static_cast<ConfResult>(res);
+  return static_cast<KafkaConfResult>(res);
 }
 
-ConfResult KafkaGlobalConf::Get(const std::string &name,
-                           std::string *value) const {
+KafkaConfResult KafkaGlobalConf::Get(const std::string &name,
+                                     std::string *value) const {
   if (name.empty() || value == NULL) {
-    return ConfResult::kConfEmpty;
+    return KafkaConfResult::kConfEmpty;
   }
 
   size_t size;
   rd_kafka_conf_res_t res = RD_KAFKA_CONF_OK;
   if ((res = rd_kafka_conf_get(rk_conf_, name.c_str(), NULL, &size))
           != RD_KAFKA_CONF_OK) {
-    return static_cast<ConfResult>(res);
+    return static_cast<KafkaConfResult>(res);
   }
 
   std::unique_ptr<char[]> msg(new char[size]);
   if ((res = rd_kafka_conf_get(rk_conf_, name.c_str(), msg.get(), &size))
           != RD_KAFKA_CONF_OK) {
-    return static_cast<ConfResult>(res);
+    return static_cast<KafkaConfResult>(res);
   }
 
   (*value).assign(msg.get());
-  return ConfResult::kConfOk;
+  return KafkaConfResult::kConfOk;
 }
+
 
 // ------------------------------------------------------------------
 // KafkaTopicProducerConf
 
+
 // ------------------------------------------------------------------
 // KafkaTopicConsumerConf
+
 
 // ------------------------------------------------------------------
 // KafkaTopicConf
@@ -128,12 +131,12 @@ std::unique_ptr<KafkaTopicConf> KafkaTopicConf::Init(
   return res;
 }
 
-ConfResult KafkaTopicConf::Set(const std::string &name,
-                               const std::string &value,
-                               std::string *errstr) {
+KafkaConfResult KafkaTopicConf::Set(const std::string &name,
+                                    const std::string &value,
+                                    std::string *errstr) {
   if (name.empty() || value.empty()) {
     *errstr = "config empty";
-    return ConfResult::kConfEmpty;
+    return KafkaConfResult::kConfEmpty;
   }
 
   rd_kafka_conf_res_t res;
@@ -143,30 +146,30 @@ ConfResult KafkaTopicConf::Set(const std::string &name,
   if (res != RD_KAFKA_CONF_OK && errstr != NULL) {
     *errstr = errbuf;
   }
-  return static_cast<ConfResult>(res);
+  return static_cast<KafkaConfResult>(res);
 }
 
-ConfResult KafkaTopicConf::Get(const std::string &name,
-                               std::string *value) const {
+KafkaConfResult KafkaTopicConf::Get(const std::string &name,
+                                    std::string *value) const {
   if (name.empty() || value == NULL) {
-    return ConfResult::kConfEmpty;
+    return KafkaConfResult::kConfEmpty;
   }
 
   size_t size;
   rd_kafka_conf_res_t res = RD_KAFKA_CONF_OK;
   if ((res = rd_kafka_topic_conf_get(rkt_conf_, name.c_str(), NULL, &size))
           != RD_KAFKA_CONF_OK) {
-    return static_cast<ConfResult>(res);
+    return static_cast<KafkaConfResult>(res);
   }
 
   std::unique_ptr<char[]> msg(new char[size]);
   if ((res = rd_kafka_topic_conf_get(rkt_conf_, name.c_str(), msg.get(), &size))
           != RD_KAFKA_CONF_OK) {
-    return static_cast<ConfResult>(res);
+    return static_cast<KafkaConfResult>(res);
   }
 
   (*value).assign(msg.get());
-  return ConfResult::kConfOk;
+  return KafkaConfResult::kConfOk;
 }
 
 }   // namespace log2hdfs

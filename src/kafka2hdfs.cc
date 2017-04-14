@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
   std::string errstr;
 
   // Init kafka consumer conf
-  std::unique_ptr<GlobalConf> consumer_conf = GlobalConf::Init(
-      GlobalConf::ConfType::kConfConsumer);
+  std::unique_ptr<KafkaGlobalConf> consumer_conf = KafkaGlobalConf::Init(
+      KafkaGlobalConf::Type::kConsumer);
   if (!consumer_conf) {
     Log(LogLevel::kLogError, "Init consumer global conf failed");
     exit(EXIT_FAILURE);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
   } else {
     for (auto it = section_kafka->Begin(); it != section_kafka->End(); ++it) {
       if (consumer_conf->Set(it->first, it->second, &errstr)
-              == ConfResult::kConfOk) {
+              == KafkaConfResult::kConfOk) {
         Log(LogLevel::kLogInfo, "Set configuration key[%s] value[%s] "
             "successed", it->first.c_str(), it->second.c_str());
       } else {
@@ -126,14 +126,15 @@ int main(int argc, char *argv[]) {
 
   // Init kafka consumer
   Log(LogLevel::kLogInfo, "Init kafka consumer");
-  std::shared_ptr<Consumer> consumer = Consumer::Init(consumer_conf.get(),
-                                                      &errstr);
+  std::shared_ptr<KafkaConsumer> consumer =
+      KafkaConsumer::Init(consumer_conf.get());
   if (!consumer) {
     Log(LogLevel::kLogError, "Init kafka consumer failed with error[%s]",
         errstr.c_str());
     exit(EXIT_FAILURE);
   }
 
+/*
   //std::vector<std::unique_ptr<Kafka2hdfsTopic> >  k2h_topics;
   IniConfigParser::const_iterator it;
   for (it = conf->Begin() ;it != conf->End(); ++it) {
@@ -152,14 +153,7 @@ int main(int argc, char *argv[]) {
 
     //k2h_topics.push_back(Kafka2hdfsTopic::Init(std::move(k2h_topic_conf)));
   }
-
-  //for (std::unique_ptr<Kafka2hdfsTopic> ptr : k2h_topics) {
-  //  ptr->Start();
-  //}
-
-  //for (std::unique_ptr<Kafka2hdfsTopic> ptr : k2h_topics) {
-  //  ptr->join();
-  //}
-
+*/
+  
   return 0;
 }

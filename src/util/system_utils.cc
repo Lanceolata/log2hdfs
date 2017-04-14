@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <utility>
@@ -131,6 +132,44 @@ Optional<time_t> FileMtime(const char *path) {
     return Optional<time_t>::Invalid();
   }
   return Optional<time_t>(stbuf.st_mtime);
+}
+
+Optional<std::string> BaseName(const std::string &filepath) {
+  if (filepath.empty()) {
+    return Optional<std::string>::Invalid();
+  }
+  return BaseName(filepath.c_str());
+}
+
+Optional<std::string> BaseName(const char *filepath) {
+  if (!filepath) {
+    return Optional<std::string>::Invalid();
+  }
+  const char *p = strrchr(filepath, '/');
+  if (p == NULL) {
+    p = filepath;
+  }
+  return Optional<std::string>(p);
+}
+
+Optional<time_t> StrToTs(const std::string &str, const std::string &format) {
+  if (str.empty() || format.empty()) {
+    return Optional<time_t>::Invalid();
+  }
+  return StrToTs(str.c_str(), format.c_str());
+}
+
+Optional<time_t> StrToTs(const char *str, const char *format) {
+  if (!str || !format) {
+    return Optional<time_t>::Invalid();
+  }
+
+  struct tm timeinfo;
+  memset(&timeinfo, 0, sizeof(struct tm));
+  if (strptime(str, format, &timeinfo) == NULL) {
+    return Optional<time_t>::Invalid();
+  }
+  return Optional<time_t>(mktime(&timeinfo));
 }
 
 Optional<std::vector<std::string> > ScanDirFile(

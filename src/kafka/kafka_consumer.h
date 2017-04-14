@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
 
 #ifdef __cplusplus
@@ -24,8 +25,6 @@ class KafkaGlobalConf;
 class KafkaTopicConf;
 class KafkaHandle;
 class KafkaTopic;
-class KafkaPartitionConsumer;
-class KafkaPartitionConsumerCb;
 
 class KafkaConsumer {
  public:
@@ -33,10 +32,10 @@ class KafkaConsumer {
 
   explicit KafkaConsumer(rd_kafka_t *rk): handle_(KafkaHandle::Init(rk)) {}
 
+  ~KafkaConsumer();
+
   KafkaConsumer(const KafkaConsumer &other) = delete;
   KafkaConsumer &operator=(const KafkaConsumer &other) = delete;
-
-  ~KafkaConsumer() {}
 
   const std::string Name() const {
     return handle_->Name();
@@ -53,21 +52,11 @@ class KafkaConsumer {
   std::shared_ptr<KafkaTopic> CreateTopic(const std::string &topic,
                                           KafkaTopicConf *conf);
 
-  std::shared_ptr<KafkaPartitionConsumer> CreatePartitionConsumer(
-      const std::string &topic, int32_t partition,
-      int64_t offset, std::shared_ptr<KafkaPartitionConsumerCb> cb);
-
-  bool StartTopic(const std::string &topic);
-
-  void StopAll(int milli = 5000);
-
  private:
   std::mutex mutex_;
   std::shared_ptr<KafkaHandle> handle_;
   std::unordered_map<std::string,
       std::shared_ptr<KafkaTopic> > topics_;
-  std::unordered_multimap<std::string,
-      std::shared_ptr<KafkaPartitionConsumer> > consumers_;
 };
 
 }   // namespace log2hdfs

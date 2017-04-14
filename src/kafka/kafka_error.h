@@ -27,7 +27,6 @@ extern KafkaErrorCode KafkaErrnoToError(int errnox);
 
 extern const std::string KafkaErrnoToStr(int errnox);
 
-extern int KafkaErrno();
 
 }   // namespace log2hdfs
 

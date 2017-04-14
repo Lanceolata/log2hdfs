@@ -35,8 +35,8 @@ class Section {
 
   explicit Section(const std::string &delimiters): delimiters_(delimiters) {}
 
-  Section(const Section &other): delimiters_(other.delimiters_),
-      options_(other.options_) {}
+  Section(const Section &other):
+      delimiters_(other.delimiters_), options_(other.options_) {}
 
   Section(Section &&other) {
     delimiters_ = std::move(other.delimiters_);

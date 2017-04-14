@@ -107,13 +107,4 @@ bool EndsWith(const char *str, const char *suffix) {
   return memcmp(end, suffix, len2) == 0;
 }
 
-std::string TsToString(time_t ts) {
-  return std::to_string(ts);
-}
-
-time_t StringToTs(const std::string &str) {
-  time_t ts = atol(str.c_str());
-  return ts;
-}
-
 }   // namespace log2hdfs

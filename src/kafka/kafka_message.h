@@ -18,7 +18,7 @@ extern "C" {
 
 namespace log2hdfs {
 
-struct MessageTimestamp {
+class MessageTimestamp {
  public:
   enum MessageTimestampType {
     MSG_TIMESTAMP_NOT_AVAILABLE,    // Timestamp not available
@@ -37,14 +37,15 @@ class KafkaMessage {
   explicit KafkaMessage(rd_kafka_message_t *rkmessage):
       rkmessage_(rkmessage) {}
 
-  KafkaMessage(const KafkaMessage &m) = delete;
-  KafkaMessage &operator=(const KafkaMessage &m) = delete;
-
   ~KafkaMessage() {
     if (rkmessage_) {
       rd_kafka_message_destroy(rkmessage_);
+      rkmessage_ = NULL;
     }
   }
+
+  KafkaMessage(const KafkaMessage &m) = delete;
+  KafkaMessage &operator=(const KafkaMessage &m) = delete;
 
   std::string TopicName() const {
     if (rkmessage_->rkt) {

@@ -62,8 +62,7 @@ std::shared_ptr<FILE> FpCache::Get(const std::string &key,
 
 #define ERASE_TIMES 6
 
-bool FpCache::Remove(const std::string &key) {
-  bool res = true;
+FpCache::RemoveResult FpCache::Remove(const std::string &key) {
   std::shared_ptr<FILE> fptr = nullptr;
   std::unordered_map<std::string, std::shared_ptr<FILE> >::const_iterator it;
 
@@ -71,8 +70,7 @@ bool FpCache::Remove(const std::string &key) {
 
   it = cache_.find(key);
   if (it == cache_.end()) {
-    Log(LogLevel::kLogWarn, "invalid key[%s] for FpCache", key.c_str());
-    res = false;
+    return FpCache::RemoveResult::kInvalidKey;
   } else {
     fptr = it->second;
     cache_.erase(it);
@@ -80,10 +78,7 @@ bool FpCache::Remove(const std::string &key) {
 
   pthread_rwlock_unlock(&lock_);
 
-  if (!fptr) {
-    return res;
-  }
-
+  // 判断指针的引用是否为1(当前函数引用1次) 最多循环6次
   int count = 0;
   while (count < ERASE_TIMES && fptr.use_count() > 1) {
     ++count;
@@ -91,19 +86,10 @@ bool FpCache::Remove(const std::string &key) {
   }
 
   if (fptr.use_count() > 1) {
-    Log(LogLevel::kLogError, "key[%s] shared_ptr use_count[%d]",
-        key.c_str(), fptr.use_count());
-    FILE *fp = fptr.get();
-    if (fclose(fp) != 0) {
-      Log(LogLevel::kLogError, "fclose key[%s] faild with errno[%d]",
-          key.c_str(), errno);
-      res = false;
-    } else {
-      Log(LogLevel::kLogError, "fclose key[%s] success", key.c_str());
-    }
+    return FpCache::RemoveResult::kRemoveFailed;
   }
 
-  return res;
+  return FpCache::RemoveResult::kRemoveOk;
 }
 
 void FpCache::Clean() {

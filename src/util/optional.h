@@ -8,6 +8,11 @@
 
 namespace log2hdfs {
 
+/*
+ * Represents a type that may be invalid, similar to std::optional.
+ * 
+ * */
+
 template <class T>
 class Optional {
  public:
@@ -20,8 +25,8 @@ class Optional {
   explicit Optional(const T &value):
       valid_(true), value_(value) {}
 
-  Optional(const Optional &other): valid_(other.valid_),
-      value_(other.value_) {}
+  Optional(const Optional &other):
+      valid_(other.valid_), value_(other.value_) {}
 
   Optional &operator=(const Optional &other) {
     if (this != &other) {

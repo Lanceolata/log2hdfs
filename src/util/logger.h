@@ -7,6 +7,11 @@
 #include <string>
 #include <memory>
 
+/*
+ * 日志类(临时方法)
+ * TODO 使用easylogging++
+ * 
+ * */
 namespace log2hdfs {
 
 class Logger {
