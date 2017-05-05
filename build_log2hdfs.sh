@@ -10,4 +10,4 @@ thirdparty/installed/include/easylogging++.cc \
 
 export LD_LIBRARY_PATH="/data/users/data-infra/log2hdfs/thirdparty/installed/lib:/usr/java/jdk1.8.0_77/jre/lib/amd64/server:/usr/hdp/2.4.0.0-169/usr/lib:/usr/hdp/2.4.0.0-169/hadoop/lib/native:$LD_LIBRARY_PATH"
 
-#./kafka2hdfs -c conf/kafka2hdfs_config_example.conf
+./log2kafka -c conf/log2kafka_conf_example.conf -l conf/log2kafka_logconfig_example.conf
