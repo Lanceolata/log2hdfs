@@ -3,17 +3,12 @@
 #ifndef LOG2HDFS_UTIL_OPTIONAL_H_
 #define LOG2HDFS_UTIL_OPTIONAL_H_
 
-#include <string>
 #include <utility>
 
 namespace log2hdfs {
 
-/*
- * Represents a type that may be invalid, similar to std::optional.
- * 
- * */
-
-template <class T>
+// Represents a type that may be invalid, similar to std::optional.
+template <typename T>
 class Optional {
  public:
   static Optional Invalid() {
@@ -22,13 +17,18 @@ class Optional {
 
   Optional():valid_(false), value_(T()) {}
 
-  explicit Optional(const T &value):
+  explicit Optional(const T& value):
       valid_(true), value_(value) {}
 
-  Optional(const Optional &other):
+  Optional(const Optional& other):
       valid_(other.valid_), value_(other.value_) {}
 
-  Optional &operator=(const Optional &other) {
+  Optional(Optional&& other):
+      valid_(other.valid_), value_(std::move(other.value_)) {
+    other.valid_ = false;
+  }
+
+  Optional& operator=(const Optional& other) {
     if (this != &other) {
       valid_ = other.valid_;
       value_ = other.value_;
@@ -36,13 +36,14 @@ class Optional {
     return *this;
   }
 
-  Optional &operator=(const T &value) {
-    value_ = value;
-    valid_ = true;
+  Optional& operator=(Optional&& other) {
+    value_ = std::move(other.value_);
+    valid_ = other.valid_;
+    other.valid_ = false;
     return *this;
   }
 
-  Optional &operator=(T &&value) {
+  Optional& operator=(T&& value) {
     value_ = std::move(value);
     valid_ = true;
     return *this;
@@ -56,16 +57,15 @@ class Optional {
     return valid_;
   }
 
-  const T &value() {
+  const T& value() {
     return value_;
   }
 
-  bool operator==(const Optional &other) const {
-    return (valid_ == other.valid_) &&
-        (!valid_ || value_ == other.value_);
+  bool operator==(const Optional& other) const {
+    return (valid_ == other.valid_) && (!valid_ || value_ == other.value_);
   }
 
-  bool operator!=(const Optional &other) const {
+  bool operator!=(const Optional& other) const {
     return !(*this == other);
   }
 

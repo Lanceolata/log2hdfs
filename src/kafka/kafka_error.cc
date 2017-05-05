@@ -5,12 +5,12 @@
 namespace log2hdfs {
 
 const std::string KafkaErrorToStr(KafkaErrorCode err) {
-  const char *es = rd_kafka_err2str(err);
+  const char* es = rd_kafka_err2str(err);
   return std::string(es ? es : "");
 }
 
 const std::string KafkaErrorToName(KafkaErrorCode err) {
-  const char *es = rd_kafka_err2name(err);
+  const char* es = rd_kafka_err2name(err);
   return std::string(es ? es : "");
 }
 
@@ -23,8 +23,7 @@ KafkaErrorCode KafkaErrnoToError(int errnox) {
 }
 
 const std::string KafkaErrnoToStr(int errnox) {
-  KafkaErrorCode code = rd_kafka_errno2err(errnox);
-  return KafkaErrorToStr(code);
+  return KafkaErrorToStr(rd_kafka_errno2err(errnox));
 }
 
 int KafkaErrno() {

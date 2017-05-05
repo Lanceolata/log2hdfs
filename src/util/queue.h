@@ -10,89 +10,77 @@
 
 namespace log2hdfs {
 
-/*
- * Thread safe queue.
- * 
- * */
-
+// Thread safe queue.
 template<typename T>
 class Queue {
  public:
-  static std::shared_ptr<Queue<T>> Init() {
-    return nullptr;
+  static std::shared_ptr<Queue> Init() {
+    return std::make_shared<Queue>();
   }
 
   Queue() {}
 
-  Queue(const Queue &q) {
-    std::lock_guard<std::mutex> lg(q.mutex_);
-    queue_ = q.queue_;
-  }
-
-  Queue &operator=(const Queue &q) {
-    if (this != &q) {
-      std::lock_guard<std::mutex> lg(q.mutex_);
-      queue_ = q.queue_;
-    }
-    return *this;
-  }
+  Queue(const Queue& other) = delete;
+  Queue& operator=(const Queue& other) = delete;
 
   void Push(T value) {
+    std::shared_ptr<T> data(std::make_shared<T>(std::move(value)));
     std::lock_guard<std::mutex> lg(mutex_);
-    queue_.push(value);
+    queue_.push(data);
     cond_.notify_one();
   }
 
-  // 阻塞直到可以从queue_中取出值
-  void WaitPop(T *value) {
-    if (!value) {
+  // Wait until pop value.
+  void WaitPop(T* value) {
+    if (!value)
       return;
-    }
+
     std::unique_lock<std::mutex> lg(mutex_);
     cond_.wait(lg, [this]{ return !queue_.empty(); });
-    *value = queue_.front();
+    *value = std::move(*queue_.front());
     queue_.pop();
   }
 
+  // Wait until pop value.
   std::shared_ptr<T> WaitPop() {
     std::unique_lock<std::mutex> lg(mutex_);
     cond_.wait(lg, [this]{ return !queue_.empty(); });
-    std::shared_ptr<T> res(std::make_shared<T>(queue_.front()));
+    std::shared_ptr<T> res = queue_.front();
     queue_.pop();
     return res;
   }
 
-  bool TryPop(T *value) {
-    if (!value) {
+  bool TryPop(T* value) {
+    if (!value)
       return false;
-    }
+
     std::lock_guard<std::mutex> lg(mutex_);
-    if (queue_.empty()) {
+    if (queue_.empty())
       return false;
-    }
-    *value = queue_.front();
+
+    *value = std::move(*queue_.front());
     queue_.pop();
     return true;
   }
 
   std::shared_ptr<T> TryPop() {
     std::lock_guard<std::mutex> lg(mutex_);
-    if (queue_.empty()) {
-      return false;
-    }
-    std::shared_ptr<T> res(std::make_shared<T>(queue_.font()));
+    if (queue_.empty())
+      return nullptr;
+
+    std::shared_ptr<T> res = queue_.front();
     queue_.pop();
     return res;
   }
 
-  bool empty() const {
+  bool Empty() const {
     std::lock_guard<std::mutex> lg(mutex_);
     return queue_.empty();
   }
 
  private:
+  std::queue<std::shared_ptr<T>> queue_;
   mutable std::mutex mutex_;
-  std::queue<T> queue_;
   std::condition_variable cond_;
 };
 

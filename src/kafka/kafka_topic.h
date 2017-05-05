@@ -5,8 +5,6 @@
 
 #include <string>
 #include <memory>
-#include <mutex>
-#include <unordered_map>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,50 +14,35 @@ extern "C" {
 }
 #endif
 
-#include "kafka/kafka_topic_handle.h"
-
 namespace log2hdfs {
 
-class KafkaHandle;
+class KafkaTopicProducer;
 class KafkaPartitionConsumer;
-class KafkaPartitionConsumeCb;
 
 class KafkaTopic {
  public:
-  static std::shared_ptr<KafkaTopic> Init(
-      rd_kafka_topic_t *rkt, std::shared_ptr<KafkaHandle> handle);
+  static std::shared_ptr<KafkaTopic> Init(rd_kafka_topic_t* rkt);
 
-  KafkaTopic(rd_kafka_topic_t *rkt, std::shared_ptr<KafkaHandle> handle):
-      handle_(handle), topic_handle_(KafkaTopicHandle::Init(rkt)) {}
+  explicit KafkaTopic(rd_kafka_topic_t* rkt): rkt_(rkt) {}
 
-  ~KafkaTopic() {}
-
-  KafkaTopic(const KafkaTopic &other) = delete;
-  KafkaTopic &operator=(const KafkaTopic &other) = delete;
-
-  const std::string Name() const {
-    return topic_handle_->Name();
+  ~KafkaTopic() {
+    if (rkt_)
+      rd_kafka_topic_destroy(rkt_);
   }
 
-  std::shared_ptr<KafkaPartitionConsumer> CreatePartitionConsumer(
-      int32_t partition, int64_t offset,
-      std::shared_ptr<KafkaPartitionConsumeCb> cb);
+  KafkaTopic(const KafkaTopic& other) = delete;
+  KafkaTopic& operator=(const KafkaTopic& other) = delete;
 
-  // only no KafkaPartitionConsumers return false;
-  bool StartAllPartitionConsumer();
-
-  bool StopAllPartitionConsumer();
-
-  // TODO(lanceolata)
-  // bool StartPartitionConsumers(int32_t partition);
-  // bool StopPartitionConsumers(int32_t partition);
+  const std::string Name() const {
+    const char* tn = rd_kafka_topic_name(rkt_);
+    return std::string(tn ? tn : "");
+  }
 
  private:
-  std::mutex mutex_;
-  std::shared_ptr<KafkaHandle> handle_;
-  std::shared_ptr<KafkaTopicHandle> topic_handle_;
-  std::unordered_map<int32_t,
-      std::shared_ptr<KafkaPartitionConsumer>> partition_consumers_;
+  friend class KafkaTopicProducer;
+  friend class KafkaPartitionConsumer;
+
+  rd_kafka_topic_t* rkt_;
 };
 
 }   // namespace log2hdfs

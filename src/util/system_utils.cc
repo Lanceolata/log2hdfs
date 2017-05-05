@@ -1,265 +1,202 @@
 // Copyright (c) 2017 Lanceolata
 
 #include "util/system_utils.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <time.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <utility>
-#include <memory>
+#include <unistd.h>
+#include <string.h>
 
 namespace log2hdfs {
 
-bool IsFile(const std::string &path) {
-  if (path.empty()) {
+bool IsFile(const std::string& path) {
+  if (path.empty())
     return false;
-  }
-  return IsFile(path.c_str());
-}
 
-bool IsFile(const char *path) {
-  if (!path) {
-    return false;
-  }
   struct stat stbuf;
-  if (stat(path, &stbuf) != 0) {
+  if (stat(path.c_str(), &stbuf) != 0)
     return false;
-  }
+
   return S_ISREG(stbuf.st_mode);
 }
 
-bool IsDir(const std::string &path) {
-  if (path.empty()) {
+bool RmFile(const std::string& path) {
+  if (path.empty())
     return false;
-  }
-  return IsDir(path.c_str());
+
+  return unlink(path.c_str()) == 0;
 }
 
-bool IsDir(const char *path) {
-  if (!path) {
-    return false;
-  }
+Optional<off_t> FileSize(const std::string& path) {
+  if (path.empty())
+    return Optional<off_t>::Invalid();
+
   struct stat stbuf;
-  if (stat(path, &stbuf) != 0) {
-    return false;
+  if (stat(path.c_str(), &stbuf) != 0)
+    return Optional<off_t>::Invalid();
+
+  return Optional<off_t>(stbuf.st_size);
+}
+
+Optional<time_t> FileMtime(const std::string& path) {
+  if (path.empty())
+    return Optional<time_t>::Invalid();
+
+  struct stat stbuf;
+  if (stat(path.c_str(), &stbuf) != 0)
+    return Optional<time_t>::Invalid();
+
+  return Optional<time_t>(stbuf.st_mtime);
+}
+
+Optional<struct timespec> FileCtime(const std::string& path) {
+  if (path.empty())
+    return Optional<timespec>::Invalid();
+
+  struct stat stbuf;
+  if (stat(path.c_str(), &stbuf) != 0)
+    return Optional<timespec>::Invalid();
+
+  struct timespec ts = stbuf.st_ctim;
+  return Optional<timespec>(ts);
+}
+
+Optional<std::string> BaseName(const std::string& path) {
+  if (path.empty())
+    return Optional<std::string>::Invalid();
+
+  std::string::size_type start = path.rfind("/");
+  if (start == std::string::npos) {
+    return Optional<std::string>(path);
+  } else {
+    return Optional<std::string>(path.substr(start + 1));
   }
+}
+
+Optional<std::string> DirName(const std::string& path) {
+  if (path.empty())
+    return Optional<std::string>::Invalid();
+
+  std::string::size_type start = path.rfind("/");
+  if (start == std::string::npos) {
+    return Optional<std::string>::Invalid();
+  } else {
+    return Optional<std::string>(path.substr(0, start));
+  }
+}
+
+bool IsDir(const std::string& path) {
+  if (path.empty())
+    return false;
+
+  struct stat stbuf;
+  if (stat(path.c_str(), &stbuf) != 0)
+    return false;
+
   return S_ISDIR(stbuf.st_mode);
 }
 
 #define DIR_MODE (S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
 
-bool MakeDir(const std::string &path) {
-  if (path.empty()) {
+bool MakeDir(const std::string& path) {
+  if (path.empty())
     return false;
-  }
-  return MakeDir(path.c_str());
-}
 
-bool MakeDir(const char *path) {
-  if (!path) {
-    return false;
-  }
-  if (access(path, F_OK) < 0) {
-    if (mkdir(path, DIR_MODE) < 0) {
+  if (access(path.c_str(), F_OK) < 0) {
+    if (mkdir(path.c_str(), DIR_MODE) < 0)
       return false;
-    }
   }
   return true;
 }
 
-bool Rename(const std::string &oldpath, const std::string &newpath) {
-  if (oldpath.empty() || newpath.empty()) {
-    return false;
-  }
-  return Rename(oldpath.c_str(), newpath.c_str());
+std::string NormalDirPath(const std::string& path) {
+  if (path.empty() || path == "/")
+    return path;
+
+  auto end = path.find_last_not_of("/");
+  if (end == std::string::npos)
+    return "/";
+  return path.substr(0, end + 1);
 }
 
-bool Rename(const char *oldpath, const char *newpath) {
-  if (!oldpath || !newpath) {
-    return false;
-  }
-  return rename(oldpath, newpath) == 0;
-}
+Optional<std::vector<std::string>> ScanDir(
+    const std::string& path,
+    int (*filter)(const struct dirent*),
+    int (*compar)(const struct dirent**, const struct dirent**)) {
+  if (path.empty())
+    return Optional<std::vector<std::string>>::Invalid();
 
-bool RmFile(const std::string &path) {
-  if (path.empty()) {
-    return false;
-  }
-  return RmFile(path.c_str());
-}
-
-bool RmFile(const char *path) {
-  if (!path) {
-    return false;
-  }
-  return unlink(path) == 0;
-}
-
-Optional<off_t> FileSize(const std::string &path) {
-  if (path.empty()) {
-    return Optional<off_t>::Invalid();
-  }
-  return FileSize(path.c_str());
-}
-
-Optional<off_t> FileSize(const char *path) {
-  if (!path) {
-    return Optional<off_t>::Invalid();
-  }
-  struct stat stbuf;
-  if (stat(path, &stbuf) != 0) {
-    return Optional<off_t>::Invalid();
-  }
-  return Optional<off_t>(stbuf.st_size);
-}
-
-Optional<time_t> FileMtime(const std::string &path) {
-  if (path.empty()) {
-    return Optional<time_t>::Invalid();
-  }
-  return FileMtime(path.c_str());
-}
-
-Optional<time_t> FileMtime(const char *path) {
-  if (!path) {
-    return Optional<time_t>::Invalid();
-  }
-  struct stat stbuf;
-  if (stat(path, &stbuf) != 0) {
-    return Optional<time_t>::Invalid();
-  }
-  return Optional<time_t>(stbuf.st_mtime);
-}
-
-Optional<std::string> BaseName(const std::string &filepath) {
-  if (filepath.empty()) {
-    return Optional<std::string>::Invalid();
-  }
-  return BaseName(filepath.c_str());
-}
-
-Optional<std::string> BaseName(const char *filepath) {
-  if (!filepath) {
-    return Optional<std::string>::Invalid();
-  }
-  const char *p = strrchr(filepath, '/');
-  if (p == NULL) {
-    p = filepath;
-  }
-  return Optional<std::string>(p);
-}
-
-Optional<time_t> StrToTs(const std::string &str, const std::string &format) {
-  if (str.empty() || format.empty()) {
-    return Optional<time_t>::Invalid();
-  }
-  return StrToTs(str.c_str(), format.c_str());
-}
-
-Optional<time_t> StrToTs(const char *str, const char *format) {
-  if (!str || !format) {
-    return Optional<time_t>::Invalid();
-  }
-
-  struct tm timeinfo;
-  memset(&timeinfo, 0, sizeof(struct tm));
-  if (strptime(str, format, &timeinfo) == NULL) {
-    return Optional<time_t>::Invalid();
-  }
-  return Optional<time_t>(mktime(&timeinfo));
-}
-
-Optional<std::vector<std::string> > ScanDirFile(
-    const std::string &path,
-    int (*filter)(const struct dirent *),
-    int (*compar)(const struct dirent **, const struct dirent **)) {
-  if (path.empty()) {
-    return Optional<std::vector<std::string> >::Invalid();
-  }
-  return std::move(ScanDirFile(path.c_str(), filter, compar));
-}
-
-Optional<std::vector<std::string> > ScanDirFile(
-    const char *path,
-    int (*filter)(const struct dirent *),
-    int (*compar)(const struct dirent **, const struct dirent **)) {
-  if (!path) {
-    return Optional<std::vector<std::string> >::Invalid();
-  }
-  std::vector<std::string> res;
   struct dirent **namelist = NULL;
-  int num = scandir(path, &namelist, filter, compar);
-  if (num == -1) {
-    return Optional<std::vector<std::string> >::Invalid();
-  }
+  int num = scandir(path.c_str(), &namelist, filter, compar);
+  if (num == -1)
+    return Optional<std::vector<std::string>>::Invalid();
 
-  size_t size = strlen(path) + 256;
-  std::unique_ptr<char[]> dirpath(new char[size]);
-  char *p = dirpath.get();
-  int n = snprintf(p, size, "%s/", path);
-
+  std::vector<std::string> res;
   for (int i = 0; i < num; ++i) {
     struct dirent *dep = namelist[i];
-    snprintf(p + n, size - n, "%s", dep->d_name);
-    if (IsFile(p)) {
-      res.push_back(dep->d_name);
-    }
+    res.push_back(dep->d_name);
     free(dep);
   }
   free(namelist);
-  return std::move(Optional<std::vector<std::string> >(res));
+  return Optional<std::vector<std::string>>(res);
 }
 
-bool ExecuteCommand(const std::string &command, std::string *error) {
+bool Rename(const std::string& oldpath, const std::string& newpath) {
+  if (oldpath.empty() || newpath.empty())
+    return false;
+
+  return rename(oldpath.c_str(), newpath.c_str()) == 0;
+}
+
+Optional<time_t> StrToTs(const std::string& str, const char* format) {
+  if (str.empty() || !format || format[0] == '\0')
+    return Optional<time_t>::Invalid();
+
+  struct tm timeinfo;
+  memset(&timeinfo, 0, sizeof(struct tm));
+  if (strptime(str.c_str(), format, &timeinfo) == NULL)
+    return Optional<time_t>::Invalid();
+
+  return Optional<time_t>(mktime(&timeinfo));
+}
+
+bool ExecuteCommand(const std::string& command, std::string* errstr) {
   if (command.empty()) {
-    if (error) {
-      *error = "command empty";
-    }
+    if (errstr)
+      *errstr = "command empty";
     return false;
   }
-  return ExecuteCommand(command.c_str(), error);
-}
 
-bool ExecuteCommand(const char *command, std::string *error) {
-  if (!command) {
-    if (error) {
-      *error = "command empty";
-    }
-    return false;
-  }
   char buf[1024];
   bool res = true;
-  int status = system(command);
+  int status = system(command.c_str());
   if (status < 0) {
     snprintf(buf, sizeof(buf), "system[%s] failed with errno[%d]",
-             command, errno);
+             command.c_str(), errno);
     res = false;
   } else {
     if (WIFEXITED(status)) {
       if ((status = WEXITSTATUS(status)) != 0) {
         snprintf(buf, sizeof(buf), "cmd[%s] exited with errcode[%d]",
-                 command, status);
+                 command.c_str(), status);
         res = false;
       }
     } else if (WIFSIGNALED(status)) {
       snprintf(buf, sizeof(buf), "cmd[%s] exited with signal[%d]",
-               command, WTERMSIG(status));
+               command.c_str(), status);
       res = false;
     } else if (WIFSTOPPED(status)) {
       snprintf(buf, sizeof(buf), "cmd[%s] stopped with signal[%d]",
-               command, WSTOPSIG(status));
+               command.c_str(), WSTOPSIG(status));
       res = false;
     } else {
-      snprintf(buf, sizeof(buf), "cmd[%s] exited abnormally", command);
+      snprintf(buf, sizeof(buf), "cmd[%s] exited abnormally",
+               command.c_str());
       res = false;
     }
   }
-  if (!res && error) {
-    *error = buf;
-  }
+
+  if (!res && errstr)
+    *errstr = buf;
   return res;
 }
 

@@ -16,23 +16,22 @@ extern "C" {
 
 namespace log2hdfs {
 
+class KafkaProducer;
 class KafkaConsumer;
 
 class KafkaHandle {
  public:
-  static std::shared_ptr<KafkaHandle> Init(rd_kafka_t *rk);
+  static std::shared_ptr<KafkaHandle> Init(rd_kafka_t* rk);
 
-  explicit KafkaHandle(rd_kafka_t *rk): rk_(rk) {}
+  explicit KafkaHandle(rd_kafka_t* rk): rk_(rk) {}
 
   ~KafkaHandle() {
-    if (rk_) {
+    if (rk_)
       rd_kafka_destroy(rk_);
-      rk_ = NULL;
-    }
   }
 
-  KafkaHandle(const KafkaHandle &other) = delete;
-  KafkaHandle &operator=(const KafkaHandle &other) = delete;
+  KafkaHandle(const KafkaHandle& other) = delete;
+  KafkaHandle& operator=(const KafkaHandle& other) = delete;
 
   const std::string Name() const {
     return std::string(rk_ ? rd_kafka_name(rk_) : "");
@@ -48,7 +47,7 @@ class KafkaHandle {
     return rd_kafka_outq_len(rk_);
   }
 
-  int PollOutq(int length = 2000, int timeout_ms = 200) {
+  int PollOutq(int length = 0, int timeout_ms = 2000) {
     int n = 0;
     while (rd_kafka_outq_len(rk_) > length) {
       n += rd_kafka_poll(rk_, timeout_ms);
@@ -57,9 +56,10 @@ class KafkaHandle {
   }
 
  private:
+  friend class KafkaProducer;
   friend class KafkaConsumer;
 
-  rd_kafka_t *rk_;
+  rd_kafka_t* rk_;
 };
 
 }   // namespace log2hdfs

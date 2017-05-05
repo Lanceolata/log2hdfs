@@ -41,12 +41,12 @@ if [ -n "$F_ALL" -o -n "$F_LIBRDKAFKA" ]; then
 fi
 
 # build jemalloc
-if [ -n "$F_ALL" -o -n "$F_JEMALLOC" ]; then
-    cd $TP_DIR/$JEMALLOC_BASEDIR
-    ./configure --prefix=$PREFIX
-    make
-    make install
-fi
+#if [ -n "$F_ALL" -o -n "$F_JEMALLOC" ]; then
+#    cd $TP_DIR/$JEMALLOC_BASEDIR
+#    ./configure --prefix=$PREFIX
+#    make
+#    make install
+#fi
 
 # build googletest
 if [ -n "$F_ALL" -o -n "$F_GOOGLETEST" ]; then
@@ -54,6 +54,8 @@ if [ -n "$F_ALL" -o -n "$F_GOOGLETEST" ]; then
     CXXFLAGS=-fPIC cmake -DCMAKE_INSTALL_PREFIX=$PREFIX .
     make
     make install
+    cd $TP_DIR
+    rm -rf $TP_DIR/$GOOGLETEST_BASEDIR
 fi
 
 # build easyloggingpp
@@ -62,4 +64,5 @@ if [ -n "$F_ALL" -o -n "F_EASYLOGGINGPP" ]; then
     cmake -DCMAKE_INSTALL_PREFIX=$PREFIX .
     make
     make install
+    rm -rf $TP_DIR/$EASYLOGGINGPP_BASEDIR
 fi

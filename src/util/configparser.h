@@ -5,9 +5,8 @@
 
 #include <string>
 #include <vector>
-#include <memory>
 #include <fstream>
-#include <utility>
+#include <memory>
 #include <unordered_map>
 #include "util/optional.h"
 
@@ -19,7 +18,6 @@ namespace log2hdfs {
 class Section {
  public:
   typedef std::unordered_map<std::string, std::string>::iterator iterator;
-
   typedef std::unordered_map<std::string, std::string>::const_iterator
       const_iterator;
 
@@ -27,79 +25,53 @@ class Section {
     return std::make_shared<Section>();
   }
 
-  static std::shared_ptr<Section> Init(const std::string &delimiters) {
-    return std::make_shared<Section>(delimiters);
-  }
+  Section() {}
 
-  Section(): delimiters_("=") {}
+  Section(const Section& other): options_(other.options_) {}
 
-  explicit Section(const std::string &delimiters): delimiters_(delimiters) {}
-
-  Section(const Section &other):
-      delimiters_(other.delimiters_), options_(other.options_) {}
-
-  Section(Section &&other) {
-    delimiters_ = std::move(other.delimiters_);
+  Section(Section&& other) {
     options_ = std::move(other.options_);
   }
 
-  ~Section() {}
-
-  Section &operator=(const Section &other) {
-    if (this != &other) {
-      delimiters_ = other.delimiters_;
+  Section& operator=(const Section& other) {
+    if (this != &other)
       options_ = other.options_;
-    }
     return *this;
   }
 
-  Section &operator=(Section &&other) {
-    if (this != &other) {
-      delimiters_ = std::move(other.delimiters_);
-      options_ = std::move(other.options_);
-    }
+  Section& operator=(Section&& other) {
+    options_ = std::move(other.options_);
     return *this;
   }
 
-  const std::string &delimiters() const {
-    return delimiters_;
-  }
-
-  bool set_delimiters(const std::string &delimiters) {
-    if (delimiters.empty()) {
-      return false;
-    }
-    delimiters_.assign(delimiters);
-    return true;
-  }
-
-  bool Has(const std::string &option) const {
-    Section::const_iterator it = options_.find(option);
+  bool Has(const std::string& option) const {
+    auto it = options_.find(option);
     return it != options_.end();
   }
 
-  bool Remove(const std::string &option) {
+  bool Remove(const std::string& option) {
     return options_.erase(option);
   }
 
-  Optional<std::string> Get(const std::string &option) const {
-    Section::const_iterator it = options_.find(option);
-    if (it == options_.end()) {
+  Optional<std::string> Get(const std::string& option) const {
+    auto it = options_.find(option);
+    if (it == options_.end())
       return Optional<std::string>::Invalid();
-    }
+
     return Optional<std::string>(it->second);
   }
 
-  std::string Get(const std::string &option,
-      const std::string &default_value) const {
-    Section::const_iterator it = options_.find(option);
+  std::string Get(const std::string& option,
+                  const std::string& default_value) const {
+    auto it = options_.find(option);
     if (it == options_.end()) {
       return default_value;
+    } else {
+      return it->second;
     }
-    return it->second;
   }
 
-  bool Set(const std::string &option, const std::string &value) {
+  bool Set(const std::string& option, const std::string& value) {
     options_[option] = value;
     return true;
   }
@@ -128,18 +100,13 @@ class Section {
     options_.clear();
   }
 
-  bool Read(const std::string &filepath);
+  bool Read(const std::string& filepath);
 
-  bool Write(const std::string &filepath) const;
+  bool Write(const std::string& filepath) const;
 
-  bool Write(const std::string &filepath, const std::string &delimiters) const;
-
-  bool Write(std::ofstream &ofs) const;
-
-  bool Write(std::ofstream &ofs, const std::string &delimiters) const;
+  bool Write(std::ofstream& ofs) const;
 
  private:
-  std::string delimiters_;
   std::unordered_map<std::string, std::string> options_;
 };
 
@@ -153,133 +120,96 @@ typedef Section KvConfigParser;
 
 class IniConfigParser {
  public:
-  typedef std::unordered_map<std::string, std::shared_ptr<Section> >::iterator
+  typedef std::unordered_map<std::string, std::shared_ptr<Section>>::iterator
       iterator;
-
-  typedef std::unordered_map<std::string, std::shared_ptr<Section> >
+  typedef std::unordered_map<std::string, std::shared_ptr<Section>>
       ::const_iterator const_iterator;
 
   static std::shared_ptr<IniConfigParser> Init() {
     return std::make_shared<IniConfigParser>();
   }
 
-  static std::shared_ptr<IniConfigParser> Init(
-      const std::string &delimiters) {
-    if (delimiters.empty()) {
-      return nullptr;
-    }
-    return std::make_shared<IniConfigParser>(delimiters);
-  }
+  IniConfigParser() {}
 
-  IniConfigParser(): delimiters_("=") {}
+  IniConfigParser(const IniConfigParser& other):
+      sections_(other.sections_) {}
 
-  explicit IniConfigParser(const std::string &delimiters):
-      delimiters_(delimiters) {}
+  IniConfigParser(IniConfigParser&& other):
+      sections_(std::move(other.sections_)) {}
 
-  IniConfigParser(const IniConfigParser &other):
-      delimiters_(other.delimiters_), sections_(other.sections_) {}
-
-  IniConfigParser(IniConfigParser &&other) {
-    delimiters_ = std::move(other.delimiters_);
-    sections_ = std::move(other.sections_);
-  }
-
-  ~IniConfigParser() {}
-
-  IniConfigParser &operator=(const IniConfigParser &other) {
-    if (this != &other) {
-      delimiters_ = other.delimiters_;
+  IniConfigParser& operator=(const IniConfigParser& other) {
+    if (this != &other)
       sections_ = other.sections_;
-    }
     return *this;
   }
 
-  IniConfigParser &operator=(IniConfigParser &&other) {
-    if (this != &other) {
-      delimiters_ = std::move(other.delimiters_);
-      sections_ = std::move(other.sections_);
-    }
+  IniConfigParser& operator=(const IniConfigParser&& other) {
+    sections_ = std::move(other.sections_);
     return *this;
   }
 
-  const std::string &delimiters() const {
-    return delimiters_;
-  }
-
-  bool set_delimiters(const std::string &delimiters) {
-    if (delimiters.empty()) {
-      return false;
-    }
-    delimiters_.assign(delimiters);
-    return true;
-  }
-
-  bool HasSection(const std::string &section) const {
-    IniConfigParser::const_iterator it = sections_.find(section);
+  bool HasSection(const std::string& section) const {
+    auto it = sections_.find(section);
     return it != sections_.end();
   }
 
-  bool AddSection(const std::string &section) {
-    if (HasSection(section)) {
+  bool AddSection(const std::string& section) {
+    if (HasSection(section))
       return false;
-    }
-    sections_[section] = Section::Init(delimiters_);
+    sections_[section] = Section::Init();
     return true;
   }
 
-  bool RemoveSection(const std::string &section) {
+  bool RemoveSection(const std::string& section) {
     return sections_.erase(section);
   }
 
-  std::shared_ptr<Section> GetSection(const std::string &section) {
-    IniConfigParser::const_iterator it = sections_.find(section);
-    if (it == sections_.end()) {
+  std::shared_ptr<Section> GetSection(const std::string& section) {
+    auto it = sections_.find(section);
+    if (it == sections_.end())
       return nullptr;
-    }
     return it->second;
   }
 
-  bool HasOption(const std::string &section,
-      const std::string &option) const {
-    IniConfigParser::const_iterator it = sections_.find(section);
-    if (it == sections_.end()) {
+  bool HasOption(const std::string& section,
+                 const std::string& option) const {
+    auto it = sections_.find(section);
+    if (it == sections_.end())
       return false;
-    }
     return (it->second)->Has(option);
   }
 
-  bool RemoveOption(const std::string &section, const std::string &option) {
-    IniConfigParser::const_iterator it = sections_.find(section);
-    if (it == sections_.end()) {
+  bool RemoveOption(const std::string& section,
+                    const std::string& option) {
+    auto it = sections_.find(section);
+    if (it == sections_.end())
       return false;
-    }
     return (it->second)->Remove(option);
   }
 
-  Optional<std::string> Get(const std::string &section,
-      const std::string &option) const {
-    IniConfigParser::const_iterator it = sections_.find(section);
-    if (it == sections_.end()) {
+  Optional<std::string> Get(const std::string& section,
+                            const std::string& option) const {
+    auto it = sections_.find(section);
+    if (it == sections_.end())
       return Optional<std::string>::Invalid();
-    }
-    return std::move((it->second)->Get(option));
+    return (it->second)->Get(option);
   }
 
-  std::string Get(const std::string &section, const std::string &option,
+  std::string Get(const std::string& section, const std::string& option,
       const std::string &default_value) const {
-    IniConfigParser::const_iterator it = sections_.find(section);
+    auto it = sections_.find(section);
     if (it == sections_.end()) {
       return default_value;
+    } else {
+      return it->second->Get(option, default_value);
     }
-    return it->second->Get(option, default_value);
   }
 
-  bool Set(const std::string &section, const std::string &option,
-           const std::string &value) {
-    IniConfigParser::iterator it = sections_.find(section);
-    if (it == sections_.end()) {
+  bool Set(const std::string& section, const std::string& option,
+           const std::string& value) {
+    auto it = sections_.find(section);
+    if (it == sections_.end())
       return false;
-    }
     return (it->second)->Set(option, value);
   }
 
@@ -307,15 +237,12 @@ class IniConfigParser {
     sections_.clear();
   }
 
-  bool Read(const std::string &filepath);
+  bool Read(const std::string& filepath);
 
-  bool Write(const std::string &filepath) const;
-
-  bool Write(const std::string &filepath, const std::string &delimiters) const;
+  bool Write(const std::string& filepath) const;
 
  private:
-  std::string delimiters_;
-  std::unordered_map<std::string, std::shared_ptr<Section> > sections_;
+  std::unordered_map<std::string, std::shared_ptr<Section>> sections_;
 };
 
 }   // namespace log2hdfs
