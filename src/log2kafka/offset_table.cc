@@ -9,43 +9,6 @@
 
 namespace log2hdfs {
 
-// ------------------------------------------------------------------
-// Fileoffset
-
-class Fileoffset {
- public:
-  Fileoffset(): filename_(), offset_(0) {}
-
-  Fileoffset(const std::string& filename, off_t offset):
-      filename_(filename), offset_(offset) {}
-
-  Fileoffset(const Fileoffset& other):
-      filename_(other.filename_), offset_(other.offset_) {}
-
-  Fileoffset(Fileoffset&& other):
-      filename_(std::move(other.filename_)), offset_(other.offset_) {}
-
-  Fileoffset& operator=(const Fileoffset& other) {
-    if (this != &other) {
-      filename_ = other.filename_;
-      offset_ = other.offset_;
-    }
-    return *this;
-  }
-
-  Fileoffset& operator=(Fileoffset&& other) {
-    filename_ = std::move(other.filename_);
-    offset_ = other.offset_;
-    return *this;
-  }
-
-  std::string filename_;
-  off_t offset_;
-};
-
-// ------------------------------------------------------------------
-// OffsetTable
-
 #define DEFAULT_TABLE_PATH "offset_table"
 #define DEFAULT_TABLE_INTERVAL "30"
 

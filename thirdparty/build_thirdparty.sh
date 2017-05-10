@@ -49,20 +49,21 @@ fi
 #fi
 
 # build googletest
-if [ -n "$F_ALL" -o -n "$F_GOOGLETEST" ]; then
-    cd $TP_DIR/$GOOGLETEST_BASEDIR
-    CXXFLAGS=-fPIC cmake -DCMAKE_INSTALL_PREFIX=$PREFIX .
-    make
-    make install
-    cd $TP_DIR
-    rm -rf $TP_DIR/$GOOGLETEST_BASEDIR
-fi
+#if [ -n "$F_ALL" -o -n "$F_GOOGLETEST" ]; then
+#    cd $TP_DIR/$GOOGLETEST_BASEDIR
+#    CXXFLAGS=-fPIC cmake -DCMAKE_INSTALL_PREFIX=$PREFIX .
+#    make
+#    make install
+#    cd $TP_DIR
+#    rm -rf $TP_DIR/$GOOGLETEST_BASEDIR
+#fi
 
 # build easyloggingpp
 if [ -n "$F_ALL" -o -n "F_EASYLOGGINGPP" ]; then
     cd $TP_DIR/$EASYLOGGINGPP_BASEDIR
-    cmake -DCMAKE_INSTALL_PREFIX=$PREFIX .
-    make
-    make install
+#    cmake -DCMAKE_INSTALL_PREFIX=$PREFIX .
+#    make
+#    make install
+    mv src/* $PREFIX/include
     rm -rf $TP_DIR/$EASYLOGGINGPP_BASEDIR
 fi
