@@ -1,8 +1,7 @@
 // Copyright (c) 2017 Lanceolata
 
 #include "util/fp_cache.h"
-#include <unistd.h>     // include for sleep
-#include <utility>      // include for make_pair
+#include <unistd.h>
 #include "easylogging++.h"
 
 namespace log2hdfs {
@@ -12,9 +11,10 @@ namespace {
 void Destructor(FILE* fp) {
   if (fp) {
     if (fclose(fp) != 0)
-      LOG(ERROR) << "fclose faild with errno[" << errno << "]";
+      LOG(ERROR) << "FpCache Destructor fclose faild with errno["
+                 << errno << "]";
   } else {
-    LOG(WARNING) << "unexpected null FP";
+    LOG(WARNING) << "FpCache Destructor unexpected null FP";
   }
 }
 
@@ -26,9 +26,8 @@ std::shared_ptr<FILE> FpCache::Get(const std::string& key) {
   pthread_rwlock_rdlock(&lock_);
 
   auto it = cache_.find(key);
-  if (it != cache_.end()) {
+  if (it != cache_.end())
     res = it->second;
-  }
 
   pthread_rwlock_unlock(&lock_);
 
@@ -65,7 +64,7 @@ std::shared_ptr<FILE> FpCache::Get(const std::string& key,
   return res;
 }
 
-const int erase_times = 6;
+#define REMOVE_TIMES 3
 
 FpCache::RemoveResult FpCache::Remove(const std::string& key) {
   std::shared_ptr<FILE> fptr;
@@ -76,30 +75,26 @@ FpCache::RemoveResult FpCache::Remove(const std::string& key) {
   if (it != cache_.end()) {
     fptr = it->second;
     cache_.erase(it);
-
-    auto it2 = paths_.find(key);
-    if (it2 != paths_.end())
-      paths_.erase(it2);
+    paths_.erase(key);
   }
 
   pthread_rwlock_unlock(&lock_);
 
   if (!fptr)
-    return FpCache::RemoveResult::kInvalidKey;
+    return FpCache::kInvalidKey;
 
   int count = 0;
-  while (count < erase_times && fptr.use_count() > 1) {
+  while (count < REMOVE_TIMES && fptr.use_count() > 1) {
     ++count;
     sleep(1);
   }
 
   if (fptr.use_count() > 1) {
-    return FpCache::RemoveResult::kRemoveFailed;
+    return FpCache::kRemoveFailed;
   } else {
     fptr.reset();
   }
-
-  return FpCache::RemoveResult::kRemoveOk;
+  return FpCache::kRemoveOk;
 }
 
 std::vector<std::string> FpCache::CloseAll() {
@@ -114,16 +109,13 @@ std::vector<std::string> FpCache::CloseAll() {
   paths_.clear();
 
   pthread_rwlock_unlock(&lock_);
-
   return vec;
 }
 
 void FpCache::Clear() {
   pthread_rwlock_wrlock(&lock_);
-
   cache_.clear();
   paths_.clear();
-
   pthread_rwlock_unlock(&lock_);
 }
 

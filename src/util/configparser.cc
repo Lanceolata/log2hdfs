@@ -1,6 +1,7 @@
 // Copyright (c) 2017 Lanceolata
 
 #include "util/configparser.h"
+#include "util/optional.h"
 #include "util/string_utils.h"
 
 namespace log2hdfs {
@@ -15,7 +16,7 @@ const char SPACE = ' ';
 
 const char DELIMITERS[] = "=:";
 
-static Optional<std::vector<std::string>> ReadLinesFromFile(
+Optional<std::vector<std::string>> ReadLinesFromFile(
     const std::string& filepath) {
   // Try to open file
   std::ifstream ifs(filepath);
@@ -35,20 +36,20 @@ static Optional<std::vector<std::string>> ReadLinesFromFile(
   return Optional<std::vector<std::string>>(vec);
 }
 
-static bool IsSection(const std::string& line) {
+bool IsSection(const std::string& line) {
   if (line.length() < 3 || line[0] != SECTION_START
-      || line[line.length() - 1] != SECTION_END)
+          || line[line.length() - 1] != SECTION_END)
     return false;
   return true;
 }
 
-static std::string ExtractSectionName(const std::string& line) {
+std::string ExtractSectionName(const std::string& line) {
   return line.substr(1, line.length() - 2);
 }
 
-static bool ParseLine(const std::string& line, std::string* key,
-                      std::string* value) {
-  std::size_t equal = line.find_first_of(DELIMITERS);
+bool ParseLine(const std::string& line, std::string* key,
+               std::string* value) {
+  std::string::size_type equal = line.find_first_of(DELIMITERS);
   if (equal == std::string::npos)
     return false;
 

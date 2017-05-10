@@ -32,6 +32,13 @@ class KafkaProducer {
   explicit KafkaProducer(std::shared_ptr<KafkaHandle> handle):
       handle_(std::move(handle)) {}
 
+  ~KafkaProducer() {
+    std::unique_lock<std::mutex> guard(mutex_);
+    topics_.clear();
+    guard.unlock();
+    handle_->PollOutq(0, 2000);
+  }
+
   KafkaProducer(const KafkaProducer& other) = delete;
   KafkaProducer& operator=(const KafkaProducer& other) = delete;
 
@@ -43,7 +50,7 @@ class KafkaProducer {
     return handle_->MemberId();
   }
 
-  int Poll(int timeout_ms = 200) {
+  int Poll(int timeout_ms) {
     return handle_->Poll(timeout_ms);
   }
 

@@ -5,7 +5,6 @@
 #include "kafka/kafka_topic.h"
 #include "kafka/kafka_topic_producer.h"
 #include "kafka/kafka_error.h"
-#include "easylogging++.h"
 
 namespace log2hdfs {
 
@@ -13,7 +12,7 @@ std::shared_ptr<KafkaProducer> KafkaProducer::Init(
     KafkaGlobalConf* conf, std::string *errstr) {
   if (!conf) {
     if (errstr)
-      *errstr = "KafkaProducer init failed with invalid conf";
+      *errstr = "Invalid conf";
     return nullptr;
   }
 
@@ -23,7 +22,7 @@ std::shared_ptr<KafkaProducer> KafkaProducer::Init(
                                 errbuf, sizeof(errbuf));
   if (!rk) {
     if (errstr)
-      *errstr = "KafkaProducer init failed with error:" + std::string(errbuf);
+      *errstr = std::string(errbuf);
     rd_kafka_conf_destroy(rk_conf);
     return nullptr;
   }
@@ -41,10 +40,10 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::CreateTopicProducer(
     const std::string& topic, KafkaTopicConf* conf, std::string* errstr) {
   if (topic.empty() || !conf) {
     if (errstr)
-      *errstr = "CreateTopicProducer topic:" + topic +
-          " failed with invalid conf";
+      *errstr = "Invalid parameters topic[" + topic + "]";
     return nullptr;
   }
+
   std::lock_guard<std::mutex> guard(mutex_);
   auto it = topics_.find(topic);
   if (it != topics_.end())
@@ -55,8 +54,7 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::CreateTopicProducer(
                                              rkt_conf);
   if (!rkt) {
     if (errstr)
-      *errstr = "rd_kafka_topic_new failed with error:" +
-          KafkaErrnoToStr(errno) + " topic:" + topic;
+      *errstr = KafkaErrnoToStr(errno);
     rd_kafka_topic_conf_destroy(rkt_conf);
     return nullptr;
   }
@@ -64,7 +62,7 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::CreateTopicProducer(
   std::shared_ptr<KafkaTopic> kt = KafkaTopic::Init(rkt);
   if (!kt) {
     if (errstr)
-      *errstr = "KafkaTopic init topic:" + topic + " failed";
+      *errstr = "KafkaTopic init failed";
     return nullptr;
   }
 
@@ -72,7 +70,7 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::CreateTopicProducer(
   ktp = KafkaTopicProducer::Init(handle_, kt);
   if (!ktp) {
     if (errstr)
-      *errstr = "KafkaTopicProducer init topic:" + topic + " failed";
+      *errstr = "KafkaTopicProducer Init failed";
     return nullptr;
   }
   topics_.insert(std::make_pair(topic, ktp));

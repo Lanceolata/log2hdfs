@@ -35,10 +35,16 @@ class KafkaTopicProducer {
     return topic_->Name();
   }
 
-  int Poll(int timeout_ms = 200) {
+  int Poll(int timeout_ms) {
     return handle_->Poll(timeout_ms);
   }
 
+  // Produce message payload.
+  //
+  // return:
+  //  - 0                           success
+  //  - 1                           error, errno is set appropriately
+  //  - 2                           payload is empty
   int ProduceMessage(const std::string& payload) {
     if (payload.empty())
       return -2;

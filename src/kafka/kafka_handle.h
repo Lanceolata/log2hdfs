@@ -39,7 +39,7 @@ class KafkaHandle {
 
   const std::string MemberId() const;
 
-  int Poll(int timeout_ms = 200) {
+  int Poll(int timeout_ms) {
     return rd_kafka_poll(rk_, timeout_ms);
   }
 
@@ -47,7 +47,7 @@ class KafkaHandle {
     return rd_kafka_outq_len(rk_);
   }
 
-  int PollOutq(int length = 0, int timeout_ms = 2000) {
+  int PollOutq(int length, int timeout_ms) {
     int n = 0;
     while (rd_kafka_outq_len(rk_) > length) {
       n += rd_kafka_poll(rk_, timeout_ms);

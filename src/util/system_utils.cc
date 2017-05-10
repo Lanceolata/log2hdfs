@@ -22,65 +22,66 @@ bool IsFile(const std::string& path) {
 bool RmFile(const std::string& path) {
   if (path.empty())
     return false;
-
   return unlink(path.c_str()) == 0;
 }
 
-Optional<off_t> FileSize(const std::string& path) {
+off_t FileSize(const std::string& path) {
   if (path.empty())
-    return Optional<off_t>::Invalid();
+    return -1;
 
   struct stat stbuf;
   if (stat(path.c_str(), &stbuf) != 0)
-    return Optional<off_t>::Invalid();
+    return -1;
 
-  return Optional<off_t>(stbuf.st_size);
+  return stbuf.st_size;
 }
 
-Optional<time_t> FileMtime(const std::string& path) {
+time_t FileMtime(const std::string& path) {
   if (path.empty())
-    return Optional<time_t>::Invalid();
+    return -1;
 
   struct stat stbuf;
   if (stat(path.c_str(), &stbuf) != 0)
-    return Optional<time_t>::Invalid();
+    return -1;
 
-  return Optional<time_t>(stbuf.st_mtime);
+  return stbuf.st_mtime;
 }
 
-Optional<struct timespec> FileCtime(const std::string& path) {
-  if (path.empty())
-    return Optional<timespec>::Invalid();
+bool FileCtim(const std::string& path, struct timespec* ts) {
+  if (path.empty() || !ts)
+    return false;
 
   struct stat stbuf;
   if (stat(path.c_str(), &stbuf) != 0)
-    return Optional<timespec>::Invalid();
+    return false;
 
-  struct timespec ts = stbuf.st_ctim;
-  return Optional<timespec>(ts);
+  *ts = stbuf.st_ctim;
+  return true;
 }
 
-Optional<std::string> BaseName(const std::string& path) {
+std::string BaseName(const std::string& path) {
   if (path.empty())
-    return Optional<std::string>::Invalid();
+    return "";
 
   std::string::size_type start = path.rfind("/");
   if (start == std::string::npos) {
-    return Optional<std::string>(path);
+    return path;
   } else {
-    return Optional<std::string>(path.substr(start + 1));
+    return path.substr(start + 1);
   }
 }
 
-Optional<std::string> DirName(const std::string& path) {
+std::string DirName(const std::string& path) {
   if (path.empty())
-    return Optional<std::string>::Invalid();
+    return "";
 
-  std::string::size_type start = path.rfind("/");
-  if (start == std::string::npos) {
-    return Optional<std::string>::Invalid();
+  std::string::size_type end = path.rfind("/");
+  if (end == std::string::npos) {
+    return "";
+  } else if (end == 0) {
+    return "/";
   } else {
-    return Optional<std::string>(path.substr(0, start));
+    return path.substr(0, end);
   }
 }
 
@@ -101,62 +102,56 @@ bool MakeDir(const std::string& path) {
   if (path.empty())
     return false;
 
-  if (access(path.c_str(), F_OK) < 0) {
-    if (mkdir(path.c_str(), DIR_MODE) < 0)
+  if (access(path.c_str(), F_OK) != 0) {
+    if (mkdir(path.c_str(), DIR_MODE) != 0)
       return false;
   }
   return true;
 }
 
 std::string NormalDirPath(const std::string& path) {
-  if (path.empty() || path == "/")
-    return path;
+  if (path.empty())
+    return "";
 
-  auto end = path.find_last_not_of("/");
+  std::string::size_type end = path.find_last_not_of("/");
   if (end == std::string::npos)
     return "/";
   return path.substr(0, end + 1);
 }
 
-Optional<std::vector<std::string>> ScanDir(
+bool ScanDir(
     const std::string& path,
     int (*filter)(const struct dirent*),
-    int (*compar)(const struct dirent**, const struct dirent**)) {
-  if (path.empty())
-    return Optional<std::vector<std::string>>::Invalid();
+    int (*compar)(const struct dirent**, const struct dirent**),
+    std::vector<std::string>* names) {
+  if (path.empty() || !names)
+    return false;
 
   struct dirent **namelist = NULL;
   int num = scandir(path.c_str(), &namelist, filter, compar);
   if (num == -1)
-    return Optional<std::vector<std::string>>::Invalid();
+    return false;
 
-  std::vector<std::string> res;
+  (*names).clear();
   for (int i = 0; i < num; ++i) {
     struct dirent *dep = namelist[i];
-    res.push_back(dep->d_name);
+    (*names).push_back(dep->d_name);
     free(dep);
   }
   free(namelist);
-  return Optional<std::vector<std::string>>(res);
+  return true;
 }
 
-bool Rename(const std::string& oldpath, const std::string& newpath) {
-  if (oldpath.empty() || newpath.empty())
-    return false;
-
-  return rename(oldpath.c_str(), newpath.c_str()) == 0;
-}
-
-Optional<time_t> StrToTs(const std::string& str, const char* format) {
+time_t StrToTs(const std::string& str, const char* format) {
   if (str.empty() || !format || format[0] == '\0')
-    return Optional<time_t>::Invalid();
+    return -1;
 
   struct tm timeinfo;
   memset(&timeinfo, 0, sizeof(struct tm));
   if (strptime(str.c_str(), format, &timeinfo) == NULL)
-    return Optional<time_t>::Invalid();
+    return -1;
 
-  return Optional<time_t>(mktime(&timeinfo));
+  return mktime(&timeinfo);
 }
 
 bool ExecuteCommand(const std::string& command, std::string* errstr) {

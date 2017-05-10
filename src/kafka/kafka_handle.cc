@@ -7,7 +7,6 @@ namespace log2hdfs {
 std::shared_ptr<KafkaHandle> KafkaHandle::Init(rd_kafka_t* rk) {
   if (!rk)
     return nullptr;
-
   return std::make_shared<KafkaHandle>(rk);
 }
 

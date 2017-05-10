@@ -57,7 +57,6 @@ class Section {
     auto it = options_.find(option);
     if (it == options_.end())
       return Optional<std::string>::Invalid();
-
     return Optional<std::string>(it->second);
   }
 
@@ -188,24 +187,26 @@ class IniConfigParser {
   }
 
   Optional<std::string> Get(const std::string& section,
-                            const std::string& option) const {
+                  const std::string& option) const {
     auto it = sections_.find(section);
     if (it == sections_.end())
       return Optional<std::string>::Invalid();
     return (it->second)->Get(option);
   }
 
-  std::string Get(const std::string& section, const std::string& option,
-      const std::string &default_value) const {
+  std::string Get(const std::string& section,
+                  const std::string& option,
+                  const std::string &default_value) const {
     auto it = sections_.find(section);
     if (it == sections_.end()) {
       return default_value;
     } else {
-      return it->second->Get(option, default_value);
+      return (it->second)->Get(option, default_value);
     }
   }
 
-  bool Set(const std::string& section, const std::string& option,
+  bool Set(const std::string& section,
+           const std::string& option,
            const std::string& value) {
     auto it = sections_.find(section);
     if (it == sections_.end())

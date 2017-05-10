@@ -11,7 +11,7 @@
 
 namespace log2hdfs {
 
-// Thread safe fp cache.
+// Simple thread safe fp cache.
 class FpCache {
  public:
   static std::shared_ptr<FpCache> Init() {
@@ -34,7 +34,7 @@ class FpCache {
 
   // Get fp cache from map.
   // param:
-  //  - key     key to match
+  //  - key                     key to match
   //
   // return:
   //  - std::shared_ptr<FILE>   key was found
@@ -43,15 +43,15 @@ class FpCache {
 
   // Get fp cache from map.
   // param:
-  //  - key     key to match
-  //  - path    path to open
+  //  - key                     key to match
+  //  - path                    if key not match, path will open
   //
   // return:
   //  - std::shared_ptr<FILE>   key was found or open(path) successed
-  //  - nullptr                 open(path) failed
+  //  - nullptr                 key was not found and open(path) failed
   std::shared_ptr<FILE> Get(const std::string& key, const std::string& path);
 
-  enum class RemoveResult {
+  enum RemoveResult {
     kInvalidKey = -2,
     kRemoveFailed = -1,
     kRemoveOk = 0
@@ -59,23 +59,25 @@ class FpCache {
 
   // Remove fp cache from map.
   // param:
-  //  - key     key to math
+  //  - key                     key to math
   //
   // return:
-  //  - kInvalidKey         key was not found
-  //  - kRemoveFailed       remove from map and close fp failed(try 6 times)
-  //  - kRemoveOk           remove successed
+  //  - kInvalidKey             key was not found
+  //  - kRemoveFailed           remove from map successed but fclose failed
+  //  - kRemoveOk               remove successed
   FpCache::RemoveResult Remove(const std::string& key);
 
+  // Erase all fp cache and return cache fp paths.
   // May not thread safe.
   std::vector<std::string> CloseAll();
 
-  // Clear all cache.
   void Clear();
 
  private:
   mutable pthread_rwlock_t lock_;
+  // key <--> FILE*
   std::unordered_map<std::string, std::shared_ptr<FILE>> cache_;
+  // key <--> path
   std::unordered_map<std::string, std::string> paths_;
 };
 

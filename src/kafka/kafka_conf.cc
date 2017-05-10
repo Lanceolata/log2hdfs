@@ -17,7 +17,7 @@ KafkaConfResult KafkaGlobalConf::Set(const std::string& name,
                                      std::string* errstr) {
   if (name.empty() || value.empty()) {
     if (errstr)
-      *errstr = "config empty";
+      *errstr = "Invalid parameters name[" + name + "] value[" + value + "]";
     return KafkaConfResult::kConfEmpty;
   }
 
@@ -27,7 +27,6 @@ KafkaConfResult KafkaGlobalConf::Set(const std::string& name,
                           errbuf, sizeof(errbuf));
   if (res != RD_KAFKA_CONF_OK && errstr)
     *errstr = errbuf;
-
   return static_cast<KafkaConfResult>(res);
 }
 
@@ -64,7 +63,7 @@ KafkaConfResult KafkaTopicConf::Set(const std::string& name,
                                     std::string* errstr) {
   if (name.empty() || value.empty()) {
     if (errstr)
-      *errstr = "config empty";
+      *errstr = "Invalid parameters name[" + name + "] value[" + value + "]";
     return KafkaConfResult::kConfEmpty;
   }
 
@@ -74,7 +73,6 @@ KafkaConfResult KafkaTopicConf::Set(const std::string& name,
                                 errbuf, sizeof(errbuf));
   if (res != RD_KAFKA_CONF_OK && errstr)
     *errstr = errbuf;
-
   return static_cast<KafkaConfResult>(res);
 }
 
