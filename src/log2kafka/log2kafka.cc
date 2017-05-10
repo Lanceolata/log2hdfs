@@ -108,11 +108,15 @@ void handle_sigs(int sig) {
     topic_confs[topic] = topic_conf;
   }
 
-  for (auto it = topic_confs.begin(); it != topic_confs.end(); ++it) {
+  for (auto it = topic_confs.begin(); it != topic_confs.end();) {
     std::string topic = it->first;
     if (!conf->HasSection(topic)) {
       inotify->RemoveWatchTopic(topic);
       produce->RemoveTopic(topic);
+      topic_confs.erase(it++);
+      continue;
+    } else {
+      ++it;
     }
   }
 

@@ -107,7 +107,8 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
     return false;
   }
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::vector<std::string> paths;
+  std::unique_lock<std::mutex> guard(mutex_);
   for (auto it = wd_topic_.begin(); it != wd_topic_.end();) {
     if (it->second != topic) {
       ++it;
@@ -125,6 +126,11 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
               << "] path[" << path << "] success";
     wd_topic_.erase(it++);
     wd_path_.erase(wd);
+    paths.push_back(path);
+  }
+  guard.unlock();
+
+  for (auto& path : paths) {
     table_->Remove(path);
   }
   return true;
@@ -337,7 +343,6 @@ int Inotify::ReadInotify() {
       LOG(WARNING) << "Inotify ReadInotify buf might overflow";
     }
 
-    std::unique_lock<std::mutex> guard(mutex_, std::defer_lock);
     std::string topic, path;
     for (char *p = buf; p < buf + n;
             p += sizeof(struct inotify_event) + evp->len) {
@@ -345,7 +350,7 @@ int Inotify::ReadInotify() {
       evp = (struct inotify_event *)p;
       int wd = evp->wd;
 
-      guard.lock();
+      std::unique_lock<std::mutex> guard(mutex_);
       auto it1 = wd_topic_.find(wd);
       if (it1 == wd_topic_.end()) {
         LOG(WARNING) << "Inotify ReadInotify unknown wd topic[" << wd << "]";
