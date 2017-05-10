@@ -43,7 +43,7 @@ bool OffsetTable::Update(const std::string& dir, const std::string& file,
   if (dir.empty() || file.empty() || offset < 0)
     return false;
 
-  Fileoffset fo(file, offset);
+  FileOffset fo(file, offset);
   std::lock_guard<std::mutex> guard(mutex_);
   table_[dir] = std::move(fo);
   return true;

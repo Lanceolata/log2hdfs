@@ -1,6 +1,7 @@
 // Copyright (c) 2017 Lanceolata
 
 #include <unistd.h>
+#include <signal.h>
 #include "log2kafka/errmsg_handle.h"
 #include "log2kafka/offset_table.h"
 #include "log2kafka/topic_conf.h"
@@ -50,6 +51,77 @@ void err_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque) {
   LOG(WARNING) << "rdkafka error cb name:" << rd_kafka_name(rk)
                << " err:" << rd_kafka_err2str((rd_kafka_resp_err_t)err)
                << " reason:" << reason;
+}
+
+void handle_sigs(int sig) {
+  if (sig != SIGUSR1) {
+    LOG(INFO) << "handle_sigs existing";
+    running = false;
+    return;
+  }
+
+  std::shared_ptr<IniConfigParser> conf = IniConfigParser::Init();
+  if (!conf->Read(conf_path)) {
+    LOG(ERROR) << "IniConfigParser Read config file failed";
+    return;
+  }
+
+  std::vector<std::string> topics;
+  for (auto it = conf->Begin(); it != conf->End(); ++it) {
+    if (it->first == "global" || it->first == "kafka" || it->first == "default")
+      continue;
+
+    std::string topic = it->first;
+    topics.push_back(topic);
+
+    auto it2 = topic_confs.find(topic);
+    if (it2 != topic_confs.end()) {
+      if (!it2->second->UpdateRuntime(it->second)) {
+        LOG(WARNING) << "UpdateRuntime topic[" << topic << "] failed";
+      }
+      continue;
+    }
+
+    std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(it->first);
+    if (!topic_conf) {
+      LOG(WARNING) << "TopicConf Init topic[" << it->first << "] failed";
+      continue;
+    }
+
+    if (!topic_conf->InitConf(it->second)) {
+      LOG(WARNING) << "TopicConf InitConf topic[" << it->first << "] failed";
+      continue;
+    }
+
+    if (!produce->AddTopic(topic_conf)) {
+      LOG(WARNING) << "Produce AddTopic topic[" << it->first << "] failed";
+      continue;
+    }
+
+    if (!inotify->AddWatchTopic(topic_conf)) {
+      LOG(WARNING) << "Inotify AddWatchTopic topic[" << it->first
+                   << "] failed";
+      produce->RemoveTopic(topic);
+      continue;
+    }
+
+    topic_confs[topic] = topic_conf;
+  }
+
+  for (auto it = topic_confs.begin(); it != topic_confs.end(); ++it) {
+    std::string topic = it->first;
+    if (!conf->HasSection(topic)) {
+      inotify->RemoveWatchTopic(topic);
+      produce->RemoveTopic(topic);
+    }
+  }
+
+}
+
+void set_sig_handlers() {
+  signal(SIGTERM, handle_sigs);
+  signal(SIGINT, handle_sigs);
+  signal(SIGUSR1, handle_sigs);
 }
 
 int main(int argc, char *argv[]) {
@@ -217,6 +289,8 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
   }
+
+  set_sig_handlers();
 
   // Create thread
   handle->Start();

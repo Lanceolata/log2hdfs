@@ -125,6 +125,7 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
               << "] path[" << path << "] success";
     wd_topic_.erase(it++);
     wd_path_.erase(wd);
+    table_->Remove(path);
   }
   return true;
 }

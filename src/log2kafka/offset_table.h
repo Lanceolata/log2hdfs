@@ -13,7 +13,6 @@
 
 namespace log2hdfs {
 
-class Fileoffset;
 class Section;
 
 class OffsetTable {
@@ -58,25 +57,26 @@ class OffsetTable {
     std::lock_guard<std::mutex> guard(thread_mutex_);
     if (thread_.joinable())
       thread_.join();
+    Save();
   }
 
  private:
   void StartInternal();
 
-  class Fileoffset {
+  class FileOffset {
    public:
-    Fileoffset(): filename_(), offset_(0) {}
+    FileOffset(): filename_(), offset_(0) {}
 
-    Fileoffset(const std::string& filename, off_t offset):
+    FileOffset(const std::string& filename, off_t offset):
         filename_(filename), offset_(offset) {}
 
-    Fileoffset(const Fileoffset& other):
+    FileOffset(const FileOffset& other):
         filename_(other.filename_), offset_(other.offset_) {}
 
-    Fileoffset(Fileoffset&& other):
+    FileOffset(FileOffset&& other):
         filename_(std::move(other.filename_)), offset_(other.offset_) {}
 
-    Fileoffset& operator=(const Fileoffset& other) {
+    FileOffset& operator=(const FileOffset& other) {
       if (this != &other) {
         filename_ = other.filename_;
         offset_ = other.offset_;
@@ -84,7 +84,7 @@ class OffsetTable {
       return *this;
     }
 
-    Fileoffset& operator=(Fileoffset&& other) {
+    FileOffset& operator=(FileOffset&& other) {
       filename_ = std::move(other.filename_);
       offset_ = other.offset_;
       return *this;
@@ -100,7 +100,7 @@ class OffsetTable {
   std::atomic<bool> running_;
   std::mutex thread_mutex_;
   std::thread thread_;
-  std::unordered_map<std::string, Fileoffset> table_;
+  std::unordered_map<std::string, FileOffset> table_;
 };
 
 }   // namespace log2hdfs
