@@ -327,6 +327,7 @@ int Inotify::ReadInotify() {
   struct inotify_event *evp;
   int num = 0;
 
+  std::unique_lock<std::mutex> guard(mutex_, std::defer_lock);
   while (true) {
     ssize_t n = read(inot_fd_, buf, sizeof(buf));
     if (n == -1) {
@@ -350,10 +351,11 @@ int Inotify::ReadInotify() {
       evp = (struct inotify_event *)p;
       int wd = evp->wd;
 
-      std::unique_lock<std::mutex> guard(mutex_);
+      guard.lock();
       auto it1 = wd_topic_.find(wd);
       if (it1 == wd_topic_.end()) {
         LOG(WARNING) << "Inotify ReadInotify unknown wd topic[" << wd << "]";
+        guard.unlock();
         continue;
       }
       topic = it1->second;
@@ -362,6 +364,7 @@ int Inotify::ReadInotify() {
       if (it2 == wd_path_.end()) {
         LOG(WARNING) << "Inotify ReadInotify unknown wd path[" << wd
                      << "] topic[" << topic << "]";
+        guard.unlock();
         continue;
       }
       path = it2->second;
