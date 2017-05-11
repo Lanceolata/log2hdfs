@@ -114,12 +114,12 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
 
     std::string path = wd_path_[it->first];
     if (RemoveWatch(inot_fd_, it->first)) {
+      LOG(INFO) << "Inotify RemoveWatchTopic RemoveWatch wd[" << it->first
+                << "] topic[" << topic << "] path[" << path << "] success";
+    } else {
       LOG(WARNING) << "Inotify RemoveWatchTopic RemoveWatch wd[" << it->first
                    << "] topic[" << topic << "] path[" << path
                    << "] failed with errno[" << errno << "]";
-    } else {
-      LOG(INFO) << "Inotify RemoveWatchTopic RemoveWatch wd[" << it->first
-                << "] topic[" << topic << "] path[" << path << "] success";
     }
   }
   return true;
