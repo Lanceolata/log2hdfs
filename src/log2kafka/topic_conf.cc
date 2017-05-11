@@ -25,6 +25,7 @@ TopicConfContents::TopicConfContents(const TopicConfContents& other):
     poll_timeout_(other.poll_timeout_.load()),
     poll_messages_(other.poll_messages_.load()) {}
 
+// rdkafka conf in section[default] start with "kafka.".
 #define KAFKA_PREFIX "kafka."
 #define KAFKA_PREFIX_LEN 6
 
@@ -57,11 +58,11 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
     if (StartsWith(it->first, KAFKA_PREFIX)) {
       std::string name = it->first.substr(KAFKA_PREFIX_LEN);
       if (kafka_topic_conf_->Set(name, it->second, &errstr) == kConfOk) {
-        LOG(INFO) << "TopicConfContents Update kafka conf name[" << name
-                  << "] value[" << it->second << "]";
+        LOG(INFO) << "TopicConfContents Update set kafka conf name[" << name
+                  << "] value[" << it->second << "] success";
       } else {
-        LOG(INFO) << "TopicConfContents Update kafka conf name[" << name
-                  << "] value[" << it->second << "] failed";
+        LOG(WARNING) << "TopicConfContents Update set kafka conf name[" << name
+                     << "] value[" << it->second << "] failed";
         return false;
       }
     }
@@ -110,21 +111,21 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
 
   if (batch_num != batch_num_.load()) {
     batch_num_.store(batch_num);
+    LOG(INFO) << "TopicConfContents UpdateRuntime update batch_num["
+              << batch_num << "] success";
   }
-  LOG(INFO) << "TopicConfContents UpdateRuntime update batch_num["
-            << batch_num << "]";
 
   if (poll_timeout != poll_timeout_.load()) {
     poll_timeout_.store(poll_timeout);
+    LOG(INFO) << "TopicConfContents UpdateRuntime update poll_timeout["
+              << poll_timeout << "] success";
   }
-  LOG(INFO) << "TopicConfContents UpdateRuntime update poll_timeout["
-            << poll_timeout << "]";
 
   if (poll_messages != poll_messages_.load()) {
     poll_messages_.store(poll_messages);
+    LOG(INFO) << "TopicConfContents UpdateRuntime update poll_messages["
+              << poll_messages << "] success";
   }
-  LOG(INFO) << "TopicConfContents UpdateRuntime update poll_messages["
-            << poll_messages << "]";
   return true;
 }
 
@@ -179,7 +180,7 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
 
     dirs_.push_back(dir);
   }
-  LOG(INFO) << "TopicConf InitConf dirs[" << dirpaths << "]";
+  LOG(INFO) << "TopicConf InitConf update dirs[" << dirpaths << "] success";
   return contents_.Update(std::move(section));
 }
 

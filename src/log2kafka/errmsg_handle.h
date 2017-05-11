@@ -23,6 +23,7 @@ namespace log2hdfs {
 class Section;
 class FpCache;
 
+// Handle produce failed messages.
 class ErrmsgHandle {
  public:
   static std::shared_ptr<ErrmsgHandle> Init(
@@ -40,8 +41,10 @@ class ErrmsgHandle {
   ErrmsgHandle(const ErrmsgHandle& other) = delete;
   ErrmsgHandle& operator=(const ErrmsgHandle& other) = delete;
 
+  // Write msg to file.
   void ArchiveMsg(const std::string& topic, const std::string& msg);
 
+  // Creat thread.
   void Start() {
     std::call_once(flag_, &ErrmsgHandle::CreateThread, this);
   }

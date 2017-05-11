@@ -11,6 +11,7 @@
 
 namespace log2hdfs {
 
+// Default configuration
 #define DEFAULT_HANDLE_DIR "remedy"
 #define DEFAULT_HANDLE_INTERVAL "1800"
 #define DEFAULT_HANDLE_REMEDY ""
@@ -68,6 +69,11 @@ std::shared_ptr<ErrmsgHandle> ErrmsgHandle::Init(
 
 void ErrmsgHandle::ArchiveMsg(const std::string& topic,
                               const std::string& msg) {
+  if (topic.empty() || msg.empty()) {
+    LOG(WARNING) << "ErrmsgHandle ArchiveMsg invalid parameters";
+    return;
+  }
+
   std::shared_ptr<FILE> fptr = cache_->Get(topic);
   if (!fptr) {
     std::string path = dir_ + "/" + topic + "." +
@@ -95,29 +101,34 @@ void ErrmsgHandle::StartInternal() {
   while (true) {
     sleep(interval_);
 
-    std::vector<std::string> vec = cache_->CloseAll();
+    std::vector<std::string> paths = cache_->CloseAll();
+
     // wait for all cache fp close.
     sleep(5);
-    for (auto& path : vec) {
+
+    for (auto& path : paths) {
       LOG(INFO) << "ErrmsgHandle StartInternal handle path[" << path << "]";
 
       if (!remedy_)
         continue;
 
-      std::string basename = BaseName(path);
-      if (basename.empty()) {
+      // Get file name.
+      std::string file = BaseName(path);
+      if (file.empty()) {
         LOG(WARNING) << "ErrmsgHandle StartInternal BaseName[" << path
                      << "] failed";
         continue;
       }
-      auto end = basename.find(".");
+
+      // Extract topic from file name.
+      auto end = file.find(".");
       if (end == std::string::npos) {
         LOG(WARNING) << "ErrmsgHandle StartInternal invalid path[" << path
                      << "]";
         continue;
       }
 
-      std::string topic = basename.substr(0, end);
+      std::string topic = file.substr(0, end);
       queue_->Push(topic + ":" + path + ":0");
     }
   }

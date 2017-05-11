@@ -31,6 +31,7 @@ class TopicConfContents {
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
   time_t remedy_;
 
+  // Update runtime
   std::atomic<int> batch_num_;
   std::atomic<int> poll_timeout_;
   std::atomic<int> poll_messages_;
@@ -38,13 +39,13 @@ class TopicConfContents {
 
 class TopicConf {
  public:
-  // Must call function before new TopicConf.
+  // Must call before new TopicConf.
   static bool UpdataDefaultConf(std::shared_ptr<Section> section);
 
   static std::shared_ptr<TopicConf> Init(const std::string& topic);
 
   explicit TopicConf(const std::string& topic):
-     topic_(topic), contents_(DEFAULT_CONTENTS_) {}
+      topic_(topic), contents_(DEFAULT_CONTENTS_) {}
 
   bool InitConf(std::shared_ptr<Section> section);
 

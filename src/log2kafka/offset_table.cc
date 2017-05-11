@@ -9,6 +9,7 @@
 
 namespace log2hdfs {
 
+// Default configuration
 #define DEFAULT_TABLE_PATH "offset_table"
 #define DEFAULT_TABLE_INTERVAL "30"
 
@@ -127,10 +128,10 @@ void OffsetTable::Remedy() {
 
     if (Update(dir, file, offset)) {
       LOG(INFO) << "OffsetTable Remedy construct record dir[" << dir
-                << "] file[" << file << "] offset[" << offset << "]";
+                << "] file[" << file << "] offset[" << offset << "] success";
     } else {
-      LOG(INFO) << "OffsetTable Remedy construct record dir[" << dir
-                << "] file[" << file << "] offset[" << offset << "] failed";
+      LOG(WARNING) << "OffsetTable Remedy construct record dir[" << dir
+                   << "] file[" << file << "] offset[" << offset << "] failed";
     }
   }
   ifs.close();

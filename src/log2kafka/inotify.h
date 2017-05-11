@@ -43,11 +43,11 @@ class Inotify {
     t.detach();
   }
 
-  void StartInternal();
-
   void Remedy(const std::string& topic, const std::string& path,
               time_t remedy, const struct timespec& end,
               const std::string& remedy_file, off_t remedy_offset);
+
+  void StartInternal();
 
   int ReadInotify();
 

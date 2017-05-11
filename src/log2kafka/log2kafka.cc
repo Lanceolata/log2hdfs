@@ -11,10 +11,14 @@
 #include "util/configparser.h"
 #include "easylogging++.h"
 
+// Init logging
 INITIALIZE_EASYLOGGINGPP
+
 using namespace log2hdfs;
 
+// Running flag
 static bool running = true;
+// conf file path
 static char *conf_path = NULL;
 
 static std::shared_ptr<ErrmsgHandle> handle;
@@ -24,17 +28,27 @@ static std::unordered_map<std::string,
 static std::unique_ptr<Produce> produce;
 static std::unique_ptr<Inotify> inotify;
 
-void rolloutHandler(const char* filename, std::size_t size) {
+// logging roll handler
+void RolloutHandler(const char* filename, std::size_t size) {
   std::stringstream stream;
   stream << filename << "." << time(NULL);
   rename(filename, stream.str().c_str());
 }
 
+// kafka err callback
+void err_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque) {
+  LOG(WARNING) << "rdkafka error cb name:" << rd_kafka_name(rk)
+               << " err:" << rd_kafka_err2str((rd_kafka_resp_err_t)err)
+               << " reason:" << reason;
+}
+
+// kafka deliver message callback
 void dr_msg_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
                void* opaque) {
   if (rkmessage->err == 0)
     return;
 
+  // handle produce failed message
   const std::string topic = rd_kafka_topic_name(rkmessage->rkt);
   char *payload = static_cast<char *>(rkmessage->payload);
   size_t len = rkmessage->len;
@@ -47,13 +61,8 @@ void dr_msg_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
   }
 }
 
-void err_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque) {
-  LOG(WARNING) << "rdkafka error cb name:" << rd_kafka_name(rk)
-               << " err:" << rd_kafka_err2str((rd_kafka_resp_err_t)err)
-               << " reason:" << reason;
-}
-
-void handle_sigs(int sig) {
+// signals handler
+void signals_handler(int sig) {
   if (sig != SIGUSR1) {
     LOG(INFO) << "handle_sigs existing";
     running = false;
@@ -62,44 +71,45 @@ void handle_sigs(int sig) {
 
   std::shared_ptr<IniConfigParser> conf = IniConfigParser::Init();
   if (!conf->Read(conf_path)) {
-    LOG(ERROR) << "IniConfigParser Read config file failed";
+    LOG(ERROR) << "signals_handler IniConfigParser Read config file failed";
     return;
   }
 
-  std::vector<std::string> topics;
   for (auto it = conf->Begin(); it != conf->End(); ++it) {
-    if (it->first == "global" || it->first == "kafka" || it->first == "default")
+    const std::string topic = it->first;
+    if (topic == "global" || topic == "kafka" || topic == "default")
       continue;
-
-    std::string topic = it->first;
-    topics.push_back(topic);
 
     auto it2 = topic_confs.find(topic);
     if (it2 != topic_confs.end()) {
       if (!it2->second->UpdateRuntime(it->second)) {
-        LOG(WARNING) << "UpdateRuntime topic[" << topic << "] failed";
+        LOG(WARNING) << "signals_handler UpdateRuntime topic[" << topic
+                     << "] failed";
       }
       continue;
     }
 
     std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(it->first);
     if (!topic_conf) {
-      LOG(WARNING) << "TopicConf Init topic[" << it->first << "] failed";
+      LOG(WARNING) << "signals_handler TopicConf Init topic[" << topic
+                   << "] failed";
       continue;
     }
 
     if (!topic_conf->InitConf(it->second)) {
-      LOG(WARNING) << "TopicConf InitConf topic[" << it->first << "] failed";
+      LOG(WARNING) << "signals_handler TopicConf InitConf topic[" << topic
+                   << "] failed";
       continue;
     }
 
     if (!produce->AddTopic(topic_conf)) {
-      LOG(WARNING) << "Produce AddTopic topic[" << it->first << "] failed";
+      LOG(WARNING) << "signals_handler Produce AddTopic topic[" << topic
+                   << "] failed";
       continue;
     }
 
     if (!inotify->AddWatchTopic(topic_conf)) {
-      LOG(WARNING) << "Inotify AddWatchTopic topic[" << it->first
+      LOG(WARNING) << "signals_handler Inotify AddWatchTopic topic[" << topic
                    << "] failed";
       produce->RemoveTopic(topic);
       continue;
@@ -109,23 +119,21 @@ void handle_sigs(int sig) {
   }
 
   for (auto it = topic_confs.begin(); it != topic_confs.end();) {
-    std::string topic = it->first;
-    if (!conf->HasSection(topic)) {
+    const std::string topic = it->first;
+    if (conf->HasSection(topic)) {
+      ++it;
+    } else {
       inotify->RemoveWatchTopic(topic);
       produce->RemoveTopic(topic);
       topic_confs.erase(it++);
-      continue;
-    } else {
-      ++it;
     }
   }
-
 }
 
-void set_sig_handlers() {
-  signal(SIGTERM, handle_sigs);
-  signal(SIGINT, handle_sigs);
-  signal(SIGUSR1, handle_sigs);
+void set_signal_handlers() {
+  signal(SIGTERM, signals_handler);
+  signal(SIGINT, signals_handler);
+  signal(SIGUSR1, signals_handler);
 }
 
 int main(int argc, char *argv[]) {
@@ -161,10 +169,11 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  // Init easylogging++
   el::Loggers::addFlag(el::LoggingFlag::StrictLogFileSizeCheck);
   el::Configurations log_conf(log_conf_path);
   el::Loggers::reconfigureAllLoggers(log_conf);
-  el::Helpers::installPreRollOutCallback(rolloutHandler);
+  el::Helpers::installPreRollOutCallback(RolloutHandler);
 
   // Init configuration
   std::shared_ptr<IniConfigParser> conf = IniConfigParser::Init();
@@ -181,20 +190,20 @@ int main(int argc, char *argv[]) {
   }
 
   // Init ErrmsgHandle
-  std::shared_ptr<Section> section_global = conf->GetSection("global");
-  if (!section_global) {
+  std::shared_ptr<Section> global_section = conf->GetSection("global");
+  if (!global_section) {
     LOG(ERROR) << "Get section[global] failed";
     exit(EXIT_FAILURE);
   }
 
-  handle = ErrmsgHandle::Init(section_global, queue);
+  handle = ErrmsgHandle::Init(global_section, queue);
   if (!handle) {
     LOG(ERROR) << "ErrmsgHandle Init failed";
     exit(EXIT_FAILURE);
   }
 
   // Init offset table
-  table = OffsetTable::Init(section_global);
+  table = OffsetTable::Init(global_section);
   if (!table) {
     LOG(ERROR) << "OffsetTable Init failed";
     exit(EXIT_FAILURE);
@@ -209,20 +218,20 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<Section> section_kafka = conf->GetSection("kafka");
-  if (!section_kafka) {
+  std::shared_ptr<Section> kafka_section = conf->GetSection("kafka");
+  if (!kafka_section) {
     LOG(ERROR) << "Get section[kafka] failed";
     exit(EXIT_FAILURE);
   }
 
-  for (auto it = section_kafka->Begin(); it != section_kafka->End(); ++it) {
+  for (auto it = kafka_section->Begin(); it != kafka_section->End(); ++it) {
     if (producer_conf->Set(it->first, it->second, &errstr)
             == KafkaConfResult::kConfOk) {
-      LOG(INFO) << "Set configuration key[" << it->first << "] value["
-                << it->second << "] successed";
+      LOG(INFO) << "Set configuration name[" << it->first << "] value["
+                << it->second << "] success";
     } else {
-      LOG(ERROR) << "Set configuration key[" << it->first << "] value["
-                 << it->second << "] failed with error:" << errstr;
+      LOG(ERROR) << "Set configuration name[" << it->first << "] value["
+                 << it->second << "] failed with error[" << errstr << "]";
       exit(EXIT_FAILURE);
     }
   }
@@ -234,16 +243,16 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<KafkaProducer> producer = KafkaProducer::Init(
       producer_conf.get(), &errstr);
   if (!producer) {
-    LOG(ERROR) << "KafkaProducer Init failed with error:" << errstr;
+    LOG(ERROR) << "KafkaProducer Init failed with error[" << errstr << "]";
     exit(EXIT_FAILURE);
   }
 
   // Init log2kafka default conf
-  std::shared_ptr<Section> section_default = conf->GetSection("default");
-  if (!section_default) {
-    LOG(WARNING) << "Get section[global] failed";
+  std::shared_ptr<Section> default_section = conf->GetSection("default");
+  if (!default_section) {
+    LOG(WARNING) << "Get section[default] failed";
   } else {
-    if (!TopicConf::UpdataDefaultConf(section_default)) {
+    if (!TopicConf::UpdataDefaultConf(default_section)) {
       LOG(ERROR) << "TopicConf UpdataDefaultConf failed";
       exit(EXIT_FAILURE);
     }
@@ -251,20 +260,21 @@ int main(int argc, char *argv[]) {
 
   // Init log2kafka topic confs
   for (auto it = conf->Begin(); it != conf->End(); ++it) {
-    if (it->first == "global" || it->first == "kafka" || it->first == "default")
+    const std::string topic = it->first;
+    if (topic == "global" || topic == "kafka" || topic == "default")
       continue;
 
-    std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(it->first);
+    std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(topic); 
     if (!topic_conf) {
-      LOG(ERROR) << "TopicConf Init topic[" << it->first << "] failed";
+      LOG(ERROR) << "TopicConf Init topic[" << topic << "] failed";
       exit(EXIT_FAILURE);
     }
 
     if (!topic_conf->InitConf(it->second)) {
-      LOG(ERROR) << "TopicConf InitConf topic[" << it->first << "] failed";
+      LOG(ERROR) << "TopicConf InitConf topic[" << topic << "] failed";
       exit(EXIT_FAILURE);
     }
-    topic_confs[it->first] = topic_conf;
+    topic_confs[topic] = std::move(topic_conf);
   }
 
   // Init log2kafka produce
@@ -294,7 +304,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  set_sig_handlers();
+  set_signal_handlers();
 
   // Create thread
   handle->Start();
@@ -310,4 +320,5 @@ int main(int argc, char *argv[]) {
   produce->Stop();
   table->Stop();
   el::Helpers::uninstallPreRollOutCallback();
+  return 0;
 }

@@ -48,7 +48,7 @@ int inotify_fd() {
 
 inline int AddWatch(int fd, const std::string& path) {
   return inotify_add_watch(fd, path.c_str(),
-             IN_MOVED_TO | IN_CREATE | IN_DONT_FOLLOW | IN_DELETE_SELF);
+             IN_MOVED_TO | IN_CREATE | IN_DONT_FOLLOW);
 }
 
 inline bool RemoveWatch(int fd, int wd) {
@@ -107,31 +107,20 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
     return false;
   }
 
-  std::vector<std::string> paths;
-  std::unique_lock<std::mutex> guard(mutex_);
-  for (auto it = wd_topic_.begin(); it != wd_topic_.end();) {
-    if (it->second != topic) {
-      ++it;
+  std::lock_guard<std::mutex> guard(mutex_);
+  for (auto it = wd_topic_.begin(); it != wd_topic_.end(); ++it) {
+    if (it->second != topic)
       continue;
+
+    std::string path = wd_path_[it->first];
+    if (RemoveWatch(inot_fd_, it->first)) {
+      LOG(WARNING) << "Inotify RemoveWatchTopic RemoveWatch wd[" << it->first
+                   << "] topic[" << topic << "] path[" << path
+                   << "] failed with errno[" << errno << "]";
+    } else {
+      LOG(INFO) << "Inotify RemoveWatchTopic RemoveWatch wd[" << it->first
+                << "] topic[" << topic << "] path[" << path << "] success";
     }
-
-    int wd = it->first;
-    std::string path = wd_path_[wd];
-    if (!RemoveWatch(inot_fd_, wd)) {
-      LOG(WARNING) << "Inotify RemoveWatchTopic RemoveWatch wd[" << "] path["
-                   << path << "] failed with errno[" << errno << "]";
-    }
-
-    LOG(INFO) << "Inotify RemoveWatchTopic wd[" << wd << "] topic[" << topic
-              << "] path[" << path << "] success";
-    wd_topic_.erase(it++);
-    wd_path_.erase(wd);
-    paths.push_back(path);
-  }
-  guard.unlock();
-
-  for (auto& path : paths) {
-    table_->Remove(path);
   }
   return true;
 }
@@ -153,7 +142,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
     return false;
   }
 
-  // wait for path not change.
+  // wait for dir not change.
   while (true) {
     time_t mtime = FileMtime(normalpath);
     if (mtime < 0) {
@@ -168,12 +157,12 @@ bool Inotify::AddWatchPath(const std::string& topic,
     sleep(1);
   }
 
-  // get remedy file and path
-  std::string remedy_file;
-  off_t remedy_offset = 0;
+  // step 1: Get remedy file and path
+  std::string remedy_file = "";
+  off_t remedy_offset = -1;
   table_->Get(normalpath, &remedy_file, &remedy_offset);
 
-  // add watch
+  // step 2: Add watch
   std::unique_lock<std::mutex> guard(mutex_);
   int wd = AddWatch(inot_fd_, normalpath);
   if (wd == -1) {
@@ -183,6 +172,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
     return false;
   }
 
+  // step 3: Get add watch timespec
   struct timespec ts;
   memset(&ts, 0, sizeof(ts));
   if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
@@ -192,6 +182,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
     return false;
   }
 
+  // step 4: Check wd_topic_ avoid repeat remedy.
   auto it = wd_topic_.find(wd);
   if (it != wd_topic_.end()) {
     LOG(WARNING) << "Inotify AddWatchPath topic[" << topic << "] path["
@@ -199,6 +190,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
     return false;
   }
 
+  // step 5: Update wd_topic_ and wd_path_
   wd_topic_[wd] = topic;
   wd_path_[wd] = normalpath;
   guard.unlock();
@@ -206,50 +198,16 @@ bool Inotify::AddWatchPath(const std::string& topic,
   LOG(INFO) << "Inotify AddWatchPath topic[" << topic << "] path["
             << normalpath << "] remedy[" << remedy << "] successed";
 
+  // step 6: Remedy records already in dir
   Remedy(topic, normalpath, remedy, ts, remedy_file, remedy_offset);
   return true;
-}
-
-#define INOT_BUF_LEN 8192
-
-void Inotify::StartInternal() {
-  LOG(INFO) << "Inotify thread created";
-
-  struct pollfd pfd = { inot_fd_, POLLIN | POLLPRI, 0 };
-  int n;
-
-  while (true) {
-    n = poll(&pfd, 1, 120000);
-    if (n == -1) {
-      if (errno == EINTR) {
-        LOG(WARNING) << "Inotify StartInternal poll interrupted by a signal";
-        continue;
-      }
-      LOG(ERROR) << "Inotify StartInternal poll failed with errno["
-                 << errno << "]";
-      break;
-    } else if (n == 0) {
-      LOG(INFO) << "Inotify StartInternal poll timed out after 120 seconds";
-      continue;
-    }
-
-    if ((pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-      LOG(WARNING) << "Inotify StartInternal poll abnormal";
-      continue;
-    }
-
-    if (ReadInotify() < 0)
-      break;
-  }
-
-  LOG(ERROR) << "Inotify thread existing";
 }
 
 void Inotify::Remedy(const std::string& topic, const std::string& dir,
                      time_t remedy, const struct timespec& end,
                      const std::string& remedy_file, off_t remedy_offset) {
   Optional<struct timespec> start;
-  if (!remedy_file.empty()) {
+  if (!remedy_file.empty() && remedy_offset >= 0) {
     struct timespec start_ts;
     std::string remedy_path = dir + "/" + remedy_file;
     if (FileCtim(remedy_path, &start_ts)) {
@@ -276,8 +234,10 @@ void Inotify::Remedy(const std::string& topic, const std::string& dir,
   for (auto& name : names) {
     std::string inner = dir + "/" + name;
     if (IsDir(inner)) {
+      // sub dictionary
       AddWatchPath(topic, inner, remedy);
     } else if (IsFile(inner)) {
+      // sub file
       if (remedy == -1)
         continue;
 
@@ -315,10 +275,45 @@ void Inotify::Remedy(const std::string& topic, const std::string& dir,
                 << inner << "]";
       queue_->Push(topic + ":" + inner + ":0");
     } else {
-      LOG(WARNING) << "Inotify Remedy Unknown file[" << inner << "]";
+      LOG(WARNING) << "Inotify Remedy unknown file[" << inner << "]";
     }
   }
 }
+
+void Inotify::StartInternal() {
+  LOG(INFO) << "Inotify thread created";
+
+  struct pollfd pfd = { inot_fd_, POLLIN | POLLPRI, 0 };
+  int n;
+
+  while (true) {
+    n = poll(&pfd, 1, 120000);
+    if (n == -1) {
+      if (errno == EINTR) {
+        LOG(WARNING) << "Inotify StartInternal poll interrupted by a signal";
+        continue;
+      }
+      LOG(ERROR) << "Inotify StartInternal poll failed with errno["
+                 << errno << "]";
+      break;
+    } else if (n == 0) {
+      LOG(INFO) << "Inotify StartInternal poll timed out after 120 seconds";
+      continue;
+    }
+
+    if ((pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+      LOG(WARNING) << "Inotify StartInternal poll abnormal";
+      continue;
+    }
+
+    if (ReadInotify() < 0)
+      break;
+  }
+
+  LOG(ERROR) << "Inotify thread existing";
+}
+
+#define INOT_BUF_LEN 8192
 
 int Inotify::ReadInotify() {
   char buf[INOT_BUF_LEN]
@@ -371,22 +366,24 @@ int Inotify::ReadInotify() {
       guard.unlock();
 
       if ((evp->mask & IN_ISDIR) != 0) {
+        // new dir create
         if ((evp->mask & IN_CREATE) != 0) {
           path.append("/");
           path.append(evp->name);
           AddWatchPath(topic, path, 0);
         } else {
-          LOG(WARNING) << "Inotify ReadInotify unexpected dir event["
+          LOG(WARNING) << "Inotify ReadInotify wd[" << wd << "] topic["
+                       << topic << "] path[" << path << "] unknown mask["
                        << evp->mask << "]";
         }
       } else if ((evp->mask & IN_MOVED_TO) != 0) {
+        // new file move to
         path.append("/");
         path.append(evp->name);
         queue_->Push(topic + ":" + path + ":0");
-      } else if ((evp->mask & IN_DELETE_SELF) != 0) {
-        LOG(INFO) << "Inotify ReadInotify wd[" << wd << "] topic[" << topic
-                  << "] path[" << path << "] delete";
       } else if ((evp->mask & IN_IGNORED) != 0) {
+        // Watch was removed explicitly (inotify_rm_watch(2)) or
+        // automatically(file was deleted, or filesystem was unmounted).
         LOG(INFO) << "Inotify ReadInotify erase wd[" << wd << "] topic["
                   << topic << "] path[" << path << "]";
 

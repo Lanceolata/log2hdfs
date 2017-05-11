@@ -22,8 +22,8 @@ std::unique_ptr<Produce> Produce::Init(
     return nullptr;
   }
   return std::unique_ptr<Produce>(new Produce(
-              std::move(producer), std::move(queue),
-              std::move(table), std::move(handle)));
+             std::move(producer), std::move(queue),
+             std::move(table), std::move(handle)));
 }
 
 bool Produce::AddTopic(std::shared_ptr<TopicConf> conf) {
@@ -40,7 +40,7 @@ bool Produce::AddTopic(std::shared_ptr<TopicConf> conf) {
       topic, topic_conf.get(), &errstr);
   if (!ktp) {
     LOG(WARNING) << "Produce AddTopic CreateTopicProducer topic[" << topic
-                 << "] failed with err[" << errstr << "]";
+                 << "] failed with errstr[" << errstr << "]";
     return false;
   }
 
@@ -86,6 +86,7 @@ bool Produce::RemoveTopic(const std::string& topic) {
 
 void Produce::StartInternal() {
   LOG(INFO) << "Log2kafkaProduce thread created";
+
   while (running_.load()) {
     std::shared_ptr<std::string> record = queue_->WaitPop();
     if (!record) {
@@ -111,8 +112,8 @@ void Produce::StartInternal() {
     }
 
     if (!IsFile(path)) {
-      LOG(WARNING) << "Produce StartInternal IsFile failed path[" << path
-                   << "]";
+      LOG(WARNING) << "Produce StartInternal IsFile failed topic[" << topic
+                   << "] path[" << path << "] offset[" << "offset" << "]";
       continue;
     }
 
@@ -120,11 +121,12 @@ void Produce::StartInternal() {
     std::shared_ptr<KafkaTopicProducer> ktp =
         producer_->GetTopicProducer(topic);
     if (!ktp) {
-      LOG(WARNING) << "Produce StartInternal GetTopicProducer failed topic["
-                   << topic << "]";
+      LOG(WARNING) << "Produce StartInternal GetTopicProducer topic["
+                   << topic << "] failed";
       continue;
     }
 
+    // get topic conf
     std::unique_lock<std::mutex> guard(mutex_);
     auto it = topic_confs_.find(topic);
     if (it == topic_confs_.end()) {
@@ -137,6 +139,7 @@ void Produce::StartInternal() {
     std::shared_ptr<TopicConf> conf = it->second;
     guard.unlock();
 
+    // get conf parameter
     int batch = conf->batch_num();
     int timeout = conf->poll_timeout();
     int msgs = conf->poll_messages();
@@ -157,24 +160,27 @@ void Produce::ProduceAndSave(
     int timeout,
     int msgs_num,
     std::shared_ptr<KafkaTopicProducer> ktp) {
-  std::string dirname = DirName(path);
-  std::string basename = BaseName(path);
-  if (dirname.empty() || basename.empty()) {
+  std::string dir = DirName(path);
+  std::string file = BaseName(path);
+  if (dir.empty() || file.empty()) {
     LOG(WARNING) << "Produce ProduceAndSave invlaid path[" << path << "]";
     return;
   }
 
-  table_->Update(dirname, basename, 0);
-  LOG(INFO) << "log sent[" << path << "]";
+  table_->Update(dir, file, 0);
+  LOG(INFO) << "log sent topic[" << topic << "] path[" << path << "] offset["
+            << offset << "] batch[" << batch << "] timeout[" << timeout
+            <<"] msgs_num[" << msgs_num << "]";
 
 /*
-
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
     LOG(WARNING) << "Produce ProduceAndSave open path[" << path << "] failed";
     return;
   }
-  ifs.seekg(offset);
+
+  if (offset != 0)
+    ifs.seekg(offset);
 
   int i = 0;
   off_t num = 0;
@@ -192,8 +198,7 @@ void Produce::ProduceAndSave(
         break;
       }
 
-      int en = errno;
-      if (en == 105) {
+      if (errno == 105) {
         producer_->PollOutq(msgs_num, timeout);
       } else {
         ktp->Poll(timeout);
@@ -209,7 +214,7 @@ void Produce::ProduceAndSave(
     }
 
     if (num % batch == 0) {
-      if (!table_->Update(dirname, basename, ifs.tellg())) {
+      if (!table_->Update(dir, file, ifs.tellg())) {
         LOG(WARNING) << "Produce ProduceAndSave table Update failed "
                      << "topic[" << topic << "] path[" << path << "]"
                      << " offset[" << ifs.tellg() << "]";
@@ -217,13 +222,14 @@ void Produce::ProduceAndSave(
     }
   }
 
-  if (!table_->Update(dirname, basename, ifs.tellg())) {
+  if (!table_->Update(dir, file, ifs.tellg())) {
     LOG(WARNING) << "Produce ProduceAndSave table Update failed "
                  << "topic[" << topic << "] path[" << path << "]"
                  << " offset[" << ifs.tellg() << "]";
   }
-
   ifs.close();
+
+  producer_->PollOutq(msgs_num, timeout);
   LOG(INFO) << "log sent[" << path << "] line[" << num << "]";
 
 */
