@@ -12,7 +12,7 @@ std::shared_ptr<KafkaProducer> KafkaProducer::Init(
     KafkaGlobalConf* conf, std::string *errstr) {
   if (!conf) {
     if (errstr)
-      *errstr = "Invalid conf";
+      *errstr = "Invalid parameters";
     return nullptr;
   }
 

@@ -41,7 +41,7 @@ std::shared_ptr<OffsetTable> OffsetTable::Init(
 
 bool OffsetTable::Update(const std::string& dir, const std::string& file,
                          off_t offset) {
-  if (dir.empty() || file.empty() || offset < 0)
+  if (dir.empty() || file.empty() || offset < -1)
     return false;
 
   FileOffset fo(file, offset);
@@ -121,7 +121,7 @@ void OffsetTable::Remedy() {
     std::string dir = DirName(vec[0]);
     std::string file = BaseName(vec[0]);
     off_t offset = atol(vec[1].c_str());
-    if (dir.empty() || file.empty() || offset < 0) {
+    if (dir.empty() || file.empty() || offset < -1) {
       LOG(WARNING) << "OffsetTable Remedy invalid line[" << line << "]";
       continue;
     }

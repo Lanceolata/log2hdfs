@@ -166,18 +166,21 @@ void Produce::ProduceAndSave(
     LOG(WARNING) << "Produce ProduceAndSave invlaid path[" << path << "]";
     return;
   }
-
+/*
   table_->Update(dir, file, 0);
   LOG(INFO) << "log sent topic[" << topic << "] path[" << path << "] offset["
             << offset << "] batch[" << batch << "] timeout[" << timeout
             <<"] msgs_num[" << msgs_num << "]";
+*/
 
-/*
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
     LOG(WARNING) << "Produce ProduceAndSave open path[" << path << "] failed";
     return;
   }
+
+  if (offset == -1)
+    return;
 
   if (offset != 0)
     ifs.seekg(offset);
@@ -232,7 +235,6 @@ void Produce::ProduceAndSave(
   producer_->PollOutq(msgs_num, timeout);
   LOG(INFO) << "log sent[" << path << "] line[" << num << "]";
 
-*/
 }
 
 }   // namespace log2hdfs

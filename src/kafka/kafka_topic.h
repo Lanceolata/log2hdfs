@@ -17,7 +17,7 @@ extern "C" {
 namespace log2hdfs {
 
 class KafkaTopicProducer;
-class KafkaPartitionConsumer;
+class KafkaTopicConsumer;
 
 class KafkaTopic {
  public:
@@ -40,7 +40,7 @@ class KafkaTopic {
 
  private:
   friend class KafkaTopicProducer;
-  friend class KafkaPartitionConsumer;
+  friend class KafkaTopicConsumer;
 
   rd_kafka_topic_t* rkt_;
 };

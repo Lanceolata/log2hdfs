@@ -159,7 +159,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
 
   // step 1: Get remedy file and path
   std::string remedy_file = "";
-  off_t remedy_offset = -1;
+  off_t remedy_offset = -2;
   table_->Get(normalpath, &remedy_file, &remedy_offset);
 
   // step 2: Add watch
@@ -207,7 +207,7 @@ void Inotify::Remedy(const std::string& topic, const std::string& dir,
                      time_t remedy, const struct timespec& end,
                      const std::string& remedy_file, off_t remedy_offset) {
   Optional<struct timespec> start;
-  if (!remedy_file.empty() && remedy_offset >= 0) {
+  if (!remedy_file.empty() && remedy_offset >= -1) {
     struct timespec start_ts;
     std::string remedy_path = dir + "/" + remedy_file;
     if (FileCtim(remedy_path, &start_ts)) {
