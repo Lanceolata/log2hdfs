@@ -105,9 +105,9 @@ void Produce::StartInternal() {
     const std::string& topic = vec[0];
     const std::string& path = vec[1];
     off_t offset = atol(vec[2].c_str());
-    if (topic.empty() || path.empty() || offset < 0) {
+    if (topic.empty() || path.empty() || offset < -1) {
       LOG(WARNING) << "Produce StartInternal invalid record topic[" << topic
-                   << "] path[" << path << "] offset[" << "offset" << "]";
+                   << "] path[" << path << "] offset[" << offset << "]";
       continue;
     }
 
