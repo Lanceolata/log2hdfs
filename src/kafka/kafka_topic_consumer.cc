@@ -158,6 +158,9 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
     handle_->Poll(200);
   }
 
+  handle_->Poll(200);
+  free(messages);
+
   LOG(INFO) << "KafkaTopicConsumer thread topic[" << topic << "] partition["
             << partition << "] exiting";
 }
