@@ -56,8 +56,11 @@ void dr_msg_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
   std::string msg(payload, len);
   if (handle) {
     handle->ArchiveMsg(topic, msg);
+    LOG(WARNING) << "dr_msg_cb topic[" << topic << "] partition["
+                 << rkmessage->partition << "] failed with error["
+                 << rd_kafka_err2str(rkmessage->err) << "]";
   } else {
-    LOG(WARNING) << "dr_msg_cb topic:" << topic << " msg[" << payload << "]";
+    LOG(WARNING) << "dr_msg_cb topic[" << topic << "] msg[" << payload << "]";
   }
 }
 
