@@ -8,8 +8,8 @@ namespace log2hdfs {
 std::shared_ptr<KafkaTopicConsumer> KafkaTopicConsumer::Init(
     std::shared_ptr<KafkaHandle> handle,
     std::shared_ptr<KafkaTopic> topic,
-    std::vector<int32_t> partitions,
-    std::vector<int64_t> offsets,
+    const std::vector<int32_t>& partitions,
+    const std::vector<int64_t>& offsets,
     std::shared_ptr<KafkaConsumeCb> cb) {
   if (!handle || !topic || partitions.empty() || offsets.empty() || !cb) {
     return nullptr;
@@ -26,8 +26,7 @@ std::shared_ptr<KafkaTopicConsumer> KafkaTopicConsumer::Init(
   }
 
   return std::make_shared<KafkaTopicConsumer>(std::move(handle),
-             std::move(topic), std::move(partitions), std::move(offsets),
-             std::move(cb));
+             std::move(topic), partitions, offsets, std::move(cb));
 }
 
 void KafkaTopicConsumer::Start() {

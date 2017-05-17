@@ -1,0 +1,55 @@
+\hypertarget{classlog2hdfs_1_1KafkaGlobalConf}{}\section{log2hdfs\+:\+:Kafka\+Global\+Conf Class Reference}
+\label{classlog2hdfs_1_1KafkaGlobalConf}\index{log2hdfs\+::\+Kafka\+Global\+Conf@{log2hdfs\+::\+Kafka\+Global\+Conf}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries Type} \{ {\bfseries k\+Producer}, 
+{\bfseries k\+Consumer}
+ \}\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a4841d3ac340b3a5eb2e9e82cda9bb131}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a4841d3ac340b3a5eb2e9e82cda9bb131}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Kafka\+Global\+Conf} (Kafka\+Global\+Conf\+::\+Type type, rd\+\_\+kafka\+\_\+conf\+\_\+t $\ast$rk\+\_\+conf=N\+U\+LL)\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_aeffc5a410d44fd4a48c835af1dac1933}{}\label{classlog2hdfs_1_1KafkaGlobalConf_aeffc5a410d44fd4a48c835af1dac1933}
+
+\item 
+{\bfseries Kafka\+Global\+Conf} (const \hyperlink{classlog2hdfs_1_1KafkaGlobalConf}{Kafka\+Global\+Conf} \&other)=delete\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_aef5305d0446f0ee61484545a77746ddd}{}\label{classlog2hdfs_1_1KafkaGlobalConf_aef5305d0446f0ee61484545a77746ddd}
+
+\item 
+\hyperlink{classlog2hdfs_1_1KafkaGlobalConf}{Kafka\+Global\+Conf} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1KafkaGlobalConf}{Kafka\+Global\+Conf} \&other)=delete\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a8bd4653616a95a7fa146c3e88d0258b0}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a8bd4653616a95a7fa146c3e88d0258b0}
+
+\item 
+Kafka\+Conf\+Result {\bfseries Set} (const std\+::string \&name, const std\+::string \&value, std\+::string $\ast$errstr)\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a5961838fea3e2f86294408224995f4f2}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a5961838fea3e2f86294408224995f4f2}
+
+\item 
+Kafka\+Conf\+Result {\bfseries Get} (const std\+::string \&name, std\+::string $\ast$value) const \hypertarget{classlog2hdfs_1_1KafkaGlobalConf_aa229932c6969f605b852e45b77490b5d}{}\label{classlog2hdfs_1_1KafkaGlobalConf_aa229932c6969f605b852e45b77490b5d}
+
+\item 
+bool {\bfseries Set\+Error\+Cb} (void($\ast$err\+\_\+cb)(rd\+\_\+kafka\+\_\+t $\ast$rk, int err, const char $\ast$reason, void $\ast$opaque))\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_ab4a25ce619291f06177f171bbdd380f3}{}\label{classlog2hdfs_1_1KafkaGlobalConf_ab4a25ce619291f06177f171bbdd380f3}
+
+\item 
+bool {\bfseries Set\+Dr\+Msg\+Cb} (void($\ast$dr\+\_\+msg\+\_\+cb)(rd\+\_\+kafka\+\_\+t $\ast$rk, const rd\+\_\+kafka\+\_\+message\+\_\+t $\ast$rkmessage, void $\ast$opaque))\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a409ae11df58eae9c05451431139a8a18}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a409ae11df58eae9c05451431139a8a18}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::unique\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaGlobalConf}{Kafka\+Global\+Conf} $>$ {\bfseries Init} (Kafka\+Global\+Conf\+::\+Type type)\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a6c1386eb26a6d7046b747a0b51702335}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a6c1386eb26a6d7046b747a0b51702335}
+
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class {\bfseries Kafka\+Producer}\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a25501737c09078d7d152ac5ba415f843}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a25501737c09078d7d152ac5ba415f843}
+
+\item 
+class {\bfseries Kafka\+Consumer}\hypertarget{classlog2hdfs_1_1KafkaGlobalConf_a6333789304ef25919eff3559a1e12c36}{}\label{classlog2hdfs_1_1KafkaGlobalConf_a6333789304ef25919eff3559a1e12c36}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/kafka/kafka\+\_\+conf.\+h\item 
+src/kafka/kafka\+\_\+conf.\+cc\end{DoxyCompactItemize}

@@ -1,0 +1,89 @@
+\hypertarget{classlog2hdfs_1_1IniConfigParser}{}\section{log2hdfs\+:\+:Ini\+Config\+Parser Class Reference}
+\label{classlog2hdfs_1_1IniConfigParser}\index{log2hdfs\+::\+Ini\+Config\+Parser@{log2hdfs\+::\+Ini\+Config\+Parser}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\+::unordered\+\_\+map$<$ std\+::string, std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1Section}{Section} $>$ $>$\+::iterator {\bfseries iterator}\hypertarget{classlog2hdfs_1_1IniConfigParser_aa9fda92b7dac941dd1b5ebb92eba684f}{}\label{classlog2hdfs_1_1IniConfigParser_aa9fda92b7dac941dd1b5ebb92eba684f}
+
+\item 
+typedef std\+::unordered\+\_\+map$<$ std\+::string, std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1Section}{Section} $>$ $>$\+::const\+\_\+iterator {\bfseries const\+\_\+iterator}\hypertarget{classlog2hdfs_1_1IniConfigParser_ab4bb963379b16f07f5704ed0df15ec95}{}\label{classlog2hdfs_1_1IniConfigParser_ab4bb963379b16f07f5704ed0df15ec95}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Ini\+Config\+Parser} (const \hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} \&other)\hypertarget{classlog2hdfs_1_1IniConfigParser_a9d4ef61cd9269503552c45b3290e21de}{}\label{classlog2hdfs_1_1IniConfigParser_a9d4ef61cd9269503552c45b3290e21de}
+
+\item 
+{\bfseries Ini\+Config\+Parser} (\hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} \&\&other)\hypertarget{classlog2hdfs_1_1IniConfigParser_acb529019833028c7c2f3c70793e520a4}{}\label{classlog2hdfs_1_1IniConfigParser_acb529019833028c7c2f3c70793e520a4}
+
+\item 
+\hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} \&other)\hypertarget{classlog2hdfs_1_1IniConfigParser_ab09d0f609f4c65484547d0230881b606}{}\label{classlog2hdfs_1_1IniConfigParser_ab09d0f609f4c65484547d0230881b606}
+
+\item 
+\hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} \&\&other)\hypertarget{classlog2hdfs_1_1IniConfigParser_ad8d28b244d3270b5cc29b8fcf72393cf}{}\label{classlog2hdfs_1_1IniConfigParser_ad8d28b244d3270b5cc29b8fcf72393cf}
+
+\item 
+bool {\bfseries Has\+Section} (const std\+::string \&section) const \hypertarget{classlog2hdfs_1_1IniConfigParser_ad8353947ca41522c7693d46a49100361}{}\label{classlog2hdfs_1_1IniConfigParser_ad8353947ca41522c7693d46a49100361}
+
+\item 
+bool {\bfseries Add\+Section} (const std\+::string \&section)\hypertarget{classlog2hdfs_1_1IniConfigParser_a4a61b4b5843622039e36bb0947a33344}{}\label{classlog2hdfs_1_1IniConfigParser_a4a61b4b5843622039e36bb0947a33344}
+
+\item 
+bool {\bfseries Remove\+Section} (const std\+::string \&section)\hypertarget{classlog2hdfs_1_1IniConfigParser_a32b3293011b19876351a27653925cf8c}{}\label{classlog2hdfs_1_1IniConfigParser_a32b3293011b19876351a27653925cf8c}
+
+\item 
+std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1Section}{Section} $>$ {\bfseries Get\+Section} (const std\+::string \&section)\hypertarget{classlog2hdfs_1_1IniConfigParser_aeee13031c12b4d3fdf857acd3347f0d8}{}\label{classlog2hdfs_1_1IniConfigParser_aeee13031c12b4d3fdf857acd3347f0d8}
+
+\item 
+bool {\bfseries Has\+Option} (const std\+::string \&section, const std\+::string \&option) const \hypertarget{classlog2hdfs_1_1IniConfigParser_a280e18ede56472f6325d00fe34271a6c}{}\label{classlog2hdfs_1_1IniConfigParser_a280e18ede56472f6325d00fe34271a6c}
+
+\item 
+bool {\bfseries Remove\+Option} (const std\+::string \&section, const std\+::string \&option)\hypertarget{classlog2hdfs_1_1IniConfigParser_abf3278e73c150db0fb091b7d9ed15da0}{}\label{classlog2hdfs_1_1IniConfigParser_abf3278e73c150db0fb091b7d9ed15da0}
+
+\item 
+\hyperlink{classlog2hdfs_1_1Optional}{Optional}$<$ std\+::string $>$ {\bfseries Get} (const std\+::string \&section, const std\+::string \&option) const \hypertarget{classlog2hdfs_1_1IniConfigParser_a0930726f5c508fd9684c0758e02bc1aa}{}\label{classlog2hdfs_1_1IniConfigParser_a0930726f5c508fd9684c0758e02bc1aa}
+
+\item 
+std\+::string {\bfseries Get} (const std\+::string \&section, const std\+::string \&option, const std\+::string \&default\+\_\+value) const \hypertarget{classlog2hdfs_1_1IniConfigParser_af3e496884b1f0c5820c941b8d21b6e9d}{}\label{classlog2hdfs_1_1IniConfigParser_af3e496884b1f0c5820c941b8d21b6e9d}
+
+\item 
+bool {\bfseries Set} (const std\+::string \&section, const std\+::string \&option, const std\+::string \&value)\hypertarget{classlog2hdfs_1_1IniConfigParser_a1b8deba703a74c1539295760a7e794ee}{}\label{classlog2hdfs_1_1IniConfigParser_a1b8deba703a74c1539295760a7e794ee}
+
+\item 
+Ini\+Config\+Parser\+::iterator {\bfseries Begin} ()\hypertarget{classlog2hdfs_1_1IniConfigParser_a514a95d5e7f8f3d1119d446e0a5bc39d}{}\label{classlog2hdfs_1_1IniConfigParser_a514a95d5e7f8f3d1119d446e0a5bc39d}
+
+\item 
+Ini\+Config\+Parser\+::iterator {\bfseries End} ()\hypertarget{classlog2hdfs_1_1IniConfigParser_a3bbc39cd2701e0411065328285faef37}{}\label{classlog2hdfs_1_1IniConfigParser_a3bbc39cd2701e0411065328285faef37}
+
+\item 
+Ini\+Config\+Parser\+::const\+\_\+iterator {\bfseries Begin} () const \hypertarget{classlog2hdfs_1_1IniConfigParser_ab1c7cf51560f0e4b7172defa1900b948}{}\label{classlog2hdfs_1_1IniConfigParser_ab1c7cf51560f0e4b7172defa1900b948}
+
+\item 
+Ini\+Config\+Parser\+::const\+\_\+iterator {\bfseries End} () const \hypertarget{classlog2hdfs_1_1IniConfigParser_a5ab4ebd42acd0993db74c55d60468ae7}{}\label{classlog2hdfs_1_1IniConfigParser_a5ab4ebd42acd0993db74c55d60468ae7}
+
+\item 
+bool {\bfseries Empty} () const \hypertarget{classlog2hdfs_1_1IniConfigParser_a489246260e96bcd7b714d7873b298a6a}{}\label{classlog2hdfs_1_1IniConfigParser_a489246260e96bcd7b714d7873b298a6a}
+
+\item 
+void {\bfseries Clear} ()\hypertarget{classlog2hdfs_1_1IniConfigParser_a3a322d4842c048c51e9e31ec817ac29c}{}\label{classlog2hdfs_1_1IniConfigParser_a3a322d4842c048c51e9e31ec817ac29c}
+
+\item 
+bool {\bfseries Read} (const std\+::string \&filepath)\hypertarget{classlog2hdfs_1_1IniConfigParser_a3863dfedd40a884fa7b7dc7db718e88d}{}\label{classlog2hdfs_1_1IniConfigParser_a3863dfedd40a884fa7b7dc7db718e88d}
+
+\item 
+bool {\bfseries Write} (const std\+::string \&filepath) const \hypertarget{classlog2hdfs_1_1IniConfigParser_a0a145c323b3fff62e405645c88f78b6c}{}\label{classlog2hdfs_1_1IniConfigParser_a0a145c323b3fff62e405645c88f78b6c}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1IniConfigParser}{Ini\+Config\+Parser} $>$ {\bfseries Init} ()\hypertarget{classlog2hdfs_1_1IniConfigParser_a78747e0d07c0789a29941b4e284ac6b8}{}\label{classlog2hdfs_1_1IniConfigParser_a78747e0d07c0789a29941b4e284ac6b8}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/util/configparser.\+h\item 
+src/util/configparser.\+cc\end{DoxyCompactItemize}

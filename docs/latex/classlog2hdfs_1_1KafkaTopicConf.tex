@@ -1,0 +1,52 @@
+\hypertarget{classlog2hdfs_1_1KafkaTopicConf}{}\section{log2hdfs\+:\+:Kafka\+Topic\+Conf Class Reference}
+\label{classlog2hdfs_1_1KafkaTopicConf}\index{log2hdfs\+::\+Kafka\+Topic\+Conf@{log2hdfs\+::\+Kafka\+Topic\+Conf}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries Type} \{ {\bfseries k\+Producer}, 
+{\bfseries k\+Consumer}
+ \}\hypertarget{classlog2hdfs_1_1KafkaTopicConf_a0af6a61bea8b44482f5d386a419fa135}{}\label{classlog2hdfs_1_1KafkaTopicConf_a0af6a61bea8b44482f5d386a419fa135}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Kafka\+Topic\+Conf} (Kafka\+Topic\+Conf\+::\+Type type, rd\+\_\+kafka\+\_\+topic\+\_\+conf\+\_\+t $\ast$rkt\+\_\+conf=N\+U\+LL)\hypertarget{classlog2hdfs_1_1KafkaTopicConf_a166abb2b9a2b44843c1b64f5ec8bcc2c}{}\label{classlog2hdfs_1_1KafkaTopicConf_a166abb2b9a2b44843c1b64f5ec8bcc2c}
+
+\item 
+{\bfseries Kafka\+Topic\+Conf} (const \hyperlink{classlog2hdfs_1_1KafkaTopicConf}{Kafka\+Topic\+Conf} \&other)=delete\hypertarget{classlog2hdfs_1_1KafkaTopicConf_a590a0778cd2f3aa76e31b3527ecd48a1}{}\label{classlog2hdfs_1_1KafkaTopicConf_a590a0778cd2f3aa76e31b3527ecd48a1}
+
+\item 
+\hyperlink{classlog2hdfs_1_1KafkaTopicConf}{Kafka\+Topic\+Conf} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1KafkaTopicConf}{Kafka\+Topic\+Conf} \&other)=delete\hypertarget{classlog2hdfs_1_1KafkaTopicConf_aff28cced1c43f0ed4efd6639ce220f32}{}\label{classlog2hdfs_1_1KafkaTopicConf_aff28cced1c43f0ed4efd6639ce220f32}
+
+\item 
+Kafka\+Conf\+Result {\bfseries Set} (const std\+::string \&name, const std\+::string \&value, std\+::string $\ast$errstr)\hypertarget{classlog2hdfs_1_1KafkaTopicConf_afb5c5afa2d824d12f2edae11bbebfaba}{}\label{classlog2hdfs_1_1KafkaTopicConf_afb5c5afa2d824d12f2edae11bbebfaba}
+
+\item 
+Kafka\+Conf\+Result {\bfseries Get} (const std\+::string \&name, std\+::string $\ast$value) const \hypertarget{classlog2hdfs_1_1KafkaTopicConf_acd6f86cf119cdffec8661f8b90db48b6}{}\label{classlog2hdfs_1_1KafkaTopicConf_acd6f86cf119cdffec8661f8b90db48b6}
+
+\item 
+std\+::unique\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaTopicConf}{Kafka\+Topic\+Conf} $>$ {\bfseries Copy} () const \hypertarget{classlog2hdfs_1_1KafkaTopicConf_ae6d151685c3809e4b5a6aec3c042b3fa}{}\label{classlog2hdfs_1_1KafkaTopicConf_ae6d151685c3809e4b5a6aec3c042b3fa}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::unique\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaTopicConf}{Kafka\+Topic\+Conf} $>$ {\bfseries Init} (Kafka\+Topic\+Conf\+::\+Type type)\hypertarget{classlog2hdfs_1_1KafkaTopicConf_aa7c2f76168b0e5ad0d4b16958548c693}{}\label{classlog2hdfs_1_1KafkaTopicConf_aa7c2f76168b0e5ad0d4b16958548c693}
+
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+class {\bfseries Kafka\+Producer}\hypertarget{classlog2hdfs_1_1KafkaTopicConf_a25501737c09078d7d152ac5ba415f843}{}\label{classlog2hdfs_1_1KafkaTopicConf_a25501737c09078d7d152ac5ba415f843}
+
+\item 
+class {\bfseries Kafka\+Consumer}\hypertarget{classlog2hdfs_1_1KafkaTopicConf_a6333789304ef25919eff3559a1e12c36}{}\label{classlog2hdfs_1_1KafkaTopicConf_a6333789304ef25919eff3559a1e12c36}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/kafka/kafka\+\_\+conf.\+h\item 
+src/kafka/kafka\+\_\+conf.\+cc\end{DoxyCompactItemize}

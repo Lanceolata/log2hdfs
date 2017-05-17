@@ -14,15 +14,26 @@ namespace log2hdfs {
 template<typename T>
 class Queue {
  public:
+  /**
+   * Static function to create a Queue shared_ptr.
+   * 
+   * @return std::shared_ptr<Queue>.
+   */
   static std::shared_ptr<Queue> Init() {
     return std::make_shared<Queue>();
   }
 
+  /**
+   * Constructor.
+   */
   Queue() {}
 
   Queue(const Queue& other) = delete;
   Queue& operator=(const Queue& other) = delete;
 
+  /**
+   * Push T valud to queue.
+   */
   void Push(T value) {
     std::shared_ptr<T> data(std::make_shared<T>(std::move(value)));
     std::lock_guard<std::mutex> guard(mutex_);
@@ -30,6 +41,11 @@ class Queue {
     cond_.notify_one();
   }
 
+  /**
+   * Wait to pop a value from queue.
+   * 
+   * @param value pop value.
+   */
   void WaitPop(T* value) {
     if (!value)
       return;
@@ -40,6 +56,11 @@ class Queue {
     queue_.pop();
   }
 
+  /**
+   * Wait to pop a value from queue.
+   * 
+   * @return std::shared_ptr<T> point to pop value.
+   */
   std::shared_ptr<T> WaitPop() {
     std::unique_lock<std::mutex> guard(mutex_);
     cond_.wait(guard, [this]{ return !queue_.empty(); });
@@ -48,6 +69,13 @@ class Queue {
     return res;
   }
 
+  /**
+   * Try to pop a value from queue.
+   * 
+   * @param value pop value.
+   * 
+   * @return true if pop and set value success; false otherwise.
+   */
   bool TryPop(T* value) {
     if (!value)
       return false;
@@ -61,6 +89,12 @@ class Queue {
     return true;
   }
 
+  /**
+   * Try to pop a value from queue.
+   * 
+   * @return std::shared_ptr<T> point to pop value if pop success;
+   *         nullptr otherwise.
+   */
   std::shared_ptr<T> TryPop() {
     std::lock_guard<std::mutex> guard(mutex_);
     if (queue_.empty())
@@ -71,6 +105,11 @@ class Queue {
     return res;
   }
 
+  /**
+   * Whether the queue is empty.
+   * 
+   * @return true if queue is empty; false otherwise.
+   */
   bool Empty() const {
     std::lock_guard<std::mutex> guard(mutex_);
     return queue_.empty();

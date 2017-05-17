@@ -8,16 +8,32 @@
 
 namespace log2hdfs {
 
+/**
+ * SplitString white space handle.
+ */
 enum WhitespaceHandling {
-  kKeepWhitespace,
-  kTrimWhitespace
+  kKeepWhitespace,  /**< kepp white space. */
+  kTrimWhitespace   /**< trim white space. */
 };
 
+/**
+ * SplitString empty string handle.
+ */
 enum SplitResult {
-  kSplitAll,
-  kSplitNonempty
+  kSplitAll,        /**< keep empty string. */
+  kSplitNonempty    /**< except empty string. */
 };
 
+/**
+ * Split string.
+ * 
+ * @param input         string to split.
+ * @param delimiters    delimiters.
+ * @param whitespace    white space handle.
+ * @param type          empty string handle.
+ * 
+ * @return              string vector.
+ */
 extern std::vector<std::string> SplitString(
     const std::string& input, const std::string& delimiters,
     WhitespaceHandling whitespace, SplitResult type);

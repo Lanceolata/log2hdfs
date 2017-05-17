@@ -1,0 +1,158 @@
+\hypertarget{classlog2hdfs_1_1FpCache}{}\section{log2hdfs\+:\+:Fp\+Cache Class Reference}
+\label{classlog2hdfs_1_1FpCache}\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+
+
+{\ttfamily \#include $<$fp\+\_\+cache.\+h$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \hyperlink{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabe}{Remove\+Result} \{ \hyperlink{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea45c149a2991a004cc2f703028ee8f743}{k\+Invalid\+Key} = -\/2, 
+\hyperlink{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea85a0c35bd500ce91be5a049be1e42b82}{k\+Remove\+Failed} = -\/1, 
+\hyperlink{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea9fbf001dccee023203b54359e8928193}{k\+Remove\+Ok} = 0
+ \}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classlog2hdfs_1_1FpCache_ad897ec187b661d08cacf4daf7847754e}{Fp\+Cache} ()
+\item 
+\hyperlink{classlog2hdfs_1_1FpCache_a6eb730b44c83f3984a95328a8d31c26e}{$\sim$\+Fp\+Cache} ()
+\item 
+{\bfseries Fp\+Cache} (const \hyperlink{classlog2hdfs_1_1FpCache}{Fp\+Cache} \&other)=delete\hypertarget{classlog2hdfs_1_1FpCache_ac4ef9c65d099f68cd98416200f703e72}{}\label{classlog2hdfs_1_1FpCache_ac4ef9c65d099f68cd98416200f703e72}
+
+\item 
+\hyperlink{classlog2hdfs_1_1FpCache}{Fp\+Cache} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1FpCache}{Fp\+Cache} \&other)=delete\hypertarget{classlog2hdfs_1_1FpCache_ae476c77e6844928c73205a8816b6ecc4}{}\label{classlog2hdfs_1_1FpCache_ae476c77e6844928c73205a8816b6ecc4}
+
+\item 
+std\+::shared\+\_\+ptr$<$ F\+I\+LE $>$ \hyperlink{classlog2hdfs_1_1FpCache_a37b5d20805bd50fcc06b5a3e3c626817}{Get} (const std\+::string \&key)
+\item 
+std\+::shared\+\_\+ptr$<$ F\+I\+LE $>$ \hyperlink{classlog2hdfs_1_1FpCache_a4685f018669a416f2b495012f42e3eba}{Get} (const std\+::string \&key, const std\+::string \&path)
+\item 
+\hyperlink{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabe}{Fp\+Cache\+::\+Remove\+Result} \hyperlink{classlog2hdfs_1_1FpCache_a5e9a1f0e88c2d8b0b5acfbaee3f8140b}{Remove} (const std\+::string \&key)
+\item 
+std\+::vector$<$ std\+::string $>$ \hyperlink{classlog2hdfs_1_1FpCache_a420b328e3bb226866f3344d75e13e6e7}{Close\+All} ()
+\item 
+void {\bfseries Clear} ()\hypertarget{classlog2hdfs_1_1FpCache_ada663f72b8f95401da64156c4f65fdd3}{}\label{classlog2hdfs_1_1FpCache_ada663f72b8f95401da64156c4f65fdd3}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1FpCache}{Fp\+Cache} $>$ {\bfseries Init} ()\hypertarget{classlog2hdfs_1_1FpCache_a01ea7bc476e2cee865d6e425f576e29f}{}\label{classlog2hdfs_1_1FpCache_a01ea7bc476e2cee865d6e425f576e29f}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Simple thread safe fp cache. 
+
+\subsection{Member Enumeration Documentation}
+\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!Remove\+Result@{Remove\+Result}}
+\index{Remove\+Result@{Remove\+Result}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{Remove\+Result}{RemoveResult}}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf log2hdfs\+::\+Fp\+Cache\+::\+Remove\+Result}}\hypertarget{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabe}{}\label{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabe}
+\hyperlink{classlog2hdfs_1_1FpCache}{Fp\+Cache} Remove result. \begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{k\+Invalid\+Key@{k\+Invalid\+Key}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!k\+Invalid\+Key@{k\+Invalid\+Key}}\item[{\em 
+k\+Invalid\+Key\hypertarget{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea45c149a2991a004cc2f703028ee8f743}{}\label{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea45c149a2991a004cc2f703028ee8f743}
+}]key was not found. \index{k\+Remove\+Failed@{k\+Remove\+Failed}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!k\+Remove\+Failed@{k\+Remove\+Failed}}\item[{\em 
+k\+Remove\+Failed\hypertarget{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea85a0c35bd500ce91be5a049be1e42b82}{}\label{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea85a0c35bd500ce91be5a049be1e42b82}
+}]remove from map successed but fclose failed. \index{k\+Remove\+Ok@{k\+Remove\+Ok}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!k\+Remove\+Ok@{k\+Remove\+Ok}}\item[{\em 
+k\+Remove\+Ok\hypertarget{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea9fbf001dccee023203b54359e8928193}{}\label{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabea9fbf001dccee023203b54359e8928193}
+}]remove and fclose successed. \end{description}
+\end{Desc}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!Fp\+Cache@{Fp\+Cache}}
+\index{Fp\+Cache@{Fp\+Cache}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{Fp\+Cache()}{FpCache()}}]{\setlength{\rightskip}{0pt plus 5cm}log2hdfs\+::\+Fp\+Cache\+::\+Fp\+Cache (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\hypertarget{classlog2hdfs_1_1FpCache_ad897ec187b661d08cacf4daf7847754e}{}\label{classlog2hdfs_1_1FpCache_ad897ec187b661d08cacf4daf7847754e}
+Constructor.
+
+Init pthread\+\_\+rwlock\+\_\+t. \index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!````~Fp\+Cache@{$\sim$\+Fp\+Cache}}
+\index{````~Fp\+Cache@{$\sim$\+Fp\+Cache}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{$\sim$\+Fp\+Cache()}{~FpCache()}}]{\setlength{\rightskip}{0pt plus 5cm}log2hdfs\+::\+Fp\+Cache\+::$\sim$\+Fp\+Cache (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\hypertarget{classlog2hdfs_1_1FpCache_a6eb730b44c83f3984a95328a8d31c26e}{}\label{classlog2hdfs_1_1FpCache_a6eb730b44c83f3984a95328a8d31c26e}
+Destructor.
+
+Clear all F\+I\+L\+E$\ast$ and paths, then destory pthread\+\_\+rwlock\+\_\+t. 
+
+\subsection{Member Function Documentation}
+\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!Close\+All@{Close\+All}}
+\index{Close\+All@{Close\+All}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{Close\+All()}{CloseAll()}}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$ std\+::string $>$ log2hdfs\+::\+Fp\+Cache\+::\+Close\+All (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\hypertarget{classlog2hdfs_1_1FpCache_a420b328e3bb226866f3344d75e13e6e7}{}\label{classlog2hdfs_1_1FpCache_a420b328e3bb226866f3344d75e13e6e7}
+Erase all fp cache and return cache fp paths. May not thread safe. \index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!Get@{Get}}
+\index{Get@{Get}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{Get(const std\+::string \&key)}{Get(const std::string &key)}}]{\setlength{\rightskip}{0pt plus 5cm}std\+::shared\+\_\+ptr$<$ F\+I\+LE $>$ log2hdfs\+::\+Fp\+Cache\+::\+Get (
+\begin{DoxyParamCaption}
+\item[{const std\+::string \&}]{key}
+\end{DoxyParamCaption}
+)}\hypertarget{classlog2hdfs_1_1FpCache_a37b5d20805bd50fcc06b5a3e3c626817}{}\label{classlog2hdfs_1_1FpCache_a37b5d20805bd50fcc06b5a3e3c626817}
+Get fp cache from map.
+
+
+\begin{DoxyParams}{Parameters}
+{\em key} & key to match\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::shared\+\_\+ptr$<$\+F\+I\+L\+E$>$ if key was found; nullptr otherwise. 
+\end{DoxyReturn}
+\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!Get@{Get}}
+\index{Get@{Get}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{Get(const std\+::string \&key, const std\+::string \&path)}{Get(const std::string &key, const std::string &path)}}]{\setlength{\rightskip}{0pt plus 5cm}std\+::shared\+\_\+ptr$<$ F\+I\+LE $>$ log2hdfs\+::\+Fp\+Cache\+::\+Get (
+\begin{DoxyParamCaption}
+\item[{const std\+::string \&}]{key, }
+\item[{const std\+::string \&}]{path}
+\end{DoxyParamCaption}
+)}\hypertarget{classlog2hdfs_1_1FpCache_a4685f018669a416f2b495012f42e3eba}{}\label{classlog2hdfs_1_1FpCache_a4685f018669a416f2b495012f42e3eba}
+Get fp cache from map.
+
+
+\begin{DoxyParams}{Parameters}
+{\em key} & key to match \\
+\hline
+{\em path} & if key not match, path will open\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::shared\+\_\+ptr$<$\+F\+I\+L\+E$>$ key was found or open(path) successed; nullptr otherwise. 
+\end{DoxyReturn}
+\index{log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}!Remove@{Remove}}
+\index{Remove@{Remove}!log2hdfs\+::\+Fp\+Cache@{log2hdfs\+::\+Fp\+Cache}}
+\subsubsection[{\texorpdfstring{Remove(const std\+::string \&key)}{Remove(const std::string &key)}}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Fp\+Cache\+::\+Remove\+Result} log2hdfs\+::\+Fp\+Cache\+::\+Remove (
+\begin{DoxyParamCaption}
+\item[{const std\+::string \&}]{key}
+\end{DoxyParamCaption}
+)}\hypertarget{classlog2hdfs_1_1FpCache_a5e9a1f0e88c2d8b0b5acfbaee3f8140b}{}\label{classlog2hdfs_1_1FpCache_a5e9a1f0e88c2d8b0b5acfbaee3f8140b}
+Remove fp cache from map.
+
+
+\begin{DoxyParams}{Parameters}
+{\em key} & key to math\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Remove\+Result. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See also}
+\hyperlink{classlog2hdfs_1_1FpCache_a5a925c5b356be91cf262e5219dafdabe}{Remove\+Result} 
+\end{DoxySeeAlso}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/util/fp\+\_\+cache.\+h\item 
+src/util/fp\+\_\+cache.\+cc\end{DoxyCompactItemize}

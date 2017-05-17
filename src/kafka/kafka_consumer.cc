@@ -38,9 +38,12 @@ std::shared_ptr<KafkaConsumer> KafkaConsumer::Init(
 }
 
 std::shared_ptr<KafkaTopicConsumer> KafkaConsumer::CreateTopicConsumer(
-    const std::string& topic, KafkaTopicConf* conf,
-    std::vector<int32_t> partitions, std::vector<int64_t> offsets,
-    std::shared_ptr<KafkaConsumeCb> cb, std::string* errstr) {
+    const std::string& topic,
+    KafkaTopicConf* conf,
+    const std::vector<int32_t>& partitions,
+    const std::vector<int64_t>& offsets,
+    std::shared_ptr<KafkaConsumeCb> cb,
+    std::string* errstr) {
   if (topic.empty() || !conf || partitions.empty() || offsets.empty()
           || !cb) {
     if (errstr)
@@ -50,8 +53,11 @@ std::shared_ptr<KafkaTopicConsumer> KafkaConsumer::CreateTopicConsumer(
 
   std::lock_guard<std::mutex> guard(mutex_);
   auto it = topics_.find(topic);
-  if (it != topics_.end())
-    return it->second;
+  if (it != topics_.end()) {
+    if (errstr)
+      *errstr = "topic consumer already created";
+    return nullptr;
+  }
 
   rd_kafka_topic_conf_t *rkt_conf = rd_kafka_topic_conf_dup(conf->rkt_conf_);
   rd_kafka_topic_t *rkt = rd_kafka_topic_new(handle_->rk_, topic.c_str(),
@@ -71,8 +77,8 @@ std::shared_ptr<KafkaTopicConsumer> KafkaConsumer::CreateTopicConsumer(
   }
 
   std::shared_ptr<KafkaTopicConsumer> ktc;
-  ktc = KafkaTopicConsumer::Init(handle_, kt, std::move(partitions),
-      std::move(offsets), std::move(cb));
+  ktc = KafkaTopicConsumer::Init(handle_, kt, partitions,
+                                 offsets, std::move(cb));
   if (!ktc) {
     if (errstr)
       *errstr = "KafkaTopicConsumer init failed";
@@ -98,6 +104,16 @@ void KafkaConsumer::StopAllTopic() {
   for (auto it = topics_.begin(); it != topics_.end(); ++it) {
     it->second->Join();
   }
+}
+
+bool KafkaConsumer::StartTopic(const std::string& topic) {
+  std::unique_lock<std::mutex> guard(mutex_);
+  auto it = topics_.find(topic);
+  if (it == topics_.end())
+    return false;
+
+  it->second->Start();
+  return true;
 }
 
 bool KafkaConsumer::StopTopic(const std::string& topic) {

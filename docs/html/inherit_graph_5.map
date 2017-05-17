@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classlog2hdfs_1_1KafkaConsumeCb.html" title="log2hdfs::KafkaConsumeCb" alt="" coords="5,56,203,83"/>
+<area shape="rect" id="node2" href="$classlog2hdfs_1_1ConsumeCallback.html" title="log2hdfs::ConsumeCallback" alt="" coords="251,56,449,83"/>
+<area shape="rect" id="node3" href="$classlog2hdfs_1_1DebugConsumeCallback.html" title="log2hdfs::DebugConsumeCallback" alt="" coords="497,5,737,32"/>
+<area shape="rect" id="node4" href="$classlog2hdfs_1_1ReportConsumeCallback.html" title="log2hdfs::ReportConsumeCallback" alt="" coords="498,56,737,83"/>
+<area shape="rect" id="node5" href="$classlog2hdfs_1_1V6ConsumeCallback.html" title="log2hdfs::V6ConsumeCallback" alt="" coords="510,107,725,133"/>
+</map>

@@ -37,18 +37,18 @@ class KafkaTopicConsumer {
   static std::shared_ptr<KafkaTopicConsumer> Init(
       std::shared_ptr<KafkaHandle> handle,
       std::shared_ptr<KafkaTopic> topic,
-      std::vector<int32_t> partitions,
-      std::vector<int64_t> offsets,
+      const std::vector<int32_t>& partitions,
+      const std::vector<int64_t>& offsets,
       std::shared_ptr<KafkaConsumeCb> cb);
 
   KafkaTopicConsumer(
       std::shared_ptr<KafkaHandle> handle,
       std::shared_ptr<KafkaTopic> topic,
-      std::vector<int32_t> partitions,
-      std::vector<int64_t> offsets,
+      const std::vector<int32_t>& partitions,
+      const std::vector<int64_t>& offsets,
       std::shared_ptr<KafkaConsumeCb> cb):
       handle_(std::move(handle)), topic_(std::move(topic)),
-      partitions_(std::move(partitions)), offsets_(std::move(offsets)),
+      partitions_(partitions), offsets_(offsets),
       cb_(std::move(cb)) {}
 
   ~KafkaTopicConsumer() {

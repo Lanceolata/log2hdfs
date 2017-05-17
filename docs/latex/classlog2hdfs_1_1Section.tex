@@ -1,0 +1,80 @@
+\hypertarget{classlog2hdfs_1_1Section}{}\section{log2hdfs\+:\+:Section Class Reference}
+\label{classlog2hdfs_1_1Section}\index{log2hdfs\+::\+Section@{log2hdfs\+::\+Section}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+typedef std\+::unordered\+\_\+map$<$ std\+::string, std\+::string $>$\+::iterator {\bfseries iterator}\hypertarget{classlog2hdfs_1_1Section_a395082589cdd133dfed9f7880ba86e3c}{}\label{classlog2hdfs_1_1Section_a395082589cdd133dfed9f7880ba86e3c}
+
+\item 
+typedef std\+::unordered\+\_\+map$<$ std\+::string, std\+::string $>$\+::const\+\_\+iterator {\bfseries const\+\_\+iterator}\hypertarget{classlog2hdfs_1_1Section_af425058ae6ee4e199229dcdeaae1bda7}{}\label{classlog2hdfs_1_1Section_af425058ae6ee4e199229dcdeaae1bda7}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Section} (const \hyperlink{classlog2hdfs_1_1Section}{Section} \&other)\hypertarget{classlog2hdfs_1_1Section_adfaa5487e6313183cfb00f289a446278}{}\label{classlog2hdfs_1_1Section_adfaa5487e6313183cfb00f289a446278}
+
+\item 
+{\bfseries Section} (\hyperlink{classlog2hdfs_1_1Section}{Section} \&\&other)\hypertarget{classlog2hdfs_1_1Section_ab6e5e412a379873b636b2f0b9d51b7a9}{}\label{classlog2hdfs_1_1Section_ab6e5e412a379873b636b2f0b9d51b7a9}
+
+\item 
+\hyperlink{classlog2hdfs_1_1Section}{Section} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1Section}{Section} \&other)\hypertarget{classlog2hdfs_1_1Section_ad9d6b66ff1ad2ffa7157ca7ff7a0e2c5}{}\label{classlog2hdfs_1_1Section_ad9d6b66ff1ad2ffa7157ca7ff7a0e2c5}
+
+\item 
+\hyperlink{classlog2hdfs_1_1Section}{Section} \& {\bfseries operator=} (\hyperlink{classlog2hdfs_1_1Section}{Section} \&\&other)\hypertarget{classlog2hdfs_1_1Section_a393bc4b0296173e4d2346f34ca9c0789}{}\label{classlog2hdfs_1_1Section_a393bc4b0296173e4d2346f34ca9c0789}
+
+\item 
+bool {\bfseries Has} (const std\+::string \&option) const \hypertarget{classlog2hdfs_1_1Section_a84000e3a5bcfd6e3b8ab219b038632e8}{}\label{classlog2hdfs_1_1Section_a84000e3a5bcfd6e3b8ab219b038632e8}
+
+\item 
+bool {\bfseries Remove} (const std\+::string \&option)\hypertarget{classlog2hdfs_1_1Section_aed0b35b429f51cd66f62d55153765be1}{}\label{classlog2hdfs_1_1Section_aed0b35b429f51cd66f62d55153765be1}
+
+\item 
+\hyperlink{classlog2hdfs_1_1Optional}{Optional}$<$ std\+::string $>$ {\bfseries Get} (const std\+::string \&option) const \hypertarget{classlog2hdfs_1_1Section_a5db65fc853dcde4963629a9117ccbb34}{}\label{classlog2hdfs_1_1Section_a5db65fc853dcde4963629a9117ccbb34}
+
+\item 
+std\+::string {\bfseries Get} (const std\+::string \&option, const std\+::string \&default\+\_\+value) const \hypertarget{classlog2hdfs_1_1Section_acd4eede29a5e80c7a5fefe759a49b9e1}{}\label{classlog2hdfs_1_1Section_acd4eede29a5e80c7a5fefe759a49b9e1}
+
+\item 
+bool {\bfseries Set} (const std\+::string \&option, const std\+::string \&value)\hypertarget{classlog2hdfs_1_1Section_ae87ec7d9f427d7960642e7ffce441320}{}\label{classlog2hdfs_1_1Section_ae87ec7d9f427d7960642e7ffce441320}
+
+\item 
+Section\+::iterator {\bfseries Begin} ()\hypertarget{classlog2hdfs_1_1Section_a53d856f5f884713c8a9af0a987f828db}{}\label{classlog2hdfs_1_1Section_a53d856f5f884713c8a9af0a987f828db}
+
+\item 
+Section\+::iterator {\bfseries End} ()\hypertarget{classlog2hdfs_1_1Section_aaf26649df0dfb29cfb183ca43bec1fc0}{}\label{classlog2hdfs_1_1Section_aaf26649df0dfb29cfb183ca43bec1fc0}
+
+\item 
+Section\+::const\+\_\+iterator {\bfseries Begin} () const \hypertarget{classlog2hdfs_1_1Section_aad7045f150705952a201a971674c3343}{}\label{classlog2hdfs_1_1Section_aad7045f150705952a201a971674c3343}
+
+\item 
+Section\+::const\+\_\+iterator {\bfseries End} () const \hypertarget{classlog2hdfs_1_1Section_a3460199936a5f723aa3576047c65e451}{}\label{classlog2hdfs_1_1Section_a3460199936a5f723aa3576047c65e451}
+
+\item 
+bool {\bfseries Empty} () const \hypertarget{classlog2hdfs_1_1Section_ae3d42af0cf5fd256b507c9e5a1e1c0d9}{}\label{classlog2hdfs_1_1Section_ae3d42af0cf5fd256b507c9e5a1e1c0d9}
+
+\item 
+void {\bfseries Clear} ()\hypertarget{classlog2hdfs_1_1Section_ae5a4b3417b3bd6e0aceaf50e481c3c9e}{}\label{classlog2hdfs_1_1Section_ae5a4b3417b3bd6e0aceaf50e481c3c9e}
+
+\item 
+bool {\bfseries Read} (const std\+::string \&filepath)\hypertarget{classlog2hdfs_1_1Section_a524b6063691869f2e2d1d353551386b5}{}\label{classlog2hdfs_1_1Section_a524b6063691869f2e2d1d353551386b5}
+
+\item 
+bool {\bfseries Write} (const std\+::string \&filepath) const \hypertarget{classlog2hdfs_1_1Section_a104102e5750e73b6fb6497f8561a2842}{}\label{classlog2hdfs_1_1Section_a104102e5750e73b6fb6497f8561a2842}
+
+\item 
+bool {\bfseries Write} (std\+::ofstream \&ofs) const \hypertarget{classlog2hdfs_1_1Section_ac478942a1456b7efed416ee5b65cec86}{}\label{classlog2hdfs_1_1Section_ac478942a1456b7efed416ee5b65cec86}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1Section}{Section} $>$ {\bfseries Init} ()\hypertarget{classlog2hdfs_1_1Section_ab0f923bf39efe934df970f2ca72ab65a}{}\label{classlog2hdfs_1_1Section_ab0f923bf39efe934df970f2ca72ab65a}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/util/configparser.\+h\item 
+src/util/configparser.\+cc\end{DoxyCompactItemize}

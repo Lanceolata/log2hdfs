@@ -1,0 +1,47 @@
+\hypertarget{classlog2hdfs_1_1KafkaConsumer}{}\section{log2hdfs\+:\+:Kafka\+Consumer Class Reference}
+\label{classlog2hdfs_1_1KafkaConsumer}\index{log2hdfs\+::\+Kafka\+Consumer@{log2hdfs\+::\+Kafka\+Consumer}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Kafka\+Consumer} (std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaHandle}{Kafka\+Handle} $>$ handle)\hypertarget{classlog2hdfs_1_1KafkaConsumer_af4e1f7a77ee5c7b713aae6cc7722ef20}{}\label{classlog2hdfs_1_1KafkaConsumer_af4e1f7a77ee5c7b713aae6cc7722ef20}
+
+\item 
+{\bfseries Kafka\+Consumer} (const \hyperlink{classlog2hdfs_1_1KafkaConsumer}{Kafka\+Consumer} \&other)=delete\hypertarget{classlog2hdfs_1_1KafkaConsumer_aa71f0b187f30908fd930f0103aaadb7a}{}\label{classlog2hdfs_1_1KafkaConsumer_aa71f0b187f30908fd930f0103aaadb7a}
+
+\item 
+\hyperlink{classlog2hdfs_1_1KafkaConsumer}{Kafka\+Consumer} \& {\bfseries operator=} (const \hyperlink{classlog2hdfs_1_1KafkaConsumer}{Kafka\+Consumer} \&other)=delete\hypertarget{classlog2hdfs_1_1KafkaConsumer_a21dc6d1b3dd655ceac6d31b389dca272}{}\label{classlog2hdfs_1_1KafkaConsumer_a21dc6d1b3dd655ceac6d31b389dca272}
+
+\item 
+const std\+::string {\bfseries Name} () const \hypertarget{classlog2hdfs_1_1KafkaConsumer_a6483ec9c17558953d4beae9fafeb9039}{}\label{classlog2hdfs_1_1KafkaConsumer_a6483ec9c17558953d4beae9fafeb9039}
+
+\item 
+const std\+::string {\bfseries Member\+Id} () const \hypertarget{classlog2hdfs_1_1KafkaConsumer_a43b5de3d00314b6ae52be31ef5ed7a00}{}\label{classlog2hdfs_1_1KafkaConsumer_a43b5de3d00314b6ae52be31ef5ed7a00}
+
+\item 
+std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaTopicConsumer}{Kafka\+Topic\+Consumer} $>$ {\bfseries Create\+Topic\+Consumer} (const std\+::string \&topic, \hyperlink{classlog2hdfs_1_1KafkaTopicConf}{Kafka\+Topic\+Conf} $\ast$conf, const std\+::vector$<$ int32\+\_\+t $>$ \&partitions, const std\+::vector$<$ int64\+\_\+t $>$ \&offsets, std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaConsumeCb}{Kafka\+Consume\+Cb} $>$ cb, std\+::string $\ast$errstr)\hypertarget{classlog2hdfs_1_1KafkaConsumer_aeffdb734cf330462b9ba3c2fe4d78ce9}{}\label{classlog2hdfs_1_1KafkaConsumer_aeffdb734cf330462b9ba3c2fe4d78ce9}
+
+\item 
+void {\bfseries Start\+All\+Topic} ()\hypertarget{classlog2hdfs_1_1KafkaConsumer_a4c5323c2b8aa7879151f937aa278865c}{}\label{classlog2hdfs_1_1KafkaConsumer_a4c5323c2b8aa7879151f937aa278865c}
+
+\item 
+void {\bfseries Stop\+All\+Topic} ()\hypertarget{classlog2hdfs_1_1KafkaConsumer_a8c6fa096dff438222fe5faa8e6534a36}{}\label{classlog2hdfs_1_1KafkaConsumer_a8c6fa096dff438222fe5faa8e6534a36}
+
+\item 
+bool {\bfseries Start\+Topic} (const std\+::string \&topic)\hypertarget{classlog2hdfs_1_1KafkaConsumer_a64aaf4d6b6c9b80475a36b7033fbf681}{}\label{classlog2hdfs_1_1KafkaConsumer_a64aaf4d6b6c9b80475a36b7033fbf681}
+
+\item 
+bool {\bfseries Stop\+Topic} (const std\+::string \&topic)\hypertarget{classlog2hdfs_1_1KafkaConsumer_a193777bd396d2b3adf4d8f591076b79d}{}\label{classlog2hdfs_1_1KafkaConsumer_a193777bd396d2b3adf4d8f591076b79d}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1KafkaConsumer}{Kafka\+Consumer} $>$ {\bfseries Init} (\hyperlink{classlog2hdfs_1_1KafkaGlobalConf}{Kafka\+Global\+Conf} $\ast$conf, std\+::string $\ast$errstr)\hypertarget{classlog2hdfs_1_1KafkaConsumer_a29cabdb7effeecfa881b0cf90fe84ae1}{}\label{classlog2hdfs_1_1KafkaConsumer_a29cabdb7effeecfa881b0cf90fe84ae1}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+src/kafka/kafka\+\_\+consumer.\+h\item 
+src/kafka/kafka\+\_\+consumer.\+cc\end{DoxyCompactItemize}

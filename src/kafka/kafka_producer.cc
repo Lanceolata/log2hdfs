@@ -46,8 +46,11 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::CreateTopicProducer(
 
   std::lock_guard<std::mutex> guard(mutex_);
   auto it = topics_.find(topic);
-  if (it != topics_.end())
-    return it->second;
+  if (it != topics_.end()) {
+    if (errstr)
+      *errstr = "topic producer already created";
+    return nullptr;
+  }
 
   rd_kafka_topic_conf_t *rkt_conf = rd_kafka_topic_conf_dup(conf->rkt_conf_);
   rd_kafka_topic_t *rkt = rd_kafka_topic_new(handle_->rk_, topic.c_str(),

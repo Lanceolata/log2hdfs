@@ -51,13 +51,18 @@ class KafkaConsumer {
   }
 
   std::shared_ptr<KafkaTopicConsumer> CreateTopicConsumer(
-      const std::string& topic, KafkaTopicConf* conf,
-      std::vector<int32_t> partitions, std::vector<int64_t> offsets,
-      std::shared_ptr<KafkaConsumeCb> cb, std::string* errstr);
+      const std::string& topic,
+      KafkaTopicConf* conf,
+      const std::vector<int32_t>& partitions,
+      const std::vector<int64_t>& offsets,
+      std::shared_ptr<KafkaConsumeCb> cb,
+      std::string* errstr);
 
   void StartAllTopic();
 
   void StopAllTopic();
+
+  bool StartTopic(const std::string& topic);
 
   bool StopTopic(const std::string& topic);
 

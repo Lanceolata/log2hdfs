@@ -1,0 +1,52 @@
+\hypertarget{classlog2hdfs_1_1LogFormat}{}\section{log2hdfs\+:\+:Log\+Format Class Reference}
+\label{classlog2hdfs_1_1LogFormat}\index{log2hdfs\+::\+Log\+Format@{log2hdfs\+::\+Log\+Format}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries Type} \{ \\*
+{\bfseries k\+V6}, 
+{\bfseries k\+V6\+Device}, 
+{\bfseries k\+Ef}, 
+{\bfseries k\+Ef\+Device}, 
+\\*
+{\bfseries k\+Report}
+ \}\hypertarget{classlog2hdfs_1_1LogFormat_a8d56f60d7e8d9ff7aaeeeebe1fd7e1dd}{}\label{classlog2hdfs_1_1LogFormat_a8d56f60d7e8d9ff7aaeeeebe1fd7e1dd}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual bool \hyperlink{classlog2hdfs_1_1LogFormat_a27855d25961e580cac510fcd6548e7ca}{Extract\+Key\+And\+Ts} (const char $\ast$payload, std\+::string $\ast$key, time\+\_\+t $\ast$ts) const =0
+\item 
+virtual bool {\bfseries Parse\+Key} (const std\+::string \&key, std\+::map$<$ std\+::string, std\+::string $>$ $\ast$m) const =0\hypertarget{classlog2hdfs_1_1LogFormat_ac509ca169976fb2a63203e6bb29fb8f7}{}\label{classlog2hdfs_1_1LogFormat_ac509ca169976fb2a63203e6bb29fb8f7}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \hyperlink{classlog2hdfs_1_1Optional}{Optional}$<$ Log\+Format\+::\+Type $>$ {\bfseries Parse\+Type} (const std\+::string \&type)\hypertarget{classlog2hdfs_1_1LogFormat_a8cc200b8141732e212f675ec4eb65a7d}{}\label{classlog2hdfs_1_1LogFormat_a8cc200b8141732e212f675ec4eb65a7d}
+
+\item 
+static std\+::unique\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1LogFormat}{Log\+Format} $>$ {\bfseries Init} (Log\+Format\+::\+Type type)\hypertarget{classlog2hdfs_1_1LogFormat_a479ee42ae9c8e32188f2691b1ee6248e}{}\label{classlog2hdfs_1_1LogFormat_a479ee42ae9c8e32188f2691b1ee6248e}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\index{log2hdfs\+::\+Log\+Format@{log2hdfs\+::\+Log\+Format}!Extract\+Key\+And\+Ts@{Extract\+Key\+And\+Ts}}
+\index{Extract\+Key\+And\+Ts@{Extract\+Key\+And\+Ts}!log2hdfs\+::\+Log\+Format@{log2hdfs\+::\+Log\+Format}}
+\subsubsection[{\texorpdfstring{Extract\+Key\+And\+Ts(const char $\ast$payload, std\+::string $\ast$key, time\+\_\+t $\ast$ts) const =0}{ExtractKeyAndTs(const char *payload, std::string *key, time_t *ts) const =0}}]{\setlength{\rightskip}{0pt plus 5cm}virtual bool log2hdfs\+::\+Log\+Format\+::\+Extract\+Key\+And\+Ts (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{payload, }
+\item[{std\+::string $\ast$}]{key, }
+\item[{time\+\_\+t $\ast$}]{ts}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [pure virtual]}}\hypertarget{classlog2hdfs_1_1LogFormat_a27855d25961e580cac510fcd6548e7ca}{}\label{classlog2hdfs_1_1LogFormat_a27855d25961e580cac510fcd6548e7ca}
+\begin{DoxyReturn}{Returns}
+extract success return true, otherwise false, 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/kafka2hdfs/log\+\_\+format.\+h\end{DoxyCompactItemize}

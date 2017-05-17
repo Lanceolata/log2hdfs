@@ -1,0 +1,36 @@
+\hypertarget{classlog2hdfs_1_1PathFormat}{}\section{log2hdfs\+:\+:Path\+Format Class Reference}
+\label{classlog2hdfs_1_1PathFormat}\index{log2hdfs\+::\+Path\+Format@{log2hdfs\+::\+Path\+Format}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum {\bfseries Type} \{ {\bfseries k\+Normal}, 
+{\bfseries k\+Delay}
+ \}\hypertarget{classlog2hdfs_1_1PathFormat_a681d8de0cabd971a218bc4597e29e12f}{}\label{classlog2hdfs_1_1PathFormat_a681d8de0cabd971a218bc4597e29e12f}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual bool {\bfseries Build\+Local\+File\+Name} (const \hyperlink{classlog2hdfs_1_1KafkaMessage}{Kafka\+Message} \&msg, std\+::string $\ast$path) const =0\hypertarget{classlog2hdfs_1_1PathFormat_ad3fa64a6e9319f90c71f8028b66b59f8}{}\label{classlog2hdfs_1_1PathFormat_ad3fa64a6e9319f90c71f8028b66b59f8}
+
+\item 
+virtual bool {\bfseries Write\+Finished} (const std\+::string \&filepath) const =0\hypertarget{classlog2hdfs_1_1PathFormat_ab8f27d327871a98808868f19407513b8}{}\label{classlog2hdfs_1_1PathFormat_ab8f27d327871a98808868f19407513b8}
+
+\item 
+virtual bool {\bfseries Build\+Hdfs\+Path} (const std\+::string \&filename, std\+::string $\ast$path) const =0\hypertarget{classlog2hdfs_1_1PathFormat_a75e5ace2e6950f862178b4b93e7a7649}{}\label{classlog2hdfs_1_1PathFormat_a75e5ace2e6950f862178b4b93e7a7649}
+
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \hyperlink{classlog2hdfs_1_1Optional}{Optional}$<$ Path\+Format\+::\+Type $>$ {\bfseries Get\+Type\+From\+String} (const std\+::string \&type)\hypertarget{classlog2hdfs_1_1PathFormat_ab8b176f25e66a79ce009db193114ca49}{}\label{classlog2hdfs_1_1PathFormat_ab8b176f25e66a79ce009db193114ca49}
+
+\item 
+static std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1PathFormat}{Path\+Format} $>$ {\bfseries Init} (Path\+Format\+::\+Type type, std\+::shared\+\_\+ptr$<$ \hyperlink{classlog2hdfs_1_1TopicConf}{Topic\+Conf} $>$ conf)\hypertarget{classlog2hdfs_1_1PathFormat_a1ceb4949518daba1605d77b1730d0da8}{}\label{classlog2hdfs_1_1PathFormat_a1ceb4949518daba1605d77b1730d0da8}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/kafka2hdfs/path\+\_\+format.\+h\end{DoxyCompactItemize}
