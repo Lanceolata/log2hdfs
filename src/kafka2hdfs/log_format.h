@@ -29,11 +29,11 @@ class LogFormat {
   /**
    *  @return extract success return true, otherwise false,
    */
-  virtual bool ExtractKeyAndTs(const char* payload, std::string* key,
-                               time_t* ts) const = 0;
+  virtual bool ExtractKeyAndTs(const char* payload, size_t len,
+                               std::string* key, time_t* ts) const = 0;
 
   virtual bool ParseKey(const std::string& key, 
-                        std::map<std::string, std::string>* m) const = 0;
+                        std::map<char, std::string>* m) const = 0;
 };
 
 }   // namespace log2hdfs

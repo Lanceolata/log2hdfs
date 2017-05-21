@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include "util/queue.h"
+#include "util/optional.h"
 
 namespace log2hdfs {
 
@@ -16,11 +17,14 @@ class TopicConf;
 class Upload {
  public:
   enum Type {
-    kNone,
     kText,
     kLzo,
-    kOrc
+    kOrc,
+    kCompress,
+    kTextNoUpload
   };
+
+  static Optional<Upload::Type> ParseType(const std::string& type);
 
   static std::unique_ptr<Upload> Init(std::shared_ptr<TopicConf> conf);
 

@@ -21,8 +21,6 @@ Optional<ConsumeCallback::Type> ConsumeCallback::ParseType(
     return Optional<ConsumeCallback::Type>(kReport);
   } else if (type == "debug") {
     return Optional<ConsumeCallback::Type>(kDebug);
-  } else if (type == "none") {
-    return Optional<ConsumeCallback::Type>(kNone);
   } else {
     return Optional<ConsumeCallback::Type>::Invalid();
   }
@@ -40,9 +38,6 @@ std::shared_ptr<KafkaConsumeCb> ConsumeCallback::Init(
 
   std::shared_ptr<KafkaConsumeCb> res;
   switch (type) {
-    case kNone:
-      res.reset();
-      break;
     case kV6:
       res = V6ConsumeCallback::Init(std::move(conf), std::move(format),
                                     std::move(cache));
@@ -79,15 +74,16 @@ std::shared_ptr<V6ConsumeCallback> V6ConsumeCallback::Init(
   }
 
   std::string consume_dir = conf->consume_dir();
-  if (!IsDir(consume_dir)) {
-    if (!MakeDir(consume_dir)) {
-      LOG(ERROR) << "V6ConsumeCallback Init MakeDir[" << consume_dir
+  std::string normal_path = NormalDirPath(consume_dir);
+  if (!IsDir(normal_path)) {
+    if (!MakeDir(normal_path)) {
+      LOG(ERROR) << "V6ConsumeCallback Init MakeDir[" << normal_path
                  << "] failed";
       return nullptr;
     }
   }
 
-  return std::make_shared<V6ConsumeCallback>(consume_dir,
+  return std::make_shared<V6ConsumeCallback>(normal_path,
              std::move(format), std::move(cache));
 }
 

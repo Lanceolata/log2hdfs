@@ -20,7 +20,6 @@ class TopicConf;
 class ConsumeCallback : public KafkaConsumeCb {
  public:
   enum Type {
-    kNone,
     kV6,
     kEf,
     kReport,

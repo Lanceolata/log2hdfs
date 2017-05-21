@@ -51,7 +51,7 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
       remedy_ = remedy;
     }
   }
-  LOG(INFO) << "TopicConfContents Update remedy[" << remedy_ << "]";
+  LOG(INFO) << "TopicConfContents Update remedy[" << remedy_ << "] success";
 
   std::string errstr;
   for (auto it = section->Begin(); it != section->End(); ++it) {

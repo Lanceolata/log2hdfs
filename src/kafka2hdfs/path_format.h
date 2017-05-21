@@ -20,7 +20,7 @@ class PathFormat {
     kDelay
   };
 
-  static Optional<PathFormat::Type> GetTypeFromString(const std::string &type);
+  static Optional<PathFormat::Type> ParseType(const std::string &type);
 
   static std::shared_ptr<PathFormat> Init(
       PathFormat::Type type,
@@ -29,11 +29,11 @@ class PathFormat {
   virtual ~PathFormat() {}
 
   virtual bool BuildLocalFileName(const KafkaMessage& msg,
-                                  std::string* path) const = 0;
+                                  std::string* name) const = 0;
 
   virtual bool WriteFinished(const std::string& filepath) const = 0;
 
-  virtual bool BuildHdfsPath(const std::string& filename,
+  virtual bool BuildHdfsPath(const std::string& name,
                              std::string* path) const = 0;
 };
 
