@@ -25,8 +25,15 @@ extern "C" {
 
 namespace log2hdfs {
 
+/**
+ * Consume callback class.
+ */
 class KafkaConsumeCb {
  public:
+  /**
+   * The consume callback is used with log2hdfs::KafkaTopicConsumer
+   * adn will be called for each consumed message.
+   */
   virtual void Consume(const KafkaMessage& msg) = 0;
 
   virtual ~KafkaConsumeCb() {}

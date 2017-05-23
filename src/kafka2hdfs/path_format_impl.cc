@@ -36,7 +36,8 @@ Optional<PathFormat::Type> PathFormat::ParseType(const std::string &type) {
 }
 
 std::shared_ptr<PathFormat> PathFormat::Init(
-    PathFormat::Type type, std::shared_ptr<TopicConf> conf) {
+    std::shared_ptr<TopicConf> conf) {
+  PathFormat::Type type = conf->path_format();
   std::shared_ptr<PathFormat> res;
   switch (type) {
     case kNormal:
@@ -145,10 +146,24 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
   if (file_ts < 0) {
     LOG(WARNING) << "NormalPathFormat WriteFinished FileMtime["
                  << filepath << "] failed";
+    return false;
   }
   
   if (time(NULL) - file_ts > interval)
     return true;
+
+  int maxseconds = conf_->complete_maxseconds();
+  if (maxseconds > 60) {
+    time_t file_atime = FileAtime(filepath);
+    if (file_atime < 0) {
+      LOG(WARNING) << "NormalPathFormat WriteFinished FileAtime["
+                   << filepath << "] failed";
+      return false;
+    }
+
+    if (time(NULL) - file_atime > maxseconds)
+      return true;
+  }
 
   return false;
 }

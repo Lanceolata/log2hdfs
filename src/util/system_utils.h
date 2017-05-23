@@ -14,11 +14,15 @@ extern bool IsFile(const std::string& path);
 
 extern bool RmFile(const std::string& path);
 
-// Get file size.
-// return:
-//   On success, file size is returned. On error, -1 is returned,
-//   and errno is set appropriately.
+/**
+ * Get file size.
+ * 
+ * @return On success, file size is returned. On error, -1 is returned,
+ * and errno is set appropriately.
+ */
 extern off_t FileSize(const std::string& path);
+
+extern time_t FileAtime(const std::string& path);
 
 // Get file st_mtime.
 // return:

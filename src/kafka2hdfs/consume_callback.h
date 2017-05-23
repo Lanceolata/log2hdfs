@@ -30,7 +30,6 @@ class ConsumeCallback : public KafkaConsumeCb {
       const std::string& type);
 
   static std::shared_ptr<KafkaConsumeCb> Init(
-      ConsumeCallback::Type type,
       std::shared_ptr<TopicConf> conf,
       std::shared_ptr<PathFormat> format,
       std::shared_ptr<FpCache> cache);

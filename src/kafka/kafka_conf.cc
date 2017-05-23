@@ -7,9 +7,8 @@ namespace log2hdfs {
 // ------------------------------------------------------------------
 // KafkaGlobalConf
 
-std::unique_ptr<KafkaGlobalConf> KafkaGlobalConf::Init(
-    KafkaGlobalConf::Type type) {
-  return std::unique_ptr<KafkaGlobalConf>(new KafkaGlobalConf(type));
+std::unique_ptr<KafkaGlobalConf> KafkaGlobalConf::Init() {
+  return std::unique_ptr<KafkaGlobalConf>(new KafkaGlobalConf());
 }
 
 KafkaConfResult KafkaGlobalConf::Set(const std::string& name,
@@ -53,9 +52,8 @@ KafkaConfResult KafkaGlobalConf::Get(const std::string& name,
 // ------------------------------------------------------------------
 // KafkaTopicConf
 
-std::unique_ptr<KafkaTopicConf> KafkaTopicConf::Init(
-    KafkaTopicConf::Type type) {
-  return std::unique_ptr<KafkaTopicConf>(new KafkaTopicConf(type));
+std::unique_ptr<KafkaTopicConf> KafkaTopicConf::Init() {
+  return std::unique_ptr<KafkaTopicConf>(new KafkaTopicConf());
 }
 
 KafkaConfResult KafkaTopicConf::Set(const std::string& name,

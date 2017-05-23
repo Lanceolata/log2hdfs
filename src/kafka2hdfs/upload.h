@@ -5,11 +5,11 @@
 
 #include <string>
 #include <memory>
-#include "util/queue.h"
 #include "util/optional.h"
 
 namespace log2hdfs {
 
+class FpCache;
 class HdfsHandle;
 class PathFormat;
 class TopicConf;
@@ -26,11 +26,15 @@ class Upload {
 
   static Optional<Upload::Type> ParseType(const std::string& type);
 
-  static std::unique_ptr<Upload> Init(std::shared_ptr<TopicConf> conf);
+  static std::unique_ptr<Upload> Init(
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> fp_cache,
+      std::shared_ptr<HdfsHandle> handle);
 
   virtual ~Upload() {}
 
-  virtual bool Start() = 0;
+  virtual void Start() = 0;
 
   virtual void Stop() = 0;
 };

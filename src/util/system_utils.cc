@@ -36,6 +36,17 @@ off_t FileSize(const std::string& path) {
   return stbuf.st_size;
 }
 
+time_t FileAtime(const std::string& path) {
+  if (path.empty())
+    return -1;
+
+  struct stat stbuf;
+  if (stat(path.c_str(), &stbuf) != 0)
+    return -1;
+
+  return stbuf.st_atime;
+}
+
 time_t FileMtime(const std::string& path) {
   if (path.empty())
     return -1;

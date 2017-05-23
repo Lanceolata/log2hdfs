@@ -214,8 +214,7 @@ int main(int argc, char *argv[]) {
 
   // Init kafka producer global conf
   std::string errstr;
-  std::unique_ptr<KafkaGlobalConf> producer_conf = KafkaGlobalConf::Init(
-      KafkaGlobalConf::Type::kProducer);
+  std::unique_ptr<KafkaGlobalConf> producer_conf = KafkaGlobalConf::Init();
   if (!producer_conf) {
     LOG(ERROR) << "KafkaGlobalConf Init producer global conf failed";
     exit(EXIT_FAILURE);

@@ -27,7 +27,6 @@ Optional<ConsumeCallback::Type> ConsumeCallback::ParseType(
 }
 
 std::shared_ptr<KafkaConsumeCb> ConsumeCallback::Init(
-    ConsumeCallback::Type type,
     std::shared_ptr<TopicConf> conf,
     std::shared_ptr<PathFormat> format,
     std::shared_ptr<FpCache> cache) {
@@ -37,6 +36,7 @@ std::shared_ptr<KafkaConsumeCb> ConsumeCallback::Init(
   }
 
   std::shared_ptr<KafkaConsumeCb> res;
+  ConsumeCallback::Type type = conf->consume_type();
   switch (type) {
     case kV6:
       res = V6ConsumeCallback::Init(std::move(conf), std::move(format),

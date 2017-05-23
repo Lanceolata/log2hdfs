@@ -34,6 +34,10 @@ class TopicConfContents {
 
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
+  std::string consume_dir_;
+  std::string compress_dir_;
+  std::string upload_dir_;
+
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
 
   LogFormat::Type log_format_;
@@ -41,7 +45,7 @@ class TopicConfContents {
   ConsumeCallback::Type consume_type_;
 
   Upload::Type file_format_;
-  int parallel_;
+  size_t parallel_;
   std::string compress_lzo_;
   std::string compress_orc_;
   std::string compress_mv_;
@@ -50,6 +54,7 @@ class TopicConfContents {
   std::atomic<int> consume_interval_;
   std::atomic<int> complete_interval_;
   std::atomic<long> complete_maxsize_;
+  std::atomic<int> complete_maxseconds_;
   std::atomic<int> upload_interval_;
 };
 
@@ -58,15 +63,10 @@ class TopicConf {
   // Must call before new TopicConf.
   static bool UpdataDefaultConf(std::shared_ptr<Section> section);
 
-  static std::shared_ptr<TopicConf> Init(const std::string& section,
-                                         const std::string& rootdir);
+  static std::shared_ptr<TopicConf> Init(const std::string& section);
 
-  TopicConf(const std::string& section, const std::string& rootdir):
-      section_(section), contents_(DEFAULT_CONTENTS_) {
-    consume_dir_ = rootdir + "/consume";
-    compress_dir_ = rootdir + "/compress";
-    upload_dir_ = rootdir + "/upload";
-  }
+  TopicConf(const std::string& section):
+      section_(section) {}
 
   bool InitConf(std::shared_ptr<Section> section);
 
@@ -78,15 +78,15 @@ class TopicConf {
   }
 
   const std::string& consume_dir() const {
-    return consume_dir_;
+    return contents_.consume_dir_;
   }
 
   const std::string& compress_dir() const {
-    return compress_dir_;
+    return contents_.compress_dir_;
   }
 
   const std::string& upload_dir() const {
-    return upload_dir_;
+    return contents_.upload_dir_;
   }
 
   const std::vector<std::string>& topics() const {
@@ -126,7 +126,7 @@ class TopicConf {
     return contents_.file_format_;
   }
 
-  int parallel() const {
+  size_t parallel() const {
     return contents_.parallel_;
   }
 
@@ -154,6 +154,10 @@ class TopicConf {
     return contents_.complete_maxsize_.load();
   }
 
+  int complete_maxseconds() const {
+    return contents_.complete_maxseconds_.load();
+  }
+
   int upload_interval() const {
     return contents_.upload_interval_.load();
   }
@@ -162,9 +166,6 @@ class TopicConf {
   static TopicConfContents DEFAULT_CONTENTS_;
 
   std::string section_;
-  std::string consume_dir_;
-  std::string compress_dir_;
-  std::string upload_dir_;
   std::vector<std::string> topics_;
   std::vector<std::vector<int32_t>> partitions_;
   std::vector<std::vector<int64_t>> offsets_;

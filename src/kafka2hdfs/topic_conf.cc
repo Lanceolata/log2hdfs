@@ -93,7 +93,10 @@ bool ParseOffsets(
 // TopicConfContents
 
 TopicConfContents::TopicConfContents():
-    kafka_topic_conf_(KafkaTopicConf::Init(KafkaTopicConf::Type::kConsumer)),
+    consume_dir_(""),
+    compress_dir_(""),
+    upload_dir_(""),
+    kafka_topic_conf_(KafkaTopicConf::Init()),
     log_format_(LogFormat::Type::kV6),
     path_format_(PathFormat::Type::kNormal),
     consume_type_(ConsumeCallback::Type::kV6),
@@ -105,9 +108,13 @@ TopicConfContents::TopicConfContents():
     consume_interval_(900),
     complete_interval_(120),
     complete_maxsize_(21474836480),
+    complete_maxseconds_(-1),
     upload_interval_(20) {}
 
 TopicConfContents::TopicConfContents(const TopicConfContents& other):
+    consume_dir_(other.consume_dir_),
+    compress_dir_(other.compress_dir_),
+    upload_dir_(other.upload_dir_),
     kafka_topic_conf_(other.kafka_topic_conf_->Copy()),
     log_format_(other.log_format_),
     path_format_(other.path_format_),
@@ -120,6 +127,7 @@ TopicConfContents::TopicConfContents(const TopicConfContents& other):
     consume_interval_(other.consume_interval_.load()),
     complete_interval_(other.complete_interval_.load()),
     complete_maxsize_(other.complete_maxsize_.load()),
+    complete_maxseconds_(other.complete_maxseconds_.load()),
     upload_interval_(other.upload_interval_.load()) {}
 
 // rdkafka conf in section[default] start with "kafka.".
@@ -137,7 +145,25 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
     return false;
   }
 
-  Optional<std::string> option = section->Get("log.format");
+  Optional<std::string> option = section->Get("rootdir");
+  if (!option.valid()) {
+    LOG(WARNING) << "TopicConfContents Update invalid rootdir";
+    return false;
+  }
+
+  std::string normal_path = NormalDirPath(option.value());
+  if (normal_path.empty()) {
+    LOG(WARNING) << "TopicConfContents Update invalid normal_path";
+    return false;
+  }
+  consume_dir_ = normal_path + "/consume";
+  compress_dir_ = normal_path + "/compress";
+  upload_dir_ = normal_path + "/upload";
+  LOG(INFO) << "TopicConfContents Update consume_dir_[" << consume_dir_
+            << "] compress_dir_[" << compress_dir_ << "] upload_dir_["
+            << upload_dir_ << "]";
+
+  option = section->Get("log.format");
   if (option.valid()) {
     Optional<LogFormat::Type> log_format =
         LogFormat::ParseType(option.value());
@@ -196,7 +222,7 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
 
   option = section->Get("parallel");
   if (option.valid()) {
-    int parallel = atoi(option.value().c_str());
+    long parallel = atol(option.value().c_str());
     if (parallel < 0) {
       LOG(WARNING) << "TopicConfContents Update invalid parallel["
                    << option.value() << "]";
@@ -284,6 +310,12 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
     }
   }
 
+  int complete_maxseconds = complete_maxseconds_.load();
+  option = section->Get("complete.maxseconds");
+  if (option.valid() && !option.value().empty()) {
+    complete_maxseconds = atoi(option.value().c_str());
+  }
+
   int upload_interval = upload_interval_.load();
   option = section->Get("upload.interval");
   if (option.valid() && !option.value().empty()) {
@@ -313,6 +345,12 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
               << complete_maxsize << "] success";
   }
 
+  if (complete_maxseconds != complete_maxseconds_.load()) {
+    complete_maxseconds_.store(complete_maxseconds);
+    LOG(INFO) << "TopicConfContents UpdateRuntime update complete_maxseconds["
+              << complete_maxseconds << "] success";
+  }
+
   if (upload_interval != upload_interval_.load()) {
     upload_interval_.store(upload_interval);
     LOG(INFO) << "TopicConfContents UpdateRuntime update upload_interval["
@@ -332,14 +370,12 @@ bool TopicConf::UpdataDefaultConf(std::shared_ptr<Section> section) {
   return DEFAULT_CONTENTS_.Update(std::move(section));
 }
 
-std::shared_ptr<TopicConf> TopicConf::Init(const std::string& section,
-                                           const std::string& rootdir) {
-  if (section.empty() || rootdir.empty()) {
+std::shared_ptr<TopicConf> TopicConf::Init(const std::string& section) {
+  if (section.empty()) {
     LOG(ERROR) << "TopicConf Init invalid parameters";
     return nullptr;
   }
-  std::string normal_path = NormalDirPath(rootdir);
-  return std::make_shared<TopicConf>(section, normal_path);
+  return std::make_shared<TopicConf>(section);
 }
 
 bool TopicConf::InitConf(std::shared_ptr<Section> section) {

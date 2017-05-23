@@ -12,7 +12,7 @@ namespace log2hdfs {
 // TopicConfContents
 
 TopicConfContents::TopicConfContents():
-    kafka_topic_conf_(KafkaTopicConf::Init(KafkaTopicConf::Type::kProducer)),
+    kafka_topic_conf_(KafkaTopicConf::Init()),
     remedy_(-1),
     batch_num_(100),
     poll_timeout_(200),

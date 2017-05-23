@@ -22,9 +22,7 @@ class PathFormat {
 
   static Optional<PathFormat::Type> ParseType(const std::string &type);
 
-  static std::shared_ptr<PathFormat> Init(
-      PathFormat::Type type,
-      std::shared_ptr<TopicConf> conf);
+  static std::shared_ptr<PathFormat> Init(std::shared_ptr<TopicConf> conf);
 
   virtual ~PathFormat() {}
 
