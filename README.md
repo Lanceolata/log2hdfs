@@ -1,8 +1,6 @@
-## LOG2HDFS
+## log2hdfs
 
-LOG2HDFS由LOG2KAFKA和KAFKA2HDFS两个部分组成。
-
-实现文件从前端机发送到kafka，再从kafka消费上传到hdfs。
+log2hdfs is a c++ application to aggregator log files to hdfs.
 
 ## Usage
 
@@ -10,12 +8,58 @@ LOG2HDFS由LOG2KAFKA和KAFKA2HDFS两个部分组成。
 
 - The GNU toolchain
 - GNU make
+- cmake
 - pthreads
+- zlib (optional, for gzip compression support)
+- libssl-dev (optional, for SSL and SASL SCRAM support)
+- libsasl2-dev (optional, for SASL GSSAPI support)
+- java (for kafka2hdfs hdfs client)
+- hdfs (for kafka2jdfs hdfs client)
 
-## LOG2KAFKA
+### Instructions
 
-使用linux inotify递归监控目录，发送移动到目录中的文件到配置的kafka topic。
+#### Building
 
-## KAFKA2HDFS
+##### Installing thirdparty 
 
-从kafka消费数据，按数据格式归档，上传到hdfs。
+```
+cd thirdparty
+
+sh download_thirdparty.sh
+sh build_thirdparty.sh
+```
+
+Update versions.sh to change thirdparty version.
+
+##### build log2kafka
+
+```
+sh build_log2kafka.sh
+
+```
+
+##### build kafka2hdfs
+
+```
+sh build_kafka2hdfs.sh
+```
+
+Need to configure HDFS_INCLUDE、HDFS_LIB and JAVA_LIB。
+
+### Documentation
+
+To generate Doxygen documents for the API, type:
+
+```
+doxygen Doxyfile
+```
+
+Configuration properties are documented in CONFIGURATION.md
+
+Example configuration files are documented in conf/ sub-directory.
+
+For a log2hdfs introduction, see INTRODUCTION.md
+
+### Tests
+
+See the test/ sub-directory.
