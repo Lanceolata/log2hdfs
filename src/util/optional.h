@@ -5,30 +5,28 @@
 
 #include <utility>
 
-namespace log2hdfs {
-
 /**
  * Represents a type that may be invalid, similar to std::optional.
  */
-template <typename T>
+template <class T>
 class Optional {
  public:
   /**
    * Static function to create a invalid Optional object.
    * 
-   * @return  invalid optional object.
+   * @return invalid optional object.
    */
   static Optional Invalid() {
     return Optional();
   }
 
   /**
-   * Constructor.
+   * Constructor
    */
   Optional():valid_(false), value_(T()) {}
 
   /**
-   * Constructor.
+   * Constructor
    * 
    * Implicit conversion from template value.
    */
@@ -36,13 +34,13 @@ class Optional {
       valid_(true), value_(value) {}
 
   /**
-   * Copy constructor.
+   * Copy constructor
    */
   Optional(const Optional& other):
       valid_(other.valid_), value_(other.value_) {}
 
   /**
-   * Rvalue constructor.
+   * Rvalue constructor
    */
   Optional(Optional&& other):
       valid_(other.valid_), value_(std::move(other.value_)) {
@@ -50,7 +48,7 @@ class Optional {
   }
 
   /**
-   * Copy assignment function.
+   * Copy assignment function
    */
   Optional& operator=(const Optional& other) {
     if (this != &other) {
@@ -61,7 +59,7 @@ class Optional {
   }
 
   /**
-   * Rvalue assignment function.
+   * Rvalue assignment function
    */
   Optional& operator=(Optional&& other) {
     value_ = std::move(other.value_);
@@ -71,9 +69,9 @@ class Optional {
   }
 
   /**
-   * Rvalue assignment function.
+   * Rvalue assignment function
    * 
-   * Assignment from a template value.
+   * Rvalue implicit conversion from template value.
    */
   Optional& operator=(T&& value) {
     value_ = std::move(value);
@@ -82,7 +80,7 @@ class Optional {
   }
 
   /**
-   * Reset Optional.
+   * Reset Optional
    * 
    * Set valid to false.
    */
@@ -91,7 +89,7 @@ class Optional {
   }
 
   /**
-   * Optional valid.
+   * Optional valid
    *
    * @return true if valid; false otherwise.
    */
@@ -100,7 +98,7 @@ class Optional {
   }
 
   /**
-   * Optional value.
+   * Optional value
    * 
    * @return value if optional valid; undefined behavior otherwise.
    */
@@ -109,7 +107,7 @@ class Optional {
   }
 
   /**
-   * Operators ==.
+   * Operators ==
    * 
    * @return true if equal; false otherwise.
    */
@@ -118,7 +116,7 @@ class Optional {
   }
 
   /**
-   * Operators =!.
+   * Operators =!
    * 
    * @return true if not equal; false otherwise.
    */
@@ -130,7 +128,5 @@ class Optional {
   bool valid_;
   T value_;
 };
-
-}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_OPTIONAL_H_

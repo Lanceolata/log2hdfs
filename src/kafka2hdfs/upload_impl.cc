@@ -231,7 +231,7 @@ void TextUploadImpl::UploadPath(const std::string& path) {
     if (!handle_->CreateDirectory(dir)) {
       LOG(WARNING) << "TextUploadImpl UploadPath CreateDirectory[" << dir
                    << "] path[" << path << "] failed";
-      res = true;
+      res = false;
     } else {
       res = handle_->Put(path, hdfs_path);
     }

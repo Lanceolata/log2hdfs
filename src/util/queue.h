@@ -8,23 +8,23 @@
 #include <memory>
 #include <condition_variable>
 
-namespace log2hdfs {
-
-// Simple thread safe queue.
-template<typename T>
+/**
+ * Simple thread safe queue.
+ */
+template<class T>
 class Queue {
  public:
   /**
    * Static function to create a Queue shared_ptr.
    * 
-   * @return std::shared_ptr<Queue>.
+   * @return std::shared_ptr<Queue>
    */
   static std::shared_ptr<Queue> Init() {
     return std::make_shared<Queue>();
   }
 
   /**
-   * Constructor.
+   * Constructor
    */
   Queue() {}
 
@@ -32,11 +32,11 @@ class Queue {
   Queue& operator=(const Queue& other) = delete;
 
   /**
-   * Push T valud to queue.
+   * Push T value to queue.
    */
   void Push(T value) {
     std::shared_ptr<T> data(std::make_shared<T>(std::move(value)));
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     queue_.push(data);
     cond_.notify_one();
   }
@@ -44,14 +44,14 @@ class Queue {
   /**
    * Wait to pop a value from queue.
    * 
-   * @param value pop value.
+   * @param value pop value
    */
   void WaitPop(T* value) {
     if (!value)
       return;
 
-    std::unique_lock<std::mutex> guard(mutex_);
-    cond_.wait(guard, [this]{ return !queue_.empty(); });
+    std::unique_lock<std::mutex> lock(mutex_);
+    cond_.wait(lock, [this]{ return !queue_.empty(); });
     *value = std::move(*queue_.front());
     queue_.pop();
   }
@@ -62,8 +62,8 @@ class Queue {
    * @return std::shared_ptr<T> point to pop value.
    */
   std::shared_ptr<T> WaitPop() {
-    std::unique_lock<std::mutex> guard(mutex_);
-    cond_.wait(guard, [this]{ return !queue_.empty(); });
+    std::unique_lock<std::mutex> lock(mutex_);
+    cond_.wait(lock, [this]{ return !queue_.empty(); });
     std::shared_ptr<T> res = queue_.front();
     queue_.pop();
     return res;
@@ -72,7 +72,7 @@ class Queue {
   /**
    * Try to pop a value from queue.
    * 
-   * @param value pop value.
+   * @param value pop value
    * 
    * @return true if pop and set value success; false otherwise.
    */
@@ -80,7 +80,7 @@ class Queue {
     if (!value)
       return false;
 
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (queue_.empty())
       return false;
 
@@ -96,7 +96,7 @@ class Queue {
    *         nullptr otherwise.
    */
   std::shared_ptr<T> TryPop() {
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (queue_.empty())
       return nullptr;
 
@@ -111,7 +111,7 @@ class Queue {
    * @return true if queue is empty; false otherwise.
    */
   bool Empty() const {
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     return queue_.empty();
   }
 
@@ -120,7 +120,5 @@ class Queue {
   std::condition_variable cond_;
   std::queue<std::shared_ptr<T>> queue_;
 };
-
-}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_QUEUE_H_

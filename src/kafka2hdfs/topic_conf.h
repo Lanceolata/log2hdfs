@@ -66,7 +66,7 @@ class TopicConf {
   static std::shared_ptr<TopicConf> Init(const std::string& section);
 
   TopicConf(const std::string& section):
-      section_(section) {}
+      section_(section), contents_(DEFAULT_CONTENTS_) {}
 
   bool InitConf(std::shared_ptr<Section> section);
 

@@ -146,19 +146,16 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
   }
 
   Optional<std::string> option = section->Get("rootdir");
-  if (!option.valid()) {
-    LOG(WARNING) << "TopicConfContents Update invalid rootdir";
-    return false;
+  if (option.valid()) {
+    std::string normal_path = NormalDirPath(option.value());
+    if (normal_path.empty()) {
+      LOG(WARNING) << "TopicConfContents Update invalid normal_path";
+      return false;
+    }
+    consume_dir_ = normal_path + "/consume";
+    compress_dir_ = normal_path + "/compress";
+    upload_dir_ = normal_path + "/upload";
   }
-
-  std::string normal_path = NormalDirPath(option.value());
-  if (normal_path.empty()) {
-    LOG(WARNING) << "TopicConfContents Update invalid normal_path";
-    return false;
-  }
-  consume_dir_ = normal_path + "/consume";
-  compress_dir_ = normal_path + "/compress";
-  upload_dir_ = normal_path + "/upload";
   LOG(INFO) << "TopicConfContents Update consume_dir_[" << consume_dir_
             << "] compress_dir_[" << compress_dir_ << "] upload_dir_["
             << upload_dir_ << "]";
@@ -432,6 +429,14 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
     LOG(INFO) << "TopicConf InitConf topic[" << top << "] partitions["
               << stream.str() << "] success";
   }
+
+  std::string hdfs_path = section->Get("hdfs.path", "");
+  if (hdfs_path.empty()) {
+    LOG(WARNING) << "TopicConf InitConf hdfs_path invalid";
+    return false;
+  }
+  hdfs_path_ = hdfs_path;
+  LOG(INFO) << "TopicConf InitConf hdfs_path[" << hdfs_path << "]";
 
   return contents_.Update(std::move(section));
 }

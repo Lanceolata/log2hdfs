@@ -153,6 +153,12 @@ bool ScanDir(
   return true;
 }
 
+bool Rename(const std::string& oldpath, const std::string& newpath) {
+  if (oldpath.empty() || newpath.empty())
+    return false;
+  return rename(oldpath.c_str(), newpath.c_str()) == 0;
+}
+
 time_t StrToTs(const std::string& str, const char* format) {
   if (str.empty() || !format || format[0] == '\0')
     return -1;
