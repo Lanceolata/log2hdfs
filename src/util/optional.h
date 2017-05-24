@@ -14,7 +14,7 @@ class Optional {
   /**
    * Static function to create a invalid Optional object.
    * 
-   * @return invalid optional object.
+   * @returns invalid optional object.
    */
   static Optional Invalid() {
     return Optional();
@@ -91,7 +91,7 @@ class Optional {
   /**
    * Optional valid
    *
-   * @return true if valid; false otherwise.
+   * @returns true if valid; false otherwise.
    */
   bool valid() {
     return valid_;
@@ -100,7 +100,7 @@ class Optional {
   /**
    * Optional value
    * 
-   * @return value if optional valid; undefined behavior otherwise.
+   * @returns value if optional valid; undefined behavior otherwise.
    */
   const T& value() {
     return value_;
@@ -109,7 +109,7 @@ class Optional {
   /**
    * Operators ==
    * 
-   * @return true if equal; false otherwise.
+   * @returns true if equal; false otherwise.
    */
   bool operator==(const Optional& other) const {
     return (valid_ == other.valid_) && (!valid_ || value_ == other.value_);
@@ -118,7 +118,7 @@ class Optional {
   /**
    * Operators =!
    * 
-   * @return true if not equal; false otherwise.
+   * @returns true if not equal; false otherwise.
    */
   bool operator!=(const Optional& other) const {
     return !(*this == other);

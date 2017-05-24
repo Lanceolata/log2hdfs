@@ -3,7 +3,6 @@
 #include "gtest/gtest.h"
 #include "util/string_utils.h"
 
-using namespace log2hdfs;
 
 namespace {
 

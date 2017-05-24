@@ -4,17 +4,14 @@
 #include <unistd.h>
 #include "easylogging++.h"
 
-namespace log2hdfs {
-
 namespace {
 
 void Destructor(FILE* fp) {
   if (fp) {
     if (fclose(fp) != 0)
-      LOG(ERROR) << "FpCache Destructor fclose faild with errno["
-                 << errno << "]";
+      LOG(ERROR) << "Destructor fclose faild with errno[" << errno << "]";
   } else {
-    LOG(WARNING) << "FpCache Destructor unexpected null FP";
+    LOG(WARNING) << "Destructor unexpected null FP";
   }
 }
 
@@ -34,8 +31,8 @@ std::shared_ptr<FILE> FpCache::Get(const std::string& key) {
   return res;
 }
 
-std::shared_ptr<FILE> FpCache::Get(const std::string& key,
-                                   const std::string& path) {
+std::shared_ptr<FILE> FpCache::Get(
+    const std::string& key, const std::string& path) {
   std::shared_ptr<FILE> res;
 
   pthread_rwlock_rdlock(&lock_);
@@ -64,7 +61,7 @@ std::shared_ptr<FILE> FpCache::Get(const std::string& key,
   return res;
 }
 
-#define REMOVE_TIMES 3
+#define RETRY_TIMES 3
 
 FpCache::RemoveResult FpCache::Remove(const std::string& key) {
   std::shared_ptr<FILE> fptr;
@@ -73,7 +70,7 @@ FpCache::RemoveResult FpCache::Remove(const std::string& key) {
 
   auto it = cache_.find(key);
   if (it != cache_.end()) {
-    fptr = it->second;
+    fptr = std::move(it->second);
     cache_.erase(it);
     paths_.erase(key);
   }
@@ -84,7 +81,7 @@ FpCache::RemoveResult FpCache::Remove(const std::string& key) {
     return FpCache::kInvalidKey;
 
   int count = 0;
-  while (count < REMOVE_TIMES && fptr.use_count() > 1) {
+  while (count < RETRY_TIMES && fptr.use_count() > 1) {
     ++count;
     sleep(1);
   }
@@ -109,6 +106,7 @@ std::vector<std::string> FpCache::CloseAll() {
   paths_.clear();
 
   pthread_rwlock_unlock(&lock_);
+
   return vec;
 }
 
@@ -118,5 +116,3 @@ void FpCache::Clear() {
   paths_.clear();
   pthread_rwlock_unlock(&lock_);
 }
-
-}   // namespace log2hdfs

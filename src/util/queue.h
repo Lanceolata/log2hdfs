@@ -17,7 +17,7 @@ class Queue {
   /**
    * Static function to create a Queue shared_ptr.
    * 
-   * @return std::shared_ptr<Queue>
+   * @returns std::shared_ptr<Queue>
    */
   static std::shared_ptr<Queue> Init() {
     return std::make_shared<Queue>();
@@ -59,7 +59,7 @@ class Queue {
   /**
    * Wait to pop a value from queue.
    * 
-   * @return std::shared_ptr<T> point to pop value.
+   * @returns std::shared_ptr<T> point to pop value.
    */
   std::shared_ptr<T> WaitPop() {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -74,7 +74,7 @@ class Queue {
    * 
    * @param value pop value
    * 
-   * @return true if pop and set value success; false otherwise.
+   * @returns true if pop and set value success; false otherwise.
    */
   bool TryPop(T* value) {
     if (!value)
@@ -92,8 +92,8 @@ class Queue {
   /**
    * Try to pop a value from queue.
    * 
-   * @return std::shared_ptr<T> point to pop value if pop success;
-   *         nullptr otherwise.
+   * @returns std::shared_ptr<T> point to pop value if pop success;
+   *          nullptr otherwise.
    */
   std::shared_ptr<T> TryPop() {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -108,7 +108,7 @@ class Queue {
   /**
    * Whether the queue is empty.
    * 
-   * @return true if queue is empty; false otherwise.
+   * @returns true if queue is empty; false otherwise.
    */
   bool Empty() const {
     std::lock_guard<std::mutex> lock(mutex_);

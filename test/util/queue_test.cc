@@ -6,7 +6,6 @@
 #include <thread>
 #include "easylogging++.h"
 
-using namespace log2hdfs;
 
 namespace {
 

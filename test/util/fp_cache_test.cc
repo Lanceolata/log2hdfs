@@ -4,7 +4,6 @@
 #include "util/fp_cache.h"
 #include "easylogging++.h"
 
-using namespace log2hdfs;
 
 namespace {
 

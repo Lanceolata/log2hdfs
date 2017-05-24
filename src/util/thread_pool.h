@@ -11,12 +11,22 @@
 #include <condition_variable>
 #include <future>
 #include <functional>
-#include <stdexcept>
 
+/**
+ * Simple thread pool.
+ */
 class ThreadPool {
  public:
+  /**
+   * Constructor
+   * 
+   * Launches some amount of workers.
+   */
   ThreadPool(size_t threads);
 
+  /**
+   * Add new work item to the pool
+   */
   template<class F, class... Args>
   auto Enqueue(F&& f, Args&&... args)
       -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -24,31 +34,30 @@ class ThreadPool {
   ~ThreadPool();
 
  private:
-  // need to keep track of threads so we can join them
+  /**< need to keep track of thread so we can join the */
   std::vector<std::thread> workers_;
 
-  // the task queue
-  std::queue< std::function<void()> > tasks_;
+  /**< task queue */
+  std::queue<std::function<void()>> tasks_;
 
-  // synchronization
+  /**< synchronization */
   std::mutex mutex_;
   std::condition_variable cond_;
   bool stop_;
 };
 
-// the constructor just launches some amount of workers
 inline ThreadPool::ThreadPool(size_t threads):
     stop_(false) {
   for (size_t i = 0; i < threads; ++i) {
     workers_.emplace_back(
-      [this]
-      {
-        for(;;) {
+      [this] {
+        for (;;) {
           std::function<void()> task;
           {
             std::unique_lock<std::mutex> lock(this->mutex_);
             this->cond_.wait(lock,
                 [this]{ return this->stop_ || !tasks_.empty(); });
+            
             if (this->stop_)
               return;
 
@@ -63,7 +72,6 @@ inline ThreadPool::ThreadPool(size_t threads):
   }
 }
 
-// add new work item to the pool
 template<class F, class... Args>
 auto ThreadPool::Enqueue(F&& f, Args&&... args)
     -> std::future<typename std::result_of<F(Args...)>::type> {
@@ -81,7 +89,6 @@ auto ThreadPool::Enqueue(F&& f, Args&&... args)
   return res;
 }
 
-// the destructor joins all threads
 inline ThreadPool::~ThreadPool() {
   {
     std::unique_lock<std::mutex> lock(mutex_);

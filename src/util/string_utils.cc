@@ -4,8 +4,6 @@
 #include <string.h>
 #include <sstream>
 
-namespace log2hdfs {
-
 const char white_chars[] = " \f\n\r\t\v";
 const char comment_str[] = "#";
 
@@ -70,35 +68,17 @@ std::string RemoveComments(const std::string& input,
   return input;
 }
 
-bool StartsWith(const std::string& str, const std::string& prefix) {
-  return StartsWith(str.c_str(), prefix.c_str());
+bool StartsWith(const std::string& input, const std::string& prefix) {
+  return strncmp(input.c_str(), prefix.c_str(), prefix.size()) == 0;
 }
 
-bool StartsWith(const std::string& str, const char* prefix) {
-  return StartsWith(str.c_str(), prefix);
-}
-
-bool StartsWith(const char* str, const char* prefix) {
-  return strncmp(str, prefix, strlen(prefix)) == 0;
-}
-
-bool EndsWith(const std::string& str, const std::string& suffix) {
-  return EndsWith(str.c_str(), suffix.c_str());
-}
-
-bool EndsWith(const std::string& str, const char* suffix) {
-  return EndsWith(str.c_str(), suffix);
-}
-
-bool EndsWith(const char* str, const char* suffix) {
-  const auto len1 = strlen(str);
-  const auto len2 = strlen(suffix);
+bool EndsWith(const std::string& input, const std::string& suffix) {
+  const auto len1 = input.size();
+  const auto len2 = suffix.size();
 
   if (len2 > len1)
     return false;
 
-  const char *end = str + len1 - len2;
-  return memcmp(end, suffix, len2) == 0;
+  const char *end = input.c_str() + len1 - len2;
+  return memcmp(end, suffix.c_str(), len2) == 0;
 }
-
-}   // namespace log2hdfs
