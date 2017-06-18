@@ -40,11 +40,11 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::CreateTopicProducer(
     const std::string& topic, KafkaTopicConf* conf, std::string* errstr) {
   if (topic.empty() || !conf) {
     if (errstr)
-      *errstr = "Invalid parameters topic[" + topic + "]";
+      *errstr = "Topic[" + topic + "] invalid parameters";
     return nullptr;
   }
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   auto it = topics_.find(topic);
   if (it != topics_.end()) {
     if (errstr)
@@ -85,7 +85,7 @@ std::shared_ptr<KafkaTopicProducer> KafkaProducer::GetTopicProducer(
   if (topic.empty())
     return nullptr;
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   auto it = topics_.find(topic);
   if (it != topics_.end()) {
     return it->second;
@@ -98,7 +98,7 @@ bool KafkaProducer::RemoveTopicProducer(const std::string& topic) {
   if (topic.empty())
     return false;
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return topics_.erase(topic);
 }
 

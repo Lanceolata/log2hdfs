@@ -107,7 +107,7 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
     return false;
   }
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   for (auto it = wd_topic_.begin(); it != wd_topic_.end(); ++it) {
     if (it->second != topic)
       continue;
@@ -128,7 +128,7 @@ bool Inotify::RemoveWatchTopic(const std::string& topic) {
 bool Inotify::AddWatchPath(const std::string& topic,
                            const std::string& path,
                            time_t remedy) {
-  if (topic.empty() || path.empty() || remedy < -1) {
+  if (topic.empty() || path.empty()) {
     LOG(WARNING) << "Inotify AddWatchPath invalid parameters topic["
                  << topic << "] path[" << path << "] remedy[" << remedy
                  << "]";
@@ -142,7 +142,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
     return false;
   }
 
-  // wait for dir not change.
+  // wait for dir not change
   while (true) {
     time_t mtime = FileMtime(normalpath);
     if (mtime < 0) {
@@ -151,9 +151,9 @@ bool Inotify::AddWatchPath(const std::string& topic,
       return false;
     }
 
-    if (time(NULL) > mtime + 3) {
+    if (time(NULL) > mtime + 3)
       break;
-    }
+
     sleep(1);
   }
 
@@ -163,7 +163,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
   table_->Get(normalpath, &remedy_file, &remedy_offset);
 
   // step 2: Add watch
-  std::unique_lock<std::mutex> guard(mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   int wd = AddWatch(inot_fd_, normalpath);
   if (wd == -1) {
     LOG(ERROR) << "Inotify AddWatchPath AddWatch topic[" << topic
@@ -182,7 +182,7 @@ bool Inotify::AddWatchPath(const std::string& topic,
     return false;
   }
 
-  // step 4: Check wd_topic_ avoid repeat remedy.
+  // step 4: Check wd_topic_ avoid repeat watched
   auto it = wd_topic_.find(wd);
   if (it != wd_topic_.end()) {
     LOG(WARNING) << "Inotify AddWatchPath topic[" << topic << "] path["
@@ -193,10 +193,10 @@ bool Inotify::AddWatchPath(const std::string& topic,
   // step 5: Update wd_topic_ and wd_path_
   wd_topic_[wd] = topic;
   wd_path_[wd] = normalpath;
-  guard.unlock();
+  lock.unlock();
 
   LOG(INFO) << "Inotify AddWatchPath topic[" << topic << "] path["
-            << normalpath << "] remedy[" << remedy << "] successed";
+            << normalpath << "] remedy[" << remedy << "] success";
 
   // step 6: Remedy records already in dir
   Remedy(topic, normalpath, remedy, ts, remedy_file, remedy_offset);
@@ -238,7 +238,7 @@ void Inotify::Remedy(const std::string& topic, const std::string& dir,
       AddWatchPath(topic, inner, remedy);
     } else if (IsFile(inner)) {
       // sub file
-      if (remedy == -1)
+      if (remedy == 0)
         continue;
 
       struct timespec ctime;
@@ -248,12 +248,12 @@ void Inotify::Remedy(const std::string& topic, const std::string& dir,
         continue;
       }
 
-      if (remedy != 0) {
+      if (remedy > 0) {
         if (ctime.tv_sec < time(NULL) - remedy)
           continue;
       }
 
-      // ctime less than end
+      // ctime must less than end
       if (ctime.tv_sec > end.tv_sec) {
         continue;
       } else if (ctime.tv_sec == end.tv_sec) {
@@ -261,7 +261,7 @@ void Inotify::Remedy(const std::string& topic, const std::string& dir,
           continue;
       }
 
-      // ctime more than start
+      // ctime must more than start
       if (start.valid()) {
         if (ctime.tv_sec < start.value().tv_sec) {
           continue;
@@ -322,7 +322,7 @@ int Inotify::ReadInotify() {
   struct inotify_event *evp;
   int num = 0;
 
-  std::unique_lock<std::mutex> guard(mutex_, std::defer_lock);
+  std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
   while (true) {
     ssize_t n = read(inot_fd_, buf, sizeof(buf));
     if (n == -1) {
@@ -346,11 +346,11 @@ int Inotify::ReadInotify() {
       evp = (struct inotify_event *)p;
       int wd = evp->wd;
 
-      guard.lock();
+      lock.lock();
       auto it1 = wd_topic_.find(wd);
       if (it1 == wd_topic_.end()) {
         LOG(WARNING) << "Inotify ReadInotify unknown wd topic[" << wd << "]";
-        guard.unlock();
+        lock.unlock();
         continue;
       }
       topic = it1->second;
@@ -359,14 +359,15 @@ int Inotify::ReadInotify() {
       if (it2 == wd_path_.end()) {
         LOG(WARNING) << "Inotify ReadInotify unknown wd path[" << wd
                      << "] topic[" << topic << "]";
-        guard.unlock();
+        lock.unlock();
         continue;
       }
+
       path = it2->second;
-      guard.unlock();
+      lock.unlock();
 
       if ((evp->mask & IN_ISDIR) != 0) {
-        // new dir create
+        // handle new created dir
         if ((evp->mask & IN_CREATE) != 0) {
           path.append("/");
           path.append(evp->name);
@@ -377,7 +378,7 @@ int Inotify::ReadInotify() {
                        << evp->mask << "]";
         }
       } else if ((evp->mask & IN_MOVED_TO) != 0) {
-        // new file move to
+        // handle new moved file
         path.append("/");
         path.append(evp->name);
         queue_->Push(topic + ":" + path + ":0");
@@ -387,10 +388,10 @@ int Inotify::ReadInotify() {
         LOG(INFO) << "Inotify ReadInotify erase wd[" << wd << "] topic["
                   << topic << "] path[" << path << "]";
 
-        guard.lock();
+        lock.lock();
         wd_topic_.erase(wd);
         wd_path_.erase(wd);
-        guard.unlock();
+        lock.unlock();
 
         table_->Remove(path);
       } else {

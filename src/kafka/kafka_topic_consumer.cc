@@ -11,9 +11,8 @@ std::shared_ptr<KafkaTopicConsumer> KafkaTopicConsumer::Init(
     const std::vector<int32_t>& partitions,
     const std::vector<int64_t>& offsets,
     std::shared_ptr<KafkaConsumeCb> cb) {
-  if (!handle || !topic || partitions.empty() || offsets.empty() || !cb) {
+  if (!handle || !topic || partitions.empty() || offsets.empty() || !cb)
     return nullptr;
-  }
 
   for (auto& i : partitions) {
     if (i < 0) {
@@ -21,18 +20,17 @@ std::shared_ptr<KafkaTopicConsumer> KafkaTopicConsumer::Init(
     }
   }
 
-  if (partitions.size() != offsets.size()) {
+  if (partitions.size() != offsets.size())
     return nullptr;
-  }
 
   return std::make_shared<KafkaTopicConsumer>(std::move(handle),
              std::move(topic), partitions, offsets, std::move(cb));
 }
 
 void KafkaTopicConsumer::Start() {
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (threads_.empty()) {
-    running_.store(true);
+    stop_.store(false);
     std::string topic = topic_->Name();
     for (size_t i = 0; i < partitions_.size(); ++i) {
       int32_t partition = partitions_[i];
@@ -55,7 +53,7 @@ void KafkaTopicConsumer::Start() {
 }
 
 void KafkaTopicConsumer::Stop() {
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (!threads_.empty()) {
     std::string topic = topic_->Name();
     for (size_t i = 0; i < partitions_.size(); ++i) {
@@ -71,12 +69,12 @@ void KafkaTopicConsumer::Stop() {
                   << "] success";
       }
     }
-    running_.store(false);
+    stop_.store(true);
   }
 }
 
 void KafkaTopicConsumer::Join() {
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (!threads_.empty()) {
     for (size_t i = 0; i < threads_.size(); ++i) {
       if (threads_[i].joinable())
@@ -89,7 +87,7 @@ void KafkaTopicConsumer::Join() {
 #define CONSUME_BATCH_SIZE 1000
 #define CONSUME_BATCH_TIMEOUT_MS 5000
 #define POLL_TIMEOUT_MS 5000
-#define TRY_TIMES 5
+#define TRY_TIMES 3
 
 void KafkaTopicConsumer::StartInternal(int32_t partition) {
   const std::string topic = topic_->Name();
@@ -97,7 +95,7 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
             << partition << "] created";
 
   rd_kafka_message_t **messages = static_cast<rd_kafka_message_t **>(
-        malloc(CONSUME_BATCH_SIZE * sizeof(rd_kafka_message_t *)));
+      malloc(CONSUME_BATCH_SIZE * sizeof(rd_kafka_message_t *)));
   if (messages == NULL) {
     LOG(ERROR) << "KafkaTopicConsumer StartInternal malloc for topic["
                << topic << "] partition[" << partition << "] failed";
@@ -123,19 +121,17 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
                  << " for topic[" << topic << "] partition[" << partition
                  << "] failed with errno[" << errno << "] errstr["
                  << KafkaErrnoToStr(errno) << "]";
-      continue;
     } else if (n == 0) {
-      if (!running_.load()) {
-        if (++times > TRY_TIMES) {
+      if (stop_.load()) {
+        if (++times > TRY_TIMES)
           break;
-        }
       }
-      LOG(INFO) << "KafkaTopicConsumer StartInternal topic[" << topic
-                << "] partition" << partition << "] no new message";
+      //LOG(INFO) << "KafkaTopicConsumer StartInternal topic[" << topic
+      //          << "] partition" << partition << "] no new message";
       continue;
     }
 
-    for (int i = 0; i < n; ++i) {
+    for (ssize_t i = 0; i < n; ++i) {
       rd_kafka_message_t *message = messages[i];
       switch (message->err) {
         case RD_KAFKA_RESP_ERR_NO_ERROR: {
@@ -154,12 +150,10 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
                        << messages[i]->err << "]";
       }
     }
-    handle_->Poll(200);
+    handle_->Poll(300);
   }
 
-  handle_->Poll(200);
   free(messages);
-
   LOG(INFO) << "KafkaTopicConsumer thread topic[" << topic << "] partition["
             << partition << "] exiting";
 }

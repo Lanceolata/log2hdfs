@@ -4,6 +4,8 @@
 #include <string.h>
 #include <sstream>
 
+namespace log2hdfs {
+
 const char white_chars[] = " \f\n\r\t\v";
 const char comment_str[] = "#";
 
@@ -82,3 +84,5 @@ bool EndsWith(const std::string& input, const std::string& suffix) {
   const char *end = input.c_str() + len1 - len2;
   return memcmp(end, suffix.c_str(), len2) == 0;
 }
+
+}   // namespace log2hdfs

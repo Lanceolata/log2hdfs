@@ -14,6 +14,9 @@ namespace log2hdfs {
 class Section;
 class TopicConf;
 
+/**
+ * Topic conf same variable
+ */
 class TopicConfContents {
  private:
   friend class TopicConf;
@@ -31,26 +34,55 @@ class TopicConfContents {
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
   time_t remedy_;
 
-  // Update runtime
+  /*
+   * Update runtime
+   */
   std::atomic<int> batch_num_;
   std::atomic<int> poll_timeout_;
   std::atomic<int> poll_messages_;
 };
 
+/**
+ * Topic conf
+ */
 class TopicConf {
  public:
-  // Must call before new TopicConf.
+  /**
+   * Static function update default conf
+   * 
+   * @param                     Ini configuration section
+   * 
+   * @returns True if update success, false otherwise.
+   */
   static bool UpdataDefaultConf(std::shared_ptr<Section> section);
 
+  /**
+   * Static function to create TopicConf shared_ptr
+   * 
+   * @param topic               topic name
+   * 
+   * @returns std::shared_ptr<TopicConf> if init success,
+   *          nullptr otherwise.
+   */
   static std::shared_ptr<TopicConf> Init(const std::string& topic);
 
+  /**
+   * Constructor
+   */
   explicit TopicConf(const std::string& topic):
       topic_(topic), contents_(DEFAULT_CONTENTS_) {}
 
+  /**
+   * Init topic conf
+   */
   bool InitConf(std::shared_ptr<Section> section);
 
-  // This function runtime update conf safe.
-  // Just can update 3 configuration [batch.num,poll.timeout,poll.messages]
+  /**
+   * Update topic conf runtime.
+   * 
+   * Just can update 4 configurations
+   * [batch.num, poll.timeout, poll.messages]
+   */
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
   const std::string& topic() const {

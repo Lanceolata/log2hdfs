@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <string.h>
 
+namespace log2hdfs {
+
 bool IsFile(const std::string& path) {
   if (path.empty())
     return false;
@@ -209,3 +211,5 @@ bool ExecuteCommand(const std::string& command, std::string* errstr) {
     *errstr = buf;
   return res;
 }
+
+}   // namespace log2hdfs

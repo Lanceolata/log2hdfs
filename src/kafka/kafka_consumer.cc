@@ -44,8 +44,8 @@ std::shared_ptr<KafkaTopicConsumer> KafkaConsumer::CreateTopicConsumer(
     const std::vector<int64_t>& offsets,
     std::shared_ptr<KafkaConsumeCb> cb,
     std::string* errstr) {
-  if (topic.empty() || !conf || partitions.empty() || offsets.empty()
-          || !cb) {
+  if (topic.empty() || !conf || partitions.empty() ||
+          offsets.empty() || !cb) {
     if (errstr)
       *errstr = "Invlaid parameters";
     return nullptr;
@@ -89,25 +89,24 @@ std::shared_ptr<KafkaTopicConsumer> KafkaConsumer::CreateTopicConsumer(
 }
 
 void KafkaConsumer::StartAllTopic() {
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   for (auto it = topics_.begin(); it != topics_.end(); ++it) {
     it->second->Start();
   }
 }
 
 void KafkaConsumer::StopAllTopic() {
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   for (auto it = topics_.begin(); it != topics_.end(); ++it) {
     it->second->Stop();
   }
-  handle_->Poll(5000);
   for (auto it = topics_.begin(); it != topics_.end(); ++it) {
     it->second->Join();
   }
 }
 
 bool KafkaConsumer::StartTopic(const std::string& topic) {
-  std::unique_lock<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   auto it = topics_.find(topic);
   if (it == topics_.end())
     return false;
@@ -117,14 +116,14 @@ bool KafkaConsumer::StartTopic(const std::string& topic) {
 }
 
 bool KafkaConsumer::StopTopic(const std::string& topic) {
-  std::unique_lock<std::mutex> guard(mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   auto it = topics_.find(topic);
   if (it == topics_.end())
     return false;
 
   std::shared_ptr<KafkaTopicConsumer> ktc = it->second;
   topics_.erase(it);
-  guard.unlock();
+  lock.unlock();
 
   it->second->Stop();
   it->second->Join();

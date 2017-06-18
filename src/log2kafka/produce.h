@@ -18,20 +18,40 @@ class TopicConf;
 class OffsetTable;
 class ErrmsgHandle;
 
+/**
+ * Produce thread.
+ * 
+ * Produce messages to kafka.
+ */
 class Produce {
  public:
+  /**
+   * Static function to create Produce unique_ptr.
+   * 
+   * @param producer            kafka producer
+   * @param queue               file path queue
+   * @param table               offset table
+   * @param handle              error message handler
+   * 
+   * @returns std::unique_ptr<Produce> if init success,
+   *          nullptr otherwise.
+   */
   static std::unique_ptr<Produce> Init(
       std::shared_ptr<KafkaProducer> producer,
       std::shared_ptr<Queue<std::string>> queue,
       std::shared_ptr<OffsetTable> table,
       std::shared_ptr<ErrmsgHandle> handle);
 
+  /**
+   * Constructor
+   */
   Produce(std::shared_ptr<KafkaProducer> producer,
           std::shared_ptr<Queue<std::string>> queue,
           std::shared_ptr<OffsetTable> table,
           std::shared_ptr<ErrmsgHandle> handle):
       producer_(std::move(producer)), queue_(std::move(queue)),
-      table_(std::move(table)), handle_(std::move(handle)) {}
+      table_(std::move(table)), handle_(std::move(handle)),
+      stop_(true) {}
 
   ~Produce() {
     Stop();
@@ -40,22 +60,44 @@ class Produce {
   Produce(const Produce& other) = delete;
   Produce& operator=(const Produce& other) = delete;
 
+  /**
+   * Add topic to produce
+   * 
+   * @param conf                topic conf
+   * 
+   * @return True if add success, fail otherwise.
+   */
   bool AddTopic(std::shared_ptr<TopicConf> conf);
 
+  /**
+   * Remove topic from produce
+   * 
+   * @param topic               topic name
+   * 
+   * @returns True if remove success, fail otherwise.
+   */
   bool RemoveTopic(const std::string& topic);
 
+  /**
+   * Start produce thread.
+   * 
+   * Pop file from queue and produce messages to kafka.
+   */
   void Start() {
-    std::lock_guard<std::mutex> guard(thread_mutex_);
+    std::lock_guard<std::mutex> lock(thread_mutex_);
     if (!thread_.joinable()) {
-      running_.store(true);
+      stop_.store(false);
       std::thread t(&Produce::StartInternal, this);
       thread_ = std::move(t);
     }
   }
 
+  /**
+   * Stop produce thread.
+   */
   void Stop() {
-    running_.store(false);
-    std::lock_guard<std::mutex> guard(thread_mutex_);
+    stop_.store(true);
+    std::lock_guard<std::mutex> lock(thread_mutex_);
     if (thread_.joinable())
       thread_.join();
   }
@@ -76,7 +118,7 @@ class Produce {
   std::shared_ptr<Queue<std::string>> queue_;
   std::shared_ptr<OffsetTable> table_;
   std::shared_ptr<ErrmsgHandle> handle_;
-  std::atomic<bool> running_;
+  std::atomic<bool> stop_;
   mutable std::mutex mutex_;
   std::mutex thread_mutex_;
   std::thread thread_;

@@ -12,6 +12,8 @@
 #include <future>
 #include <functional>
 
+namespace log2hdfs {
+
 /**
  * Simple thread pool.
  */
@@ -22,7 +24,7 @@ class ThreadPool {
    * 
    * Launches some amount of workers.
    */
-  ThreadPool(size_t threads);
+  explicit ThreadPool(size_t threads);
 
   /**
    * Add new work item to the pool
@@ -43,7 +45,7 @@ class ThreadPool {
   /**< synchronization */
   std::mutex mutex_;
   std::condition_variable cond_;
-  bool stop_;
+  volatile bool stop_;
 };
 
 inline ThreadPool::ThreadPool(size_t threads):
@@ -57,7 +59,7 @@ inline ThreadPool::ThreadPool(size_t threads):
             std::unique_lock<std::mutex> lock(this->mutex_);
             this->cond_.wait(lock,
                 [this]{ return this->stop_ || !tasks_.empty(); });
-            
+
             if (this->stop_)
               return;
 
@@ -99,5 +101,7 @@ inline ThreadPool::~ThreadPool() {
     worker.join();
   }
 }
+
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_THREAD_POOL_H_

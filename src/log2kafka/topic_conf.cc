@@ -25,7 +25,9 @@ TopicConfContents::TopicConfContents(const TopicConfContents& other):
     poll_timeout_(other.poll_timeout_.load()),
     poll_messages_(other.poll_messages_.load()) {}
 
-// rdkafka conf in section[default] start with "kafka.".
+/*
+ * rdkafka conf in section[default] start with "kafka.".
+ */
 #define KAFKA_PREFIX "kafka."
 #define KAFKA_PREFIX_LEN 6
 
@@ -42,14 +44,7 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
 
   Optional<std::string> option = section->Get("remedy");
   if (option.valid() && !option.value().empty()) {
-    time_t remedy = atol(option.value().c_str());
-    if (remedy < -1) {
-      LOG(WARNING) << "TopicConfContents Update invalid remedy["
-                   << remedy << "]";
-      return false;
-    } else {
-      remedy_ = remedy;
-    }
+    remedy_ = atol(option.value().c_str());
   }
   LOG(INFO) << "TopicConfContents Update remedy[" << remedy_ << "] success";
 
@@ -132,7 +127,9 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
 // ------------------------------------------------------------------
 // TopicConf
 
-// static member variable initialization.
+/*
+ * Static member variable initialization.
+ */
 TopicConfContents TopicConf::DEFAULT_CONTENTS_;
 
 bool TopicConf::UpdataDefaultConf(std::shared_ptr<Section> section) {

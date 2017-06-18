@@ -16,8 +16,9 @@ INITIALIZE_EASYLOGGINGPP
 
 using namespace log2hdfs;
 
-// Running flag
-static bool running = true;
+// stop flag
+static bool stop = false;
+
 // conf file path
 static char *conf_path = NULL;
 
@@ -28,21 +29,27 @@ static std::unordered_map<std::string,
 static std::unique_ptr<Produce> produce;
 static std::unique_ptr<Inotify> inotify;
 
-// logging roll handler
+/**
+ * logging roo handler
+ */
 void RolloutHandler(const char* filename, std::size_t size) {
   std::stringstream stream;
   stream << filename << "." << time(NULL);
   rename(filename, stream.str().c_str());
 }
 
-// kafka err callback
+/**
+ * kafka err callback
+ */
 void err_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque) {
   LOG(WARNING) << "rdkafka error cb name:" << rd_kafka_name(rk)
                << " err:" << rd_kafka_err2str((rd_kafka_resp_err_t)err)
                << " reason:" << reason;
 }
 
-// kafka deliver message callback
+/**
+ * kafka deliver message callback
+ */
 void dr_msg_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
                void* opaque) {
   if (rkmessage->err == 0)
@@ -64,11 +71,13 @@ void dr_msg_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage,
   }
 }
 
-// signals handler
+/**
+ * signals handler
+ */
 void signals_handler(int sig) {
   if (sig != SIGUSR1) {
     LOG(INFO) << "handle_sigs existing";
-    running = false;
+    stop = true;
     return;
   }
 
@@ -83,6 +92,7 @@ void signals_handler(int sig) {
     if (topic == "global" || topic == "kafka" || topic == "default")
       continue;
 
+    // handle running topic
     auto it2 = topic_confs.find(topic);
     if (it2 != topic_confs.end()) {
       if (!it2->second->UpdateRuntime(it->second)) {
@@ -92,6 +102,7 @@ void signals_handler(int sig) {
       continue;
     }
 
+    // handle new topic
     std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(it->first);
     if (!topic_conf) {
       LOG(WARNING) << "signals_handler TopicConf Init topic[" << topic
@@ -121,6 +132,7 @@ void signals_handler(int sig) {
     topic_confs[topic] = topic_conf;
   }
 
+  // remove topic
   for (auto it = topic_confs.begin(); it != topic_confs.end();) {
     const std::string topic = it->first;
     if (conf->HasSection(topic)) {
@@ -266,7 +278,7 @@ int main(int argc, char *argv[]) {
     if (topic == "global" || topic == "kafka" || topic == "default")
       continue;
 
-    std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(topic); 
+    std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(topic);
     if (!topic_conf) {
       LOG(ERROR) << "TopicConf Init topic[" << topic << "] failed";
       exit(EXIT_FAILURE);
@@ -314,7 +326,7 @@ int main(int argc, char *argv[]) {
   produce->Start();
   inotify->Start();
 
-  while (running) {
+  while (!stop) {
     pause();
   }
 

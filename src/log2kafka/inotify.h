@@ -15,24 +15,68 @@ namespace log2hdfs {
 class TopicConf;
 class OffsetTable;
 
+/**
+ * linux inotify
+ */
 class Inotify {
  public:
+  /**
+   * Static function create a Inotify unique_ptr.
+   * 
+   * @param queue               produce queue
+   * @param table               offset table
+   * 
+   * @returns std::unique_ptr<Inotify> if init success,
+   *          nullptr otherwise.
+   */
   static std::unique_ptr<Inotify> Init(
       std::shared_ptr<Queue<std::string>> queue,
       std::shared_ptr<OffsetTable> table);
 
+  /**
+   * Constructor
+   */
   Inotify(int inot_fd,
           std::shared_ptr<Queue<std::string>> queue,
           std::shared_ptr<OffsetTable> table):
       inot_fd_(inot_fd), queue_(std::move(queue)), table_(std::move(table)) {}
 
+  /**
+   * Add inotify watch topic paths
+   * 
+   * @param conf                topic conf
+   * 
+   * @returns True if add inotify watch success,
+   *          false otherwise.
+   */
   bool AddWatchTopic(std::shared_ptr<TopicConf> conf);
 
+  /**
+   * Remove inotify watch topic paths
+   * 
+   * @param topic               topic to watch
+   * 
+   * @returns True if remove inotify watch success,
+   *          false otherwise.
+   */
   bool RemoveWatchTopic(const std::string& topic);
 
-  bool AddWatchPath(const std::string& topic, const std::string& path,
+  /**
+   * Add inotify watch path rescursive
+   * 
+   * @param topic               topic name
+   * @param path                path to add inotify rescursive
+   * @param remedy              remedy time
+   * 
+   * @returns True if add watch path success, false otherwise.
+   */
+  bool AddWatchPath(const std::string& topic,
+                    const std::string& path,
                     time_t remedy);
 
+  /**
+   * Start inotify thread
+   */
   void Start() {
     std::call_once(flag_, &Inotify::CreateThread, this);
   }

@@ -9,7 +9,9 @@
 
 namespace log2hdfs {
 
-// Default configuration
+/*
+ * Default configuration
+ */
 #define DEFAULT_TABLE_PATH "offset_table"
 #define DEFAULT_TABLE_INTERVAL "30"
 
@@ -45,7 +47,7 @@ bool OffsetTable::Update(const std::string& dir, const std::string& file,
     return false;
 
   FileOffset fo(file, offset);
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   table_[dir] = std::move(fo);
   return true;
 }
@@ -55,7 +57,7 @@ bool OffsetTable::Get(const std::string& dir, std::string* file,
   if (dir.empty() || !file || !offset)
     return false;
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   auto it = table_.find(dir);
   if (it == table_.end())
     return false;
@@ -69,7 +71,7 @@ bool OffsetTable::Remove(const std::string& dir) {
   if (dir.empty())
     return false;
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return table_.erase(dir);
 }
 
@@ -82,7 +84,7 @@ bool OffsetTable::Save() const {
   }
 
   char buf[512];
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   for (auto it = table_.begin(); it != table_.end(); ++it) {
     snprintf(buf, sizeof(buf), "%s/%s:%ld\n", it->first.c_str(),
              it->second.filename_.c_str(), it->second.offset_);
@@ -139,7 +141,7 @@ void OffsetTable::Remedy() {
 
 void OffsetTable::StartInternal() {
   LOG(INFO) << "OffsetTable thread created";
-  while (running_.load()) {
+  while (!stop_.load()) {
     sleep(interval_);
     Save();
   }

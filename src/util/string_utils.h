@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+namespace log2hdfs {
+
 /**
  * SplitString white space handle
  */
@@ -95,5 +97,7 @@ extern bool StartsWith(const std::string& input, const std::string& prefix);
  * @returns true if input end with suffix; false otherwise.
  */
 extern bool EndsWith(const std::string& input, const std::string& suffix);
+
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_STRING_UTILS_H_

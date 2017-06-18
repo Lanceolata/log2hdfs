@@ -8,6 +8,8 @@
 #include <memory>
 #include <condition_variable>
 
+namespace log2hdfs {
+
 /**
  * Simple thread safe queue.
  */
@@ -120,5 +122,7 @@ class Queue {
   std::condition_variable cond_;
   std::queue<std::shared_ptr<T>> queue_;
 };
+
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_QUEUE_H_

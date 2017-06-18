@@ -44,7 +44,7 @@ bool Produce::AddTopic(std::shared_ptr<TopicConf> conf) {
     return false;
   }
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   auto it = topic_confs_.find(topic);
   if (it != topic_confs_.end()) {
     LOG(WARNING) << "Produce AddTopic topic[" << topic
@@ -63,7 +63,7 @@ bool Produce::RemoveTopic(const std::string& topic) {
     return false;
   }
 
-  std::lock_guard<std::mutex> guard(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (topic_confs_.erase(topic) == 1) {
     LOG(INFO) << "Produce RemoveTopic topic_confs_ erase topic[" << topic
               << "] success";
@@ -87,7 +87,7 @@ bool Produce::RemoveTopic(const std::string& topic) {
 void Produce::StartInternal() {
   LOG(INFO) << "Log2kafkaProduce thread created";
 
-  while (running_.load()) {
+  while (!stop_.load()) {
     std::shared_ptr<std::string> record = queue_->WaitPop();
     if (!record) {
       LOG(WARNING) << "Produce StartInternal WaitPop nullptr";
@@ -127,17 +127,17 @@ void Produce::StartInternal() {
     }
 
     // get topic conf
-    std::unique_lock<std::mutex> guard(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     auto it = topic_confs_.find(topic);
     if (it == topic_confs_.end()) {
       LOG(WARNING) << "Produce StartInternal invalid topic_confs topic["
                    << topic << "]";
-      guard.unlock();
+      lock.unlock();
       continue;
     }
 
     std::shared_ptr<TopicConf> conf = it->second;
-    guard.unlock();
+    lock.unlock();
 
     // get conf parameter
     int batch = conf->batch_num();
@@ -166,12 +166,6 @@ void Produce::ProduceAndSave(
     LOG(WARNING) << "Produce ProduceAndSave invlaid path[" << path << "]";
     return;
   }
-/*
-  table_->Update(dir, file, 0);
-  LOG(INFO) << "log sent topic[" << topic << "] path[" << path << "] offset["
-            << offset << "] batch[" << batch << "] timeout[" << timeout
-            <<"] msgs_num[" << msgs_num << "]";
-*/
 
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
@@ -234,7 +228,6 @@ void Produce::ProduceAndSave(
 
   producer_->PollOutq(msgs_num, timeout);
   LOG(INFO) << "log sent[" << path << "] line[" << num << "]";
-
 }
 
 }   // namespace log2hdfs

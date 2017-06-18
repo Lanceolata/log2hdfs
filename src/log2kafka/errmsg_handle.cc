@@ -5,13 +5,14 @@
 #include <vector>
 #include "util/configparser.h"
 #include "util/fp_cache.h"
-#include "util/queue.h"
 #include "util/system_utils.h"
 #include "easylogging++.h"
 
 namespace log2hdfs {
 
-// Default configuration
+/*
+ * Default configuration
+ */
 #define DEFAULT_HANDLE_DIR "remedy"
 #define DEFAULT_HANDLE_INTERVAL "1800"
 #define DEFAULT_HANDLE_REMEDY ""
@@ -103,7 +104,7 @@ void ErrmsgHandle::StartInternal() {
 
     std::vector<std::string> paths = cache_->CloseAll();
 
-    // wait for all cache fp close.
+    // Wait for all cache fp close
     sleep(5);
 
     for (auto& path : paths) {
@@ -112,7 +113,7 @@ void ErrmsgHandle::StartInternal() {
       if (!remedy_)
         continue;
 
-      // Get file name.
+      // Get file name
       std::string file = BaseName(path);
       if (file.empty()) {
         LOG(WARNING) << "ErrmsgHandle StartInternal BaseName[" << path
@@ -120,7 +121,7 @@ void ErrmsgHandle::StartInternal() {
         continue;
       }
 
-      // Extract topic from file name.
+      // Extract topic from file name
       auto end = file.find(".");
       if (end == std::string::npos) {
         LOG(WARNING) << "ErrmsgHandle StartInternal invalid path[" << path

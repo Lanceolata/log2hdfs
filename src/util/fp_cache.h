@@ -9,6 +9,8 @@
 #include <memory>
 #include <unordered_map>
 
+namespace log2hdfs {
+
 /**
  * Simple thread safe fp cache.
  */
@@ -107,5 +109,7 @@ class FpCache {
   /**< key <--> path */
   std::unordered_map<std::string, std::string> paths_;
 };
+
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_FP_CACHE_H_

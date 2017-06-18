@@ -8,28 +8,40 @@
 #include <mutex>
 #include <thread>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "librdkafka/rdkafka.h"
-#ifdef __cplusplus
-}
-#endif
-
 #include "util/queue.h"
 
 namespace log2hdfs {
 
-class Section;
 class FpCache;
+class Section;
 
-// Handle produce failed messages.
+/**
+ * Handle produce failed messages.
+ */
 class ErrmsgHandle {
  public:
+  /**
+   * Static function to create a ErrmsgHandle shared_ptr
+   * 
+   * @param section             Ini configuration section
+   * @param queue               produce queue
+   * 
+   * @returns std::shared_ptr<ErrmsgHandle> if init success,
+   *          nullptr otherwise.
+   */
   static std::shared_ptr<ErrmsgHandle> Init(
       std::shared_ptr<Section> section,
       std::shared_ptr<Queue<std::string>> queue);
 
+  /**
+   * Constructor
+   * 
+   * @param dir                 archive local dir
+   * @param interval            remedy local file interval
+   * @param remedy              whether produce err msgs
+   * @param cache               file pointer cache 
+   * @param queue               produce queue
+   */
   ErrmsgHandle(const std::string& dir,
                int interval,
                bool remedy,
@@ -41,10 +53,17 @@ class ErrmsgHandle {
   ErrmsgHandle(const ErrmsgHandle& other) = delete;
   ErrmsgHandle& operator=(const ErrmsgHandle& other) = delete;
 
-  // Write msg to file.
+  /**
+   * Write produce failed msg to file.
+   * 
+   * @param topic               topic to produce
+   * @param msg                 produced failed msg
+   */
   void ArchiveMsg(const std::string& topic, const std::string& msg);
 
-  // Creat thread.
+  /**
+   * Create thread
+   */
   void Start() {
     std::call_once(flag_, &ErrmsgHandle::CreateThread, this);
   }

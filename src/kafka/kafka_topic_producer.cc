@@ -5,7 +5,8 @@
 namespace log2hdfs {
 
 std::shared_ptr<KafkaTopicProducer> KafkaTopicProducer::Init(
-    std::shared_ptr<KafkaHandle> handle, std::shared_ptr<KafkaTopic> topic) {
+    std::shared_ptr<KafkaHandle> handle,
+    std::shared_ptr<KafkaTopic> topic) {
   if (!handle || !topic)
     return nullptr;
 

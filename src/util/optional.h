@@ -5,6 +5,8 @@
 
 #include <utility>
 
+namespace log2hdfs {
+
 /**
  * Represents a type that may be invalid, similar to std::optional.
  */
@@ -128,5 +130,7 @@ class Optional {
   bool valid_;
   T value_;
 };
+
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_OPTIONAL_H_

@@ -8,6 +8,8 @@
 #include <vector>
 #include "util/optional.h"
 
+namespace log2hdfs {
+
 /**
  * Whether path is file
  * 
@@ -127,5 +129,7 @@ extern time_t StrToTs(const std::string& str, const char* format);
  *          and errstr is set appropriately.
  */
 bool ExecuteCommand(const std::string& command, std::string* errstr);
+
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_UTIL_SYSTEM_UTILS_H_

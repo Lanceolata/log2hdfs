@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include "easylogging++.h"
 
+namespace log2hdfs {
+
 namespace {
 
 void Destructor(FILE* fp) {
@@ -116,3 +118,5 @@ void FpCache::Clear() {
   paths_.clear();
   pthread_rwlock_unlock(&lock_);
 }
+
+}   // namespace log2hdfs

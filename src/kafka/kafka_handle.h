@@ -25,12 +25,12 @@ class KafkaConsumer;
 class KafkaHandle {
  public:
   /**
-   * Static function to create a KafkaHandle shared_ptr.
+   * Static function to create a KafkaHandle shared_ptr
    * 
    * @param rk          librdkafka client raw pointer
    * 
-   * @return std::shared_ptr<KafkaHandle> if rk valid,
-   * nullptr otherwise.
+   * @returns std::shared_ptr<KafkaHandle> if rk valid,
+   *          nullptr otherwise.
    */
   static std::shared_ptr<KafkaHandle> Init(rd_kafka_t* rk);
 
@@ -53,7 +53,7 @@ class KafkaHandle {
   KafkaHandle& operator=(const KafkaHandle& other) = delete;
 
   /**
-   * @return the name of the handle.
+   * @returns the name of the handle.
    */
   const std::string Name() const {
     return std::string(rk_ ? rd_kafka_name(rk_) : "");
@@ -84,7 +84,7 @@ class KafkaHandle {
    *
    * @warning This method MUST NOT be used with the RdKafka::KafkaConsumer,
    *          use its RdKafka::KafkaConsumer::consume() instead.
-   *          
+   *
    * @returns the number of events served.
    */
   int Poll(int timeout_ms) {
@@ -105,10 +105,10 @@ class KafkaHandle {
    * Polls the provided kafka handle for events until queue length
    * less than length.
    * 
-   * @param length      queue max length
-   * @param timeout_ms  poll timeout
+   * @param length              queue max length
+   * @param timeout_ms          poll timeout
    * 
-   * @return events number
+   * @returns events number
    */
   int PollOutq(int length, int timeout_ms) {
     int n = 0;
