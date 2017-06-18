@@ -25,7 +25,7 @@ poll.messages | 1 - 2147483647 | 2000 | kafka client队列满后，需要等待m
 Property | Range | Default | Description
 ---|---|---|---
 dirs | | | topic日志所在的目录，可以配置多个，使用','分割
-remedy | -1 - 2147483647 | -1 | 历史文件过期时间(s)，-1不处理任何历史文件
+remedy | -2147483647 - 2147483647 | 0 | 历史文件过期时间(s)，0不处理任何历史文件
 batch.num | 1 - 2147483647 | 200 | produce每批次发送的message数量
 poll.timeout | 1 - 2147483647 | 300 | kafka client poll timeout
 poll.messages | 1 - 2147483647 | 2000 | kafka client队列满后，需要等待message减少的的数量
