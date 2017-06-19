@@ -89,8 +89,8 @@ void Produce::StartInternal() {
 
   while (!stop_.load()) {
     std::shared_ptr<std::string> record = queue_->WaitPop();
-    if (!record) {
-      LOG(WARNING) << "Produce StartInternal WaitPop nullptr";
+    if (!record || record->empty()) {
+      LOG(INFO) << "Produce StartInternal WaitPop null";
       continue;
     }
 
@@ -166,12 +166,13 @@ void Produce::ProduceAndSave(
     LOG(WARNING) << "Produce ProduceAndSave invlaid path[" << path << "]";
     return;
   }
-
+/*
   table_->Update(dir, file, 0);
   LOG(INFO) << "log sent topic[" << topic << "] path[" << path << "] offset["
             << offset << "] batch[" << batch << "] timeout[" << timeout
             <<"] msgs_num[" << msgs_num << "]";
-/*
+*/
+
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
     LOG(WARNING) << "Produce ProduceAndSave open path[" << path << "] failed";
@@ -233,7 +234,7 @@ void Produce::ProduceAndSave(
 
   producer_->PollOutq(msgs_num, timeout);
   LOG(INFO) << "log sent[" << path << "] line[" << num << "]";
-*/
+
 }
 
 }   // namespace log2hdfs

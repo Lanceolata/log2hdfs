@@ -98,8 +98,11 @@ class Produce {
   void Stop() {
     stop_.store(true);
     std::lock_guard<std::mutex> lock(thread_mutex_);
-    if (thread_.joinable())
+    if (thread_.joinable()) {
+      // push empty record to avoid WaitPop.
+      queue_->Push("");
       thread_.join();
+    }
   }
 
  private:
