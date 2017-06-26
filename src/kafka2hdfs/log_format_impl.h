@@ -18,10 +18,7 @@ class V6LogFormat : public LogFormat {
 
   ~V6LogFormat() {}
 
-  /**
-   * @return true if extract success; otherwise false.
-   */
-  bool ExtractKeyAndTs(const char* payload, size_t len, 
+  bool ExtractKeyAndTs(const char* payload, size_t len,
                        std::string* key, time_t* ts) const;
 
   bool ParseKey(const std::string& key,
@@ -46,6 +43,60 @@ class V6DeviceLogFormat : public LogFormat {
                 std::map<char, std::string>* m) const;
 };
 
+// ------------------------------------------------------------------
+// EfLogFormat
+
+class EfLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfLogFormat> Init();
+
+  EfLogFormat() {}
+
+  ~EfLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
+// ------------------------------------------------------------------
+// EfDeviceLogFormat
+
+class EfDeviceLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfDeviceLogFormat> Init();
+
+  EfDeviceLogFormat() {}
+
+  ~EfDeviceLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
+// ------------------------------------------------------------------
+// ReportLogFormat
+
+class ReportLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<ReportLogFormat> Init();
+
+  ReportLogFormat() {}
+
+  ~ReportLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
 }   // namespace log2hdfs
 
-#endif  // namespace log2hdfs
+#endif  // LOG2HDFS_KAFKA2HDFS_LOG_FORMAT_IMPL_H_

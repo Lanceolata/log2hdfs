@@ -28,8 +28,6 @@ time_t AlignTimestamp(time_t ts, int interval) {
 Optional<PathFormat::Type> PathFormat::ParseType(const std::string &type) {
   if (type == "normal") {
     return Optional<PathFormat::Type>(kNormal);
-  } else if (type == "delay") {
-    return Optional<PathFormat::Type>(kDelay);
   } else {
     return Optional<PathFormat::Type>::Invalid();
   }
@@ -42,9 +40,6 @@ std::shared_ptr<PathFormat> PathFormat::Init(
   switch (type) {
     case kNormal:
       res = NormalPathFormat::Init(std::move(conf));
-      break;
-    case kDelay:
-      res = nullptr;
       break;
     default:
       res = nullptr;
@@ -130,6 +125,7 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
     return false;
   }
 
+  // 超过最大大小
   off_t maxsize = conf_->complete_maxsize();
   off_t file_size = FileSize(filepath);
   if (file_size < 0) {
@@ -141,6 +137,7 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
   if (file_size >= maxsize)
     return true;
 
+  // 超过最大未修改时间
   int interval = conf_->complete_interval();
   time_t file_ts = FileMtime(filepath);
   if (file_ts < 0) {
@@ -148,12 +145,13 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
                  << filepath << "] failed";
     return false;
   }
-  
+
   if (time(NULL) - file_ts > interval)
     return true;
 
-  int maxseconds = conf_->complete_maxseconds();
-  if (maxseconds > 60) {
+  // 超过最大保留时长 小于60s表示不限制
+  int retention = conf_->retention_seconds();
+  if (retention > 60) {
     time_t file_atime = FileAtime(filepath);
     if (file_atime < 0) {
       LOG(WARNING) << "NormalPathFormat WriteFinished FileAtime["
@@ -161,7 +159,7 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
       return false;
     }
 
-    if (time(NULL) - file_atime > maxseconds)
+    if (time(NULL) - file_atime > retention)
       return true;
   }
 
@@ -179,15 +177,17 @@ bool NormalPathFormat::BuildHdfsPath(
     return false;
   }
 
-  std::vector<std::string> vec = SplitString(name, ".",
-          kTrimWhitespace, kSplitAll);
-  if (vec.size() < 4) {
+  std::string prefix = section_ + ".";
+  if (!StartsWith(name, prefix)) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath invalid name["
                  << name << "]";
     return false;
   }
 
-  if (vec[0] != section_) {
+  std::string sub_str = name.substr(prefix.size());
+  std::vector<std::string> vec = SplitString(sub_str, ".",
+          kTrimWhitespace, kSplitAll);
+  if (vec.size() < 3) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath invalid name["
                  << name << "]";
     return false;
@@ -240,19 +240,18 @@ bool NormalPathFormat::BuildHdfsPath(
         case 's':
           os << section_;
           break;
-        case 'D':
-          os << m['D'];
-          break;
-        case 'T':
-          os << m['T'];
-          break;
         case 't':
           os << vec[3];
           break;
         default:
-          LOG(WARNING) << "NormalPathFormat BuildHdfsPath unknown formt["
-                       << path_format << "]";
-          return false;
+          auto mit = m.find(*it);
+          if (mit != m.end()) {
+            os << mit->second;
+          } else {
+            LOG(WARNING) << "NormalPathFormat BuildHdfsPath unknown formt["
+                         << path_format << "]";
+            return false;
+          }
       }
     } else {
       os << *it;

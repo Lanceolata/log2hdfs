@@ -13,6 +13,9 @@
 
 namespace log2hdfs {
 
+// ------------------------------------------------------------------
+// UploadImpl
+
 class UploadImpl : public Upload {
  public:
   UploadImpl(std::shared_ptr<TopicConf> conf,
@@ -29,22 +32,22 @@ class UploadImpl : public Upload {
   void Start() {
     std::lock_guard<std::mutex> guard(mutex_);
     if (!thread_.joinable()) {
-      running_.store(true);
+      stop_.store(false);
       std::thread t(&UploadImpl::StartInternal, this);
       thread_ = std::move(t);
     }
   }
 
-  virtual void StartInternal();
-
   void Stop() {
-    running_.store(false);
+    stop_.store(true);
     std::lock_guard<std::mutex> guard(mutex_);
     if (thread_.joinable())
       thread_.join();
   }
 
-  virtual void Remedy() {}
+  virtual void StartInternal();
+
+  virtual void Remedy();
 
   virtual void Compress() = 0;
 
@@ -57,10 +60,13 @@ class UploadImpl : public Upload {
   std::shared_ptr<HdfsHandle> handle_;
   mutable std::mutex mutex_;
   std::thread thread_;
-  std::atomic<int> running_;
+  std::atomic<bool> stop_;
   Queue<std::string> compress_queue_;
   Queue<std::string> upload_queue_;
 };
+
+// ------------------------------------------------------------------
+// TextUploadImpl
 
 class TextUploadImpl : public UploadImpl {
  public:
@@ -76,18 +82,21 @@ class TextUploadImpl : public UploadImpl {
                  std::shared_ptr<HdfsHandle> handle):
       UploadImpl(std::move(conf), std::move(format),
                  std::move(fp_cache), std::move(handle)),
-      pool_(conf_->parallel()) {}
+      pool_(1) {}
 
   void Compress();
 
   void Upload();
 
-  void UploadPath(const std::string& path);
+  void UploadFile(const std::string& path);
 
  protected:
   ThreadPool pool_;
 };
-/*
+
+// ------------------------------------------------------------------
+// LzoUploadImpl
+
 class LzoUploadImpl : public UploadImpl {
  public:
   static std::unique_ptr<LzoUploadImpl> Init(
@@ -104,22 +113,70 @@ class LzoUploadImpl : public UploadImpl {
                  std::move(fp_cache), std::move(handle)),
       pool_(conf_->parallel()) {}
 
-  void Compress(const std::string& path);
+  void Compress();
 
-  void Upload(const std::string& path);
+  void CompressFile(const std::string& path);
+
+  void Upload();
+
+  void UploadFile(const std::string& path);
 
  protected:
   ThreadPool pool_;
 };
 
-class OrcUploadImpl : public UploadImpl {
-
-};
+// ------------------------------------------------------------------
+// CompressUploadImpl
 
 class CompressUploadImpl : public UploadImpl {
+ public:
+  static std::unique_ptr<CompressUploadImpl> Init(
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> fp_cache,
+      std::shared_ptr<HdfsHandle> handle);
 
+  CompressUploadImpl(std::shared_ptr<TopicConf> conf,
+                     std::shared_ptr<PathFormat> format,
+                     std::shared_ptr<FpCache> fp_cache,
+                     std::shared_ptr<HdfsHandle> handle):
+      UploadImpl(std::move(conf), std::move(format),
+                 std::move(fp_cache), std::move(handle)),
+      pool_(conf_->parallel()) {}
+
+  void Compress();
+
+  void Upload();
+
+  void UploadFile(const std::string& path);
+
+ protected:
+  ThreadPool pool_;
 };
-*/
+
+// ------------------------------------------------------------------
+// TextNoUploadImpl
+
+class TextNoUploadImpl : public UploadImpl {
+ public:
+  static std::unique_ptr<TextNoUploadImpl> Init(
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> fp_cache,
+      std::shared_ptr<HdfsHandle> handle);
+
+  TextNoUploadImpl(std::shared_ptr<TopicConf> conf,
+                   std::shared_ptr<PathFormat> format,
+                   std::shared_ptr<FpCache> fp_cache,
+                   std::shared_ptr<HdfsHandle> handle):
+      UploadImpl(std::move(conf), std::move(format),
+                 std::move(fp_cache), std::move(handle)) {}
+
+  void Compress();
+
+  void Upload();
+};
+
 }   // namespace log2hdfs
 
 #endif  // LOG2HDFS_KAFKA2HDFS_UPLOAD_IMPL_H_

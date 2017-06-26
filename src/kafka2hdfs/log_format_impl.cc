@@ -2,6 +2,7 @@
 
 #include "kafka2hdfs/log_format_impl.h"
 #include "string.h"
+#include "util/system_utils.h"
 
 namespace log2hdfs {
 
@@ -55,6 +56,8 @@ Optional<LogFormat::Type> LogFormat::ParseType(const std::string &type) {
     return Optional<LogFormat::Type>(kEf);
   } else if (type == "efdevice") {
     return Optional<LogFormat::Type>(kEfDevice);
+  } else if (type == "report") {
+    return Optional<LogFormat::Type>(kReport);
   } else {
     return Optional<LogFormat::Type>::Invalid();
   }
@@ -65,13 +68,13 @@ std::unique_ptr<LogFormat> LogFormat::Init(LogFormat::Type type) {
     case kV6:
       return V6LogFormat::Init();
     case kV6Device:
-      return nullptr;
+      return V6DeviceLogFormat::Init();
     case kEf:
-      return nullptr;
+      return EfLogFormat::Init();
     case kEfDevice:
-      return nullptr;
+      return EfDeviceLogFormat::Init();
     case kReport:
-      return nullptr;
+      return ReportLogFormat::Init();
     default:
       return nullptr;
   }
@@ -109,6 +112,7 @@ bool V6LogFormat::ExtractKeyAndTs(const char* payload, size_t len,
               TIME_OPTION_INDEX, &obegin, &oend)) {
     return false;
   }
+
   time_t temp = atol(obegin) / 1000;
   if (temp <= 0)
     return false;
@@ -139,7 +143,6 @@ bool V6DeviceLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
   if (!payload || !key || !ts || len <= 0)
     return false;
 
-  // extract time stamp
   const char *sbegin, *send;
   if (!ExtractString(payload, payload + len, V6_SECTION_DELIMITER,
               TIME_SECTION_INDEX, &sbegin, &send)) {
@@ -151,9 +154,12 @@ bool V6DeviceLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
               TIME_OPTION_INDEX, &obegin, &oend)) {
     return false;
   }
+
   time_t temp = atol(obegin) / 1000;
   if (temp <= 0)
     return false;
+
+  *ts = temp;
 
   // extract device
   if (!ExtractString(payload, payload + len, V6_SECTION_DELIMITER,
@@ -175,8 +181,6 @@ bool V6DeviceLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
       key->assign("mobile");
     }
   }
-  *ts = temp;
-
   return true;
 }
 
@@ -191,6 +195,138 @@ bool V6DeviceLogFormat::ParseKey(const std::string& key,
   } else {
     return false;
   }
+  return true;
+}
+
+// ------------------------------------------------------------------
+// EfLogFormat
+
+std::unique_ptr<EfLogFormat> EfLogFormat::Init() {
+  return std::unique_ptr<EfLogFormat>(new EfLogFormat());
+}
+
+#define EF_DELIMITER '\t'
+#define TIME_INDEX 6
+#define DEVICE_INDEX 41
+#define TIME_FORMAT "%Y%m%d%H%M"
+#define TIME_LENGTH 12
+
+bool EfLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+                                  std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+
+  *ts = time_stamp;
+  *key = "";
+  return true;
+}
+
+bool EfLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+ if (!m)
+   return false;
+
+ m->clear();
+ return true;
+}
+
+// ------------------------------------------------------------------
+// EfDeviceLogFormat
+
+std::unique_ptr<EfDeviceLogFormat> EfDeviceLogFormat::Init() {
+  return std::unique_ptr<EfDeviceLogFormat>(new EfDeviceLogFormat());
+}
+
+bool EfDeviceLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+                                        std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+  *ts = time_stamp;
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              DEVICE_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  if (begin == end) {
+    key->assign("pc");
+  } else {
+    if (strncmp(begin, "General", 2) == 0 || strncmp(begin, "Na", 2) == 0) {
+      key->assign("pc");
+    } else {
+      key->assign("mobile");
+    }
+  }
+
+  return true;
+}
+
+bool EfDeviceLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (!m || key.empty())
+    return false;
+
+  m->clear();
+  if (key == "pc" || key == "mobile") {
+    (*m)['D'] = key;
+  } else {
+    return false;
+  }
+  return true;
+}
+
+// ------------------------------------------------------------------
+// ReportLogFormat
+
+std::unique_ptr<ReportLogFormat> ReportLogFormat::Init() {
+  return std::unique_ptr<ReportLogFormat>(new ReportLogFormat());
+}
+
+bool ReportLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+                                        std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  std::string time_str(payload, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+  *ts = time_stamp;
+
+  return true;
+}
+
+bool ReportLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (!m || key.empty())
+    return false;
+
+  m->clear();
   return true;
 }
 

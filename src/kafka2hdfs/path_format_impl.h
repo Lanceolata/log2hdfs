@@ -10,7 +10,7 @@ namespace log2hdfs {
 class NormalPathFormat : public PathFormat {
  public:
   static std::shared_ptr<NormalPathFormat> Init(
-        std::shared_ptr<TopicConf> conf);
+      std::shared_ptr<TopicConf> conf);
 
   NormalPathFormat(const std::string& section,
                    std::unique_ptr<LogFormat> format,

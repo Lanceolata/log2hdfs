@@ -13,8 +13,8 @@ INITIALIZE_EASYLOGGINGPP
 
 using namespace log2hdfs;
 
-// Running flag
-static bool running = true;
+// Stop flag
+static bool stop = false;
 // conf file path
 static char *conf_path = NULL;
 
@@ -42,7 +42,7 @@ void err_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque) {
 void signals_handler(int sig) {
   if (sig != SIGUSR1) {
     LOG(INFO) << "handle_sigs existing";
-    running = false;
+    stop = true;
     return;
   }
   return;
@@ -82,9 +82,9 @@ int main(int argc, char *argv[]) {
   }
 
   if (conf_path == NULL) {
-      std::cerr << "Usage: ./kafka2hdfs -c conf_path -l log_conf_path"
-                << std::endl;
-      exit(EXIT_FAILURE);
+    std::cerr << "Usage: ./kafka2hdfs -c conf_path -l log_conf_path"
+              << std::endl;
+    exit(EXIT_FAILURE);
   }
 
   // Init easylogging++
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // Init kafka  consumer global conf
+  // Init kafka consumer global conf
   std::string errstr;
   std::unique_ptr<KafkaGlobalConf> consumer_conf = KafkaGlobalConf::Init();
   if (!consumer_conf) {
@@ -138,7 +138,6 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
   }
-
   consumer_conf->SetErrorCb(err_cb);
 
   // Init kafka consumer
@@ -166,7 +165,7 @@ int main(int argc, char *argv[]) {
     if (topic == "global" || topic == "kafka" || topic == "default"
             || topic == "hdfs")
       continue;
-  
+
     std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(topic);
     if (!topic_conf) {
       LOG(ERROR) << "TopicConf Init topic[" << topic << "] failed";
@@ -177,11 +176,11 @@ int main(int argc, char *argv[]) {
       LOG(ERROR) << "TopicConf InitConf topic[" << topic << "] failed";
       exit(EXIT_FAILURE);
     }
-  
+
     topic_confs[topic] = std::move(topic_conf);
   }
 
-  // Init threads
+  // Init topic consumers
   for (auto it = topic_confs.begin(); it != topic_confs.end(); ++it) {
     std::shared_ptr<FpCache> cache = FpCache::Init();
     if (!cache) {
@@ -214,7 +213,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
       }
     }
-  
+
     std::unique_ptr<Upload> upload = Upload::Init(it->second,
         format, cache, handle);
     if (!upload) {
@@ -223,7 +222,7 @@ int main(int argc, char *argv[]) {
     }
     topic_uploads[it->first] = std::move(upload);
   }
-  
+
   set_signal_handlers();
   consumer->StartAllTopic();
   sleep(10);
@@ -231,10 +230,11 @@ int main(int argc, char *argv[]) {
     it->second->Start();
   }
 
-  while (running) {
+  while (!stop) {
     pause();
   }
 
   consumer->StopAllTopic();
   el::Helpers::uninstallPreRollOutCallback();
+  return 0;
 }

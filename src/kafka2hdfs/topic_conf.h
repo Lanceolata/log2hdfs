@@ -20,31 +20,51 @@ namespace log2hdfs {
 class Section;
 class TopicConf;
 
+/**
+ * Topic conf contents
+ */
 class TopicConfContents {
  private:
   friend class TopicConf;
 
+  /**
+   * Constructor
+   */
   TopicConfContents();
 
+  /**
+   * Copy constructor
+   */
   TopicConfContents(const TopicConfContents& other);
 
   TopicConfContents& operator=(const TopicConfContents& other) = delete;
 
+  /**
+   * Update configurations
+   * 
+   * @param section             configure section
+   * 
+   * @returns True if update success, false otherwise.
+   */
   bool Update(std::shared_ptr<Section> section);
 
+  /**
+   * Update configurations runtime
+   * 
+   * @param section             configure section
+   * 
+   * @returns True if update success, false otherwise.
+   */
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
-  std::string consume_dir_;
-  std::string compress_dir_;
-  std::string upload_dir_;
+  std::string root_dir_;
 
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
 
   LogFormat::Type log_format_;
   PathFormat::Type path_format_;
   ConsumeCallback::Type consume_type_;
-
-  Upload::Type file_format_;
+  Upload::Type upload_type_;
   size_t parallel_;
   std::string compress_lzo_;
   std::string compress_orc_;
@@ -54,39 +74,60 @@ class TopicConfContents {
   std::atomic<int> consume_interval_;
   std::atomic<int> complete_interval_;
   std::atomic<long> complete_maxsize_;
-  std::atomic<int> complete_maxseconds_;
+  std::atomic<int> retention_seconds_;
   std::atomic<int> upload_interval_;
 };
 
 class TopicConf {
  public:
-  // Must call before new TopicConf.
+  /**
+   * Update default configuration
+   * 
+   * Must call before create TopicConf.
+   * 
+   * @param section             configure section
+   * 
+   * @return True if update success, false otherwise.
+   */
   static bool UpdataDefaultConf(std::shared_ptr<Section> section);
 
+  /**
+   * Static function create TopicConf shared_ptr.
+   */
   static std::shared_ptr<TopicConf> Init(const std::string& section);
 
-  TopicConf(const std::string& section):
+  /**
+   * Constructor
+   */
+  explicit TopicConf(const std::string& section):
       section_(section), contents_(DEFAULT_CONTENTS_) {}
 
+  /**
+   * Init topic conf.
+   */
   bool InitConf(std::shared_ptr<Section> section);
 
-  // This function runtime update conf safe.
+  /**
+   * Update topic conf runtime.
+   * 
+   * This function runtime update conf safe.
+   */
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
   const std::string& section() const {
     return section_;
   }
 
-  const std::string& consume_dir() const {
-    return contents_.consume_dir_;
+  const std::string consume_dir() const {
+    return contents_.root_dir_ + "/" + section_ + "/consume";
   }
 
-  const std::string& compress_dir() const {
-    return contents_.compress_dir_;
+  const std::string compress_dir() const {
+    return contents_.root_dir_ + "/" + section_ + "/compress";
   }
 
-  const std::string& upload_dir() const {
-    return contents_.upload_dir_;
+  const std::string upload_dir() const {
+    return contents_.root_dir_ + "/" + section_ + "/upload";
   }
 
   const std::vector<std::string>& topics() const {
@@ -102,7 +143,7 @@ class TopicConf {
   }
 
   std::string hdfs_path() const {
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     return hdfs_path_;
   }
 
@@ -122,8 +163,8 @@ class TopicConf {
     return contents_.consume_type_;
   }
 
-  Upload::Type file_format() const {
-    return contents_.file_format_;
+  Upload::Type upload_type() const {
+    return contents_.upload_type_;
   }
 
   size_t parallel() const {
@@ -154,8 +195,8 @@ class TopicConf {
     return contents_.complete_maxsize_.load();
   }
 
-  int complete_maxseconds() const {
-    return contents_.complete_maxseconds_.load();
+  int retention_seconds() const {
+    return contents_.retention_seconds_.load();
   }
 
   int upload_interval() const {

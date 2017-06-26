@@ -14,18 +14,29 @@ class HdfsHandle;
 class PathFormat;
 class TopicConf;
 
+/**
+ * Upload interface
+ */
 class Upload {
  public:
+  /**
+   * Upload type enum
+   */
   enum Type {
     kText,
     kLzo,
-    kOrc,
     kCompress,
     kTextNoUpload
   };
 
+  /**
+   * Convert type string to Upload type
+   */
   static Optional<Upload::Type> ParseType(const std::string& type);
 
+  /**
+   * Static function to create a Upload unique_ptr.
+   */
   static std::unique_ptr<Upload> Init(
       std::shared_ptr<TopicConf> conf,
       std::shared_ptr<PathFormat> format,
@@ -34,11 +45,17 @@ class Upload {
 
   virtual ~Upload() {}
 
+  /**
+   * Upload thread create.
+   */
   virtual void Start() = 0;
 
+  /**
+   * Uplaod thread stop.
+   */
   virtual void Stop() = 0;
 };
 
 }   // namespace log2hdfs
 
-#endif  // LOG2HDFS_KAFKA2HDFS_COMPRESS_UPLOAD_H_
+#endif  // LOG2HDFS_KAFKA2HDFS_UPLOAD_H_

@@ -62,7 +62,7 @@ log.format | v6 v6device ef efdevice | v6 | 日志类型，对应v6及ef日志
 path.format | normal | normal | 路径格式类型
 consume.type | report v6 ef debug | | consume callback类型:report类型会去吊日志的第一个时间字段，v6 ef为相同日志类型，debug会写入调试信息
 file.format | orc lzo text compress | text | 文件格式：text文件文件，hdfs文件存在会追加；orc通过命令压缩为orc文件，hdfs文件存在会删除；lzo通过命令压缩为lzo文件，hdfs文件存在会删除，会生成index；compress移动给其他程序压缩，hdfs文件存在会删除。
-parallel | 1-50 | | 线程池数量，text格式为防止多个进程append同一文件，强制为1；压缩和上传共用线程池
+parallel | 1-24 | | 线程池数量，text格式为防止多个进程append同一文件，强制为1；压缩和上传共用线程池
 compress.lzo | | | lzo压缩命令
 compress.orc | | | orc压缩命令
 compress.mv | | | 移动目录
@@ -93,7 +93,7 @@ compress.mv | | | 移动目录
 consume.interval | 60-2147483647 | 900 | 文件归档时间间隔
 complete.interval | 60-2147483647 | 120 | 文件完成的时间间隔，超过时间会停止写入
 complete.maxsize | 0-2147483647 | 21474836480 | 文件的最大大小，超过大小会停止写入
-complete.maxseconds | -1-2147483647 | -1 | 文件的最大保留时间，超过会停止写入(根据atime判断)
+complete.maxseconds | -1-2147483647 | 0 | 文件的最大保留时间，超过会停止写入(根据atime判断) 小于等于0表示无限制
 upload.interval | 0-2147483647 | 20 | 上传文件扫描间隔
 
 可以配置librdkafka configuration properties，需要在配置前上'kafka.'

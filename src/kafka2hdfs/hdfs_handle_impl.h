@@ -9,7 +9,8 @@ namespace log2hdfs {
 
 class CommandHdfsHandle : public HdfsHandle {
  public:
-  static std::shared_ptr<HdfsHandle> Init(std::shared_ptr<Section> section);
+  static std::shared_ptr<CommandHdfsHandle> Init(
+      std::shared_ptr<Section> section);
 
   CommandHdfsHandle(hdfsFS fs_handle,
                     const std::string& put,
@@ -49,6 +50,6 @@ class CommandHdfsHandle : public HdfsHandle {
 
 // TODO class ApiHdfsHandle
 
-}   // namespce log2hdfs
+}   // namespace log2hdfs
 
 #endif  // LOG2HDFS_KAFKA2HDFS_HDFS_HANDLE_IMPL_H_

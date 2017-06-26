@@ -49,15 +49,15 @@ class ConsumeCallback : public KafkaConsumeCb {
   std::shared_ptr<FpCache> cache_;
 };
 
-// ------------------------------------------------------------------
+// --------------------------------------------------------
 // V6ConsumeCallback
 
 class V6ConsumeCallback : public ConsumeCallback {
  public:
   static std::shared_ptr<V6ConsumeCallback> Init(
-        std::shared_ptr<TopicConf> conf,
-        std::shared_ptr<PathFormat> format,
-        std::shared_ptr<FpCache> cache);
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> cache);
 
   V6ConsumeCallback(const std::string& dir,
                     std::shared_ptr<PathFormat> format,
@@ -81,9 +81,9 @@ typedef V6ConsumeCallback EfConsumeCallback;
 class ReportConsumeCallback : public ConsumeCallback {
  public:
   static std::shared_ptr<ReportConsumeCallback> Init(
-        std::shared_ptr<TopicConf> conf,
-        std::shared_ptr<PathFormat> format,
-        std::shared_ptr<FpCache> cache);
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> cache);
 
   ReportConsumeCallback(const std::string& dir,
                         std::shared_ptr<PathFormat> format,
@@ -99,17 +99,17 @@ class ReportConsumeCallback : public ConsumeCallback {
 
 // ------------------------------------------------------------------
 // DebugConsumeCallback
- 
+
 class DebugConsumeCallback : public ConsumeCallback {
  public:
   static std::shared_ptr<DebugConsumeCallback> Init(
-        std::shared_ptr<TopicConf> conf,
-        std::shared_ptr<PathFormat> format,
-        std::shared_ptr<FpCache> cache);
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> cache);
 
   DebugConsumeCallback(const std::string& dir,
-                        std::shared_ptr<PathFormat> format,
-                        std::shared_ptr<FpCache> cache):
+                       std::shared_ptr<PathFormat> format,
+                       std::shared_ptr<FpCache> cache):
       ConsumeCallback(dir, std::move(format), std::move(cache)) {}
 
   DebugConsumeCallback(const DebugConsumeCallback& other) = delete;

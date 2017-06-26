@@ -24,24 +24,22 @@ bool ParsePartitions(
     std::vector<int32_t> tps;
     std::vector<std::string> vec2 = SplitString(t, ",",
         kTrimWhitespace, kSplitNonempty);
-    if (vec2.size() == 0) {
+    if (vec2.size() == 0)
       return false;
-    }
 
     for (auto& p : vec2) {
       std::size_t found = p.find("-");
       if (found == std::string::npos) {
         int32_t partition = atoi(p.c_str());
-        if (partition < 0) {
+        if (partition < 0)
           return false;
-        }
+
         tps.push_back(partition);
       } else {
         int32_t start = atoi(p.substr(0, found).c_str());
         int32_t end = atoi(p.substr(found + 1).c_str());
-        if (start < 0 || end < 0 || end <= start) {
+        if (start < 0 || end < 0 || end <= start)
           return false;
-        }
 
         for (int32_t i = start; i <= end; ++i) {
           tps.push_back(i);
@@ -68,9 +66,8 @@ bool ParseOffsets(
     std::vector<int64_t> tos;
     std::vector<std::string> vec2 = SplitString(vec1[i], ",",
         kTrimWhitespace, kSplitNonempty);
-    if (vec2.size() == 0) {
+    if (vec2.size() == 0)
       return false;
-    }
 
     int64_t last;
     for (auto& o : vec2) {
@@ -93,14 +90,12 @@ bool ParseOffsets(
 // TopicConfContents
 
 TopicConfContents::TopicConfContents():
-    consume_dir_(""),
-    compress_dir_(""),
-    upload_dir_(""),
+    root_dir_("."),
     kafka_topic_conf_(KafkaTopicConf::Init()),
     log_format_(LogFormat::Type::kV6),
     path_format_(PathFormat::Type::kNormal),
     consume_type_(ConsumeCallback::Type::kV6),
-    file_format_(Upload::Type::kText),
+    upload_type_(Upload::Type::kText),
     parallel_(3),
     compress_lzo_(),
     compress_orc_(),
@@ -108,18 +103,16 @@ TopicConfContents::TopicConfContents():
     consume_interval_(900),
     complete_interval_(120),
     complete_maxsize_(21474836480),
-    complete_maxseconds_(-1),
+    retention_seconds_(0),
     upload_interval_(20) {}
 
 TopicConfContents::TopicConfContents(const TopicConfContents& other):
-    consume_dir_(other.consume_dir_),
-    compress_dir_(other.compress_dir_),
-    upload_dir_(other.upload_dir_),
+    root_dir_(other.root_dir_),
     kafka_topic_conf_(other.kafka_topic_conf_->Copy()),
     log_format_(other.log_format_),
     path_format_(other.path_format_),
     consume_type_(other.consume_type_),
-    file_format_(other.file_format_),
+    upload_type_(other.upload_type_),
     parallel_(other.parallel_),
     compress_lzo_(other.compress_lzo_),
     compress_orc_(other.compress_orc_),
@@ -127,7 +120,7 @@ TopicConfContents::TopicConfContents(const TopicConfContents& other):
     consume_interval_(other.consume_interval_.load()),
     complete_interval_(other.complete_interval_.load()),
     complete_maxsize_(other.complete_maxsize_.load()),
-    complete_maxseconds_(other.complete_maxseconds_.load()),
+    retention_seconds_(other.retention_seconds_.load()),
     upload_interval_(other.upload_interval_.load()) {}
 
 // rdkafka conf in section[default] start with "kafka.".
@@ -145,20 +138,16 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
     return false;
   }
 
-  Optional<std::string> option = section->Get("rootdir");
+  Optional<std::string> option = section->Get("root.dir");
   if (option.valid()) {
     std::string normal_path = NormalDirPath(option.value());
     if (normal_path.empty()) {
       LOG(WARNING) << "TopicConfContents Update invalid normal_path";
       return false;
     }
-    consume_dir_ = normal_path + "/consume";
-    compress_dir_ = normal_path + "/compress";
-    upload_dir_ = normal_path + "/upload";
+    root_dir_ = normal_path;
   }
-  LOG(INFO) << "TopicConfContents Update consume_dir_[" << consume_dir_
-            << "] compress_dir_[" << compress_dir_ << "] upload_dir_["
-            << upload_dir_ << "]";
+  LOG(INFO) << "TopicConfContents Update root_dir_[" << root_dir_ << "]";
 
   option = section->Get("log.format");
   if (option.valid()) {
@@ -203,29 +192,29 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
   LOG(INFO) << "TopicConfContents Update consume_type["
             << consume_type_ << "]";
 
-  option = section->Get("file.format");
+  option = section->Get("upload.type");
   if (option.valid()) {
-    Optional<Upload::Type> file_format = Upload::ParseType(option.value());
-    if (file_format.valid()) {
-      file_format_ = file_format.value();
+    Optional<Upload::Type> upload_type = Upload::ParseType(option.value());
+    if (upload_type.valid()) {
+      upload_type_ = upload_type.value();
     } else {
-      LOG(WARNING) << "TopicConfContents Update invalid file_format["
+      LOG(WARNING) << "TopicConfContents Update invalid upload_type["
                    << option.value() << "]";
       return false;
     }
   }
-  LOG(INFO) << "TopicConfContents Update file_format["
-            << file_format_ << "]";
+  LOG(INFO) << "TopicConfContents Update upload_type["
+            << upload_type_ << "]";
 
   option = section->Get("parallel");
   if (option.valid()) {
     long parallel = atol(option.value().c_str());
-    if (parallel < 0) {
+    if (parallel > 0 && parallel < 24) {
+      parallel_ = parallel;
+    } else {
       LOG(WARNING) << "TopicConfContents Update invalid parallel["
                    << option.value() << "]";
       return false;
-    } else {
-      parallel_ = parallel;
     }
   }
   LOG(INFO) << "TopicConfContents Update parallel[" << parallel_ << "]";
@@ -307,10 +296,10 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
     }
   }
 
-  int complete_maxseconds = complete_maxseconds_.load();
-  option = section->Get("complete.maxseconds");
+  int retention_seconds = retention_seconds_.load();
+  option = section->Get("retention.seconds");
   if (option.valid() && !option.value().empty()) {
-    complete_maxseconds = atoi(option.value().c_str());
+    retention_seconds = atoi(option.value().c_str());
   }
 
   int upload_interval = upload_interval_.load();
@@ -342,10 +331,10 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
               << complete_maxsize << "] success";
   }
 
-  if (complete_maxseconds != complete_maxseconds_.load()) {
-    complete_maxseconds_.store(complete_maxseconds);
-    LOG(INFO) << "TopicConfContents UpdateRuntime update complete_maxseconds["
-              << complete_maxseconds << "] success";
+  if (retention_seconds != retention_seconds_.load()) {
+    retention_seconds_.store(retention_seconds);
+    LOG(INFO) << "TopicConfContents UpdateRuntime update retention_seconds["
+              << retention_seconds << "] success";
   }
 
   if (upload_interval != upload_interval_.load()) {
@@ -438,7 +427,24 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
   hdfs_path_ = hdfs_path;
   LOG(INFO) << "TopicConf InitConf hdfs_path[" << hdfs_path << "]";
 
-  return contents_.Update(std::move(section));
+  if (!contents_.Update(std::move(section))) {
+    return false;
+  }
+
+  // create dirs
+  if (!MakeDir(contents_.root_dir_)) {
+    LOG(WARNING) << "TopicConf InitConf MakeDir[" << contents_.root_dir_
+                 << "] failed with errno[" << errno << "]";
+    return false;
+  }
+
+  std::string section_dir = contents_.root_dir_ + "/" + section_;
+  if (!MakeDir(section_dir)) {
+    LOG(WARNING) << "TopicConf InitConf MakeDir[" << section_dir
+                 << "] failed with errno[" << errno << "]";
+    return false;
+  }
+  return true;
 }
 
 bool TopicConf::UpdateRuntime(std::shared_ptr<Section> section) {
