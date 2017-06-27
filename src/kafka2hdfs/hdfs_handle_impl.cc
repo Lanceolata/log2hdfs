@@ -84,7 +84,7 @@ bool CommandHdfsHandle::Exists(const std::string& hdfs_path) const {
   if (hdfs_path.empty())
     return false;
 
-  return hdfsExists(fs_handle_, hdfs_path.c_str());
+  return hdfsExists(fs_handle_, hdfs_path.c_str()) == 0;
 }
 
 bool CommandHdfsHandle::Put(const std::string& local_path,

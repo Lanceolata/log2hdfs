@@ -280,45 +280,45 @@ void TextUploadImpl::UploadFile(const std::string& path) {
 
   if (!IsFile(file_path)) {
     LOG(WARNING) << "TextUploadImpl UploadPath invalid path["
-                 << path << "]";
+                 << file_path << "]";
     return;
   }
 
   std::string name = BaseName(file_path);
   std::string hdfs_path;
   if (!format_->BuildHdfsPath(name, &hdfs_path)) {
-    LOG(WARNING) << "TextUploadImpl UploadPath BuildHdfsPath[" << path
+    LOG(WARNING) << "TextUploadImpl UploadPath BuildHdfsPath[" << file_path
                  << "] failed";
     return;
   }
 
   if (times > 0) {
-    hdfs_path += std::to_string(times);
+    hdfs_path +=  "." + std::to_string(times);
   }
 
   bool res;
   if (handle_->Exists(hdfs_path)) {
-    res = handle_->Append(path, hdfs_path);
+    res = handle_->Append(file_path, hdfs_path);
   } else {
     std::string dir = DirName(hdfs_path);
     if (!handle_->CreateDirectory(dir)) {
       LOG(WARNING) << "TextUploadImpl UploadPath CreateDirectory[" << dir
-                   << "] path[" << path << "] failed";
+                   << "] failed";
       return;
     } else {
-      res = handle_->Put(path, hdfs_path);
+      res = handle_->Put(file_path, hdfs_path);
     }
   }
 
   if (!res) {
     times++;
-    upload_queue_.Push(path + ":" + std::to_string(times));
+    upload_queue_.Push(file_path + ":" + std::to_string(times));
   } else {
-    if (!RmFile(path)) {
-      LOG(WARNING) << "TextUploadImpl UploadPath RmFile[" << path
+    if (!RmFile(file_path)) {
+      LOG(WARNING) << "TextUploadImpl UploadPath RmFile[" << file_path
                    << "] failed";
     }
-    LOG(INFO) << "TextUploadImpl UploadPath[" << path << "] to["
+    LOG(INFO) << "TextUploadImpl UploadPath[" << file_path << "] to["
               << hdfs_path << "] success";
   }
 }
@@ -435,20 +435,20 @@ void LzoUploadImpl::UploadFile(const std::string& path) {
 
   if (!IsFile(file_path)) {
     LOG(WARNING) << "LzoUploadImpl UploadPath invalid path["
-                 << path << "]";
+                 << file_path << "]";
     return;
   }
 
   std::string name = BaseName(file_path);
   std::string hdfs_path;
   if (!format_->BuildHdfsPath(name, &hdfs_path)) {
-    LOG(WARNING) << "LzoUploadImpl UploadPath BuildHdfsPath[" << path
+    LOG(WARNING) << "LzoUploadImpl UploadPath BuildHdfsPath[" << file_path
                  << "] failed";
     return;
   }
 
   if (times > 0) {
-    hdfs_path += std::to_string(times);
+    hdfs_path += "." + std::to_string(times);
   }
 
   bool res;
@@ -460,23 +460,23 @@ void LzoUploadImpl::UploadFile(const std::string& path) {
     std::string dir = DirName(hdfs_path);
     if (!handle_->CreateDirectory(dir)) {
       LOG(WARNING) << "LzoUploadImpl UploadPath CreateDirectory[" << dir
-                   << "] path[" << path << "] failed";
+                   << "] failed";
       return;
     } else {
-      res = handle_->Put(path, hdfs_path);
+      res = handle_->Put(file_path, hdfs_path);
     }
   }
 
   if (!res) {
     times++;
-    upload_queue_.Push(path + ":" + std::to_string(times));
+    upload_queue_.Push(file_path + ":" + std::to_string(times));
   } else {
-    if (!RmFile(path)) {
-      LOG(WARNING) << "LzoUploadImpl UploadPath RmFile[" << path
+    if (!RmFile(file_path)) {
+      LOG(WARNING) << "LzoUploadImpl UploadPath RmFile[" << file_path
                    << "] failed";
     }
     handle_->LZOIndex(hdfs_path);
-    LOG(INFO) << "LzoUploadImpl UploadPath[" << path << "] to["
+    LOG(INFO) << "LzoUploadImpl UploadPath[" << file_path << "] to["
               << hdfs_path << "] success";
   }
 }
@@ -583,14 +583,14 @@ void CompressUploadImpl::UploadFile(const std::string& path) {
 
   if (!IsFile(file_path)) {
     LOG(WARNING) << "CompressUploadImpl UploadPath invalid path["
-                 << path << "]";
+                 << file_path << "]";
     return;
   }
 
   std::string name = BaseName(file_path);
   std::string hdfs_path;
   if (!format_->BuildHdfsPath(name, &hdfs_path)) {
-    LOG(WARNING) << "CompressUploadImpl UploadPath BuildHdfsPath[" << path
+    LOG(WARNING) << "CompressUploadImpl UploadPath BuildHdfsPath[" << file_path
                  << "] failed";
     return;
   }
@@ -608,22 +608,22 @@ void CompressUploadImpl::UploadFile(const std::string& path) {
     std::string dir = DirName(hdfs_path);
     if (!handle_->CreateDirectory(dir)) {
       LOG(WARNING) << "CompressUploadImpl UploadPath CreateDirectory[" << dir
-                   << "] path[" << path << "] failed";
+                   << "] failed";
       return;
     } else {
-      res = handle_->Put(path, hdfs_path);
+      res = handle_->Put(file_path, hdfs_path);
     }
   }
 
   if (!res) {
     times++;
-    upload_queue_.Push(path + ":" + std::to_string(times));
+    upload_queue_.Push(file_path + ":" + std::to_string(times));
   } else {
-    if (!RmFile(path)) {
-      LOG(WARNING) << "CompressUploadImpl UploadPath RmFile[" << path
+    if (!RmFile(file_path)) {
+      LOG(WARNING) << "CompressUploadImpl UploadPath RmFile[" << file_path
                    << "] failed";
     }
-    LOG(INFO) << "CompressUploadImpl UploadPath[" << path << "] to["
+    LOG(INFO) << "CompressUploadImpl UploadPath[" << file_path << "] to["
               << hdfs_path << "] success";
   }
 }
