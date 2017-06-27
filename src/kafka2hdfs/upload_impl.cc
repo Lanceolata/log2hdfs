@@ -354,7 +354,7 @@ std::unique_ptr<LzoUploadImpl> LzoUploadImpl::Init(
 
 void LzoUploadImpl::Compress() {
   std::string section = conf_->section();
-  std::string upload_path = conf_->upload_dir();
+  std::string compress_path = conf_->compress_dir();
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
@@ -365,7 +365,7 @@ void LzoUploadImpl::Compress() {
     }
 
     // Rename to upload dir
-    std::string new_path = upload_path + "/" + name;
+    std::string new_path = compress_path + "/" + name;
     if (!Rename(path, new_path)) {
       LOG(WARNING) << "TextUploadImpl Compress section[" << section
                    << "Rename from[" << path << "] to[" << new_path
@@ -537,10 +537,10 @@ void CompressUploadImpl::Compress() {
 
   std::vector<std::string> names;
   if (!ScanDir(compress_path, scandir_filter, scandir_compar, &names)) {
-      LOG(WARNING) << "CompressUploadImpl StartInternal ScanDir section["
-                   << section << "] compres_dir[" << compress_path
-                   << "] failed with errno[" << errno << "]";
-      return;
+    LOG(WARNING) << "CompressUploadImpl StartInternal ScanDir section["
+                 << section << "] compres_dir[" << compress_path
+                 << "] failed with errno[" << errno << "]";
+    return;
   }
 
   for (auto& name : names) {
