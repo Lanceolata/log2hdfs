@@ -393,7 +393,7 @@ void LzoUploadImpl::CompressFile(const std::string& path) {
   bool res = ExecuteCommand(cmd, &errstr);
   if (res) {
     std::string old_path = path + ".lzo";
-    std::string new_path = conf_->upload_dir() + BaseName(old_path);
+    std::string new_path = conf_->upload_dir() + "/" + BaseName(old_path);
     if (!Rename(old_path, new_path)) {
       LOG(ERROR) << "LzoUploadImpl CompressFile Rename from[" << old_path
                  << "] to[" << new_path << "] failed with errno[" << errno
