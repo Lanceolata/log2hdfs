@@ -201,7 +201,7 @@ void UploadImpl::Remedy() {
     LOG(WARNING) << "UploadImpl Remedy failed invalid upload dir["
                  << compress_dir << "]";
   } else {
-    ScandirAndPushQueue(section, upload_dir, &compress_queue_);
+    ScandirAndPushQueue(section, upload_dir, &upload_queue_);
   }
 }
 
