@@ -7,6 +7,7 @@
 #include "kafka2hdfs/topic_conf.h"
 #include "util/fp_cache.h"
 #include "util/system_utils.h"
+#include "util/string_utils.h"
 #include "easylogging++.h"
 
 namespace log2hdfs {
@@ -544,6 +545,8 @@ void CompressUploadImpl::Compress() {
   }
 
   for (auto& name : names) {
+    if (!EndsWith(name, ".orc"))
+      continue;
     std::string old_path = compress_path + "/" + name;
     std::string new_path = upload_path + "/" + name;
     if (!Rename(old_path, new_path)) {
@@ -596,7 +599,7 @@ void CompressUploadImpl::UploadFile(const std::string& path) {
   }
 
   if (times > 0) {
-    hdfs_path += std::to_string(times);
+    hdfs_path += "." + std::to_string(times);
   }
 
   bool res;
