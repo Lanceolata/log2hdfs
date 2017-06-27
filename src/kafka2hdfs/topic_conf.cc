@@ -252,6 +252,14 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
                      << "] value[" << it->second << "] failed";
         return false;
       }
+
+      if (name == "offset.store.path") {
+        if (!MakeDir(it->second)) {
+          LOG(WARNING) << "TopicConfContents Update MakeDir[" << it->second
+                       << "] failed with errno[" << errno << "]";
+          return false;
+        }
+      }
     }
   }
   return true;

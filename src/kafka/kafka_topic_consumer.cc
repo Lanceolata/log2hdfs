@@ -117,6 +117,8 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
     ssize_t n = rd_kafka_consume_batch(topic_->rkt_, partition,
         CONSUME_BATCH_TIMEOUT_MS, messages, CONSUME_BATCH_SIZE);
     if (n == -1) {
+      if (errno == 3)
+        break;
       LOG(ERROR) << "KafkaTopicConsumer StartInternal rd_kafka_consume_batch"
                  << " for topic[" << topic << "] partition[" << partition
                  << "] failed with errno[" << errno << "] errstr["
@@ -141,12 +143,12 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
         }
         case RD_KAFKA_RESP_ERR__PARTITION_EOF:
           LOG(INFO) << "KafkaTopicConsumer StartInternal topic[" << topic
-                    << "] partition" << partition << "] end";
+                    << "] partition[" << partition << "] end";
           handle_->Poll(POLL_TIMEOUT_MS);
           break;
         default:
           LOG(WARNING) << "KafkaTopicConsumer StartInternal topic[" << topic
-                       << "] partition" << partition << "] error["
+                       << "] partition[" << partition << "] error["
                        << messages[i]->err << "]";
       }
     }

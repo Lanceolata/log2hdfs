@@ -194,14 +194,14 @@ bool NormalPathFormat::BuildHdfsPath(
   }
 
   std::map<char, std::string> m;
-  if (!format_->ParseKey(vec[1], &m)) {
+  if (!format_->ParseKey(vec[0], &m)) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath ParseKey["
                  << name << "] failed";
     return false;
   }
 
   struct tm timeinfo;
-  if (strptime(vec[2].c_str(), YMDHMS_FORMAT, &timeinfo) == NULL) {
+  if (strptime(vec[1].c_str(), YMDHMS_FORMAT, &timeinfo) == NULL) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath strptime["
                  << name << "] failed";
     return false;
@@ -241,7 +241,7 @@ bool NormalPathFormat::BuildHdfsPath(
           os << section_;
           break;
         case 't':
-          os << vec[3];
+          os << vec[2];
           break;
         default:
           auto mit = m.find(*it);
