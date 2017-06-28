@@ -26,16 +26,6 @@ if [ ! -d ${LIBRDKAFKA_BASEDIR} ]; then
     download_extract_and_cleanup $LIBRDKAFKA_URL
 fi
 
-#if [ ! -d ${JEMALLOC_BASEDIR} ]; then
-#    echo "Fetching jemalloc..."
-#    download_extract_and_cleanup_bz2 $JEMALLOC_URL
-#fi
-
-if [ ! -d ${GOOGLETEST_BASEDIR} ]; then
-    echo "Fetching googletest..."
-    download_extract_and_cleanup $GOOGLETEST_URL
-fi
-
 if [ ! -d ${EASYLOGGINGPP_BASEDIR} ]; then
     echo "Fetching easyloggingpp..."
     download_extract_and_cleanup $EASYLOGGINGPP_URL
