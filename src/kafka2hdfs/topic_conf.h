@@ -130,15 +130,15 @@ class TopicConf {
     return contents_.root_dir_ + "/" + section_ + "/upload";
   }
 
-  const std::vector<std::string>& topics() const {
-    return topics_;
+  const std::string& topics() const {
+    return topic_;
   }
 
-  const std::vector<std::vector<int32_t>>& partitions() const {
+  const std::vector<int32_t>& partitions() const {
     return partitions_;
   }
 
-  const std::vector<std::vector<int64_t>>& offsets() const {
+  const std::vector<int64_t>& offsets() const {
     return offsets_;
   }
 
@@ -207,9 +207,9 @@ class TopicConf {
   static TopicConfContents DEFAULT_CONTENTS_;
 
   std::string section_;
-  std::vector<std::string> topics_;
-  std::vector<std::vector<int32_t>> partitions_;
-  std::vector<std::vector<int64_t>> offsets_;
+  std::string topic_;
+  std::vector<int32_t> partitions_;
+  std::vector<int64_t> offsets_;
   std::string hdfs_path_;
   TopicConfContents contents_;
   mutable std::mutex mutex_;

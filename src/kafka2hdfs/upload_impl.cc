@@ -76,6 +76,8 @@ Optional<Upload::Type> Upload::ParseType(const std::string& type) {
     return Optional<Upload::Type>(kText);
   } else if (type == "lzo") {
     return Optional<Upload::Type>(kLzo);
+  } else if (type == "orc") {
+    return Optional<Upload::Type>(kOrc);
   } else if (type == "compress") {
     return Optional<Upload::Type>(kCompress);
   } else if (type == "textnoupload") {
@@ -97,6 +99,9 @@ std::unique_ptr<Upload> Upload::Init(
                  std::move(fp_cache), std::move(handle));
     case kLzo:
       return LzoUploadImpl::Init(std::move(conf), std::move(format),
+                 std::move(fp_cache), std::move(handle));
+    case kOrc:
+      return OrcUploadImpl::Init(std::move(conf), std::move(format),
                  std::move(fp_cache), std::move(handle));
     case kCompress:
       return CompressUploadImpl::Init(std::move(conf), std::move(format),
@@ -206,66 +211,11 @@ void UploadImpl::Remedy() {
   }
 }
 
-// ------------------------------------------------------------------
-// TextUploadImpl
-
-std::unique_ptr<TextUploadImpl> TextUploadImpl::Init(
-    std::shared_ptr<TopicConf> conf,
-    std::shared_ptr<PathFormat> format,
-    std::shared_ptr<FpCache> fp_cache,
-    std::shared_ptr<HdfsHandle> handle) {
-  if (!conf || !format || !fp_cache || !handle) {
-    LOG(ERROR) << "TextUploadImpl Init invalid parameters";
-    return nullptr;
-  }
-
-  if (!DirParametersCheck("TextUploadImpl", conf)) {
-    LOG(ERROR) << "TextUploadImpl Init DirParametersCheck failed";
-    return nullptr;
-  }
-
-  return std::unique_ptr<TextUploadImpl>(new TextUploadImpl(
-             std::move(conf), std::move(format), std::move(fp_cache),
-             std::move(handle))); 
-}
-
-void TextUploadImpl::Compress() {
+void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
   std::string section = conf_->section();
-  std::string upload_path = conf_->upload_dir();
-  std::string path;
-  while (compress_queue_.TryPop(&path)) {
-    std::string name = BaseName(path);
-    if (name.empty()) {
-      LOG(WARNING) << "TextUploadImpl Compress invalid path["
-                   << path << "]";
-      continue;
-    }
-
-    // Rename to upload dir
-    std::string new_path = upload_path + "/" + name;
-    if (!Rename(path, new_path)) {
-      LOG(WARNING) << "TextUploadImpl Compress section[" << section
-                   << "Rename from[" << path << "] to[" << new_path
-                   << "] failed with errno[" << errno << "]";
-      continue;
-    }
-
-    upload_queue_.Push(new_path);
-  }
-}
-
-void TextUploadImpl::Upload() {
-  std::string path;
-  while (upload_queue_.TryPop(&path)) {
-    pool_.Enqueue([this](const std::string p) {
-                    this->UploadFile(p);
-                  }, path);
-  }
-}
-
-void TextUploadImpl::UploadFile(const std::string& path) {
   if (path.empty()) {
-    LOG(WARNING) << "TextUploadImpl UploadPath empty path";
+    LOG(WARNING) << "UploadImpl UploadPath section[" << section
+                 << "] empty path";
     return;
   }
 
@@ -299,11 +249,17 @@ void TextUploadImpl::UploadFile(const std::string& path) {
 
   bool res;
   if (handle_->Exists(hdfs_path)) {
-    res = handle_->Append(file_path, hdfs_path);
+    if (append) {
+      res = handle_->Append(file_path, hdfs_path);
+    } else {
+      LOG(WARNING) << "UploadImpl UploadFile hdfs path["
+                   << hdfs_path << "] already exists";
+      return;
+    }
   } else {
     std::string dir = DirName(hdfs_path);
     if (!handle_->CreateDirectory(dir)) {
-      LOG(WARNING) << "TextUploadImpl UploadPath CreateDirectory[" << dir
+      LOG(WARNING) << "UploadImpl UploadPath CreateDirectory[" << dir
                    << "] failed";
       return;
     } else {
@@ -312,15 +268,75 @@ void TextUploadImpl::UploadFile(const std::string& path) {
   }
 
   if (!res) {
-    times++;
+    ++times;
     upload_queue_.Push(file_path + ":" + std::to_string(times));
   } else {
     if (!RmFile(file_path)) {
-      LOG(WARNING) << "TextUploadImpl UploadPath RmFile[" << file_path
+      LOG(WARNING) << "UploadImpl UploadPath RmFile[" << file_path
                    << "] failed";
     }
-    LOG(INFO) << "TextUploadImpl UploadPath[" << file_path << "] to["
+    if (index) {
+      handle_->LZOIndex(hdfs_path);
+    }
+
+    LOG(INFO) << "UploadImpl UploadPath[" << file_path << "] to["
               << hdfs_path << "] success";
+  }
+}
+
+// ------------------------------------------------------------------
+// TextUploadImpl
+
+std::unique_ptr<TextUploadImpl> TextUploadImpl::Init(
+    std::shared_ptr<TopicConf> conf,
+    std::shared_ptr<PathFormat> format,
+    std::shared_ptr<FpCache> fp_cache,
+    std::shared_ptr<HdfsHandle> handle) {
+  if (!conf || !format || !fp_cache || !handle) {
+    LOG(ERROR) << "TextUploadImpl Init invalid parameters";
+    return nullptr;
+  }
+
+  if (!DirParametersCheck("TextUploadImpl", conf)) {
+    LOG(ERROR) << "TextUploadImpl Init DirParametersCheck failed";
+    return nullptr;
+  }
+
+  return std::unique_ptr<TextUploadImpl>(new TextUploadImpl(
+             std::move(conf), std::move(format), std::move(fp_cache),
+             std::move(handle)));
+}
+
+void TextUploadImpl::Compress() {
+  std::string upload_path = conf_->upload_dir();
+
+  std::string path;
+  while (compress_queue_.TryPop(&path)) {
+    std::string name = BaseName(path);
+    if (name.empty()) {
+      LOG(WARNING) << "TextUploadImpl Compress empty path";
+      continue;
+    }
+
+    // Rename to upload dir
+    std::string new_path = upload_path + "/" + name;
+    if (!Rename(path, new_path)) {
+      LOG(WARNING) << "TextUploadImpl Compress Rename from["
+                   << path << "] to [" << new_path << "] failed "
+                   << "with errno[" << errno << "]";
+      continue;
+    }
+
+    upload_queue_.Push(new_path);
+  }
+}
+
+void TextUploadImpl::Upload() {
+  std::string path;
+  while (upload_queue_.TryPop(&path)) {
+    pool_.Enqueue([this](const std::string p) {
+                    this->UploadFile(p, true, false);
+                  }, path);
   }
 }
 
@@ -349,28 +365,18 @@ std::unique_ptr<LzoUploadImpl> LzoUploadImpl::Init(
   }
 
   return std::unique_ptr<LzoUploadImpl>(new LzoUploadImpl(
-             std::move(conf), std::move(format), std::move(fp_cache),
-             std::move(handle))); 
+             std::move(conf), std::move(format), std::move(fp_cache),\
+             std::move(handle)));
 }
 
 void LzoUploadImpl::Compress() {
-  std::string section = conf_->section();
   std::string compress_path = conf_->compress_dir();
+
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
     if (name.empty()) {
-      LOG(WARNING) << "TextUploadImpl Compress invalid path["
-                   << path << "]";
-      continue;
-    }
-
-    // Rename to upload dir
-    std::string new_path = compress_path + "/" + name;
-    if (!Rename(path, new_path)) {
-      LOG(WARNING) << "TextUploadImpl Compress section[" << section
-                   << "Rename from[" << path << "] to[" << new_path
-                   << "] failed with errno[" << errno << "]";
+      LOG(WARNING) << "LzoUploadImpl Compress empty path";
       continue;
     }
 
@@ -387,98 +393,134 @@ void LzoUploadImpl::CompressFile(const std::string& path) {
     return;
   }
 
-  std::string cmd = conf_->compress_lzo();
-  cmd.append(" ");
-  cmd.append(path);
-  std::string errstr;
-  bool res = ExecuteCommand(cmd, &errstr);
-  if (res) {
-    std::string old_path = path + ".lzo";
-    std::string new_path = conf_->upload_dir() + "/" + BaseName(old_path);
-    if (!Rename(old_path, new_path)) {
-      LOG(ERROR) << "LzoUploadImpl CompressFile Rename from[" << old_path
-                 << "] to[" << new_path << "] failed with errno[" << errno
-                 << "]";
+  std::string old_path;
+  if (!EndsWith(path, ".lzo")) {
+    std::string cmd = conf_->compress_lzo();
+    cmd.append(" ");
+    cmd.append(path);
+
+    std::string errstr;
+    bool res = ExecuteCommand(cmd, &errstr);
+    if (!res) {
+      LOG(ERROR) << "LzoUploadImpl CompressFile path["
+                 << path << "] failed with errstr["
+                 << errstr << "]";
       return;
     }
-    upload_queue_.Push(new_path);
+    old_path = path + ".lzo";
   } else {
-    LOG(ERROR) << "LzoUploadImpl CompressFile path["
-               << path << "] failed with errstr["
-               << errstr << "]";
+    old_path = path;
   }
+
+  std::string new_path = conf_->upload_dir() + "/" + BaseName(old_path);
+  if (!Rename(old_path, new_path)) {
+    LOG(ERROR) << "LzoUploadImpl CompressFile Rename from[" << old_path
+               << "] to[" << new_path << "] failed with errno[" << errno
+               << "]";
+    return;
+  }
+
+  upload_queue_.Push(new_path);
 }
 
 void LzoUploadImpl::Upload() {
   std::string path;
   while (upload_queue_.TryPop(&path)) {
     pool_.Enqueue([this](const std::string p) {
-                    this->UploadFile(p);
+                    this->UploadFile(p, false, true);
                   }, path);
   }
 }
 
-void LzoUploadImpl::UploadFile(const std::string& path) {
-  if (path.empty()) {
-    LOG(WARNING) << "LzoUploadImpl UploadPath empty path";
-    return;
+// ------------------------------------------------------------------
+// OrcUploadImpl
+
+std::unique_ptr<OrcUploadImpl> OrcUploadImpl::Init(
+    std::shared_ptr<TopicConf> conf,
+    std::shared_ptr<PathFormat> format,
+    std::shared_ptr<FpCache> fp_cache,
+    std::shared_ptr<HdfsHandle> handle) {
+  if (!conf || !format || !fp_cache || !handle) {
+    LOG(ERROR) << "OrcUploadImpl Init invalid parameters";
+    return nullptr;
   }
 
-  size_t found = path.find(":");
-  int times = 0;
-  std::string file_path;
-  if (found != std::string::npos) {
-    times = atoi(path.substr(found + 1).c_str());
-    file_path = path.substr(0, found);
-  } else {
-    file_path = path;
+  if (!DirParametersCheck("OrcUploadImpl", conf)) {
+    LOG(ERROR) << "OrcUploadImpl Init DirParametersCheck failed";
+    return nullptr;
   }
 
-  if (!IsFile(file_path)) {
-    LOG(WARNING) << "LzoUploadImpl UploadPath invalid path["
-                 << file_path << "]";
-    return;
+  std::string orc_cmd = conf->compress_orc();
+  if (orc_cmd.empty()) {
+    LOG(ERROR) << "OrcUploadImpl Init invalid orc_cmd";
+    return nullptr;
   }
 
-  std::string name = BaseName(file_path);
-  std::string hdfs_path;
-  if (!format_->BuildHdfsPath(name, &hdfs_path)) {
-    LOG(WARNING) << "LzoUploadImpl UploadPath BuildHdfsPath[" << file_path
-                 << "] failed";
-    return;
-  }
+  return std::unique_ptr<OrcUploadImpl>(new OrcUploadImpl(
+             std::move(conf), std::move(format), std::move(fp_cache),
+             std::move(handle)));
+}
 
-  if (times > 0) {
-    hdfs_path += "." + std::to_string(times);
-  }
+void OrcUploadImpl::Compress() {
+  std::string compress_path = conf_->compress_dir();
 
-  bool res;
-  if (handle_->Exists(hdfs_path)) {
-    LOG(WARNING) << "LzoUploadImpl UploadPath hdfs path["
-                 << hdfs_path << "] already exists";
-    return;
-  } else {
-    std::string dir = DirName(hdfs_path);
-    if (!handle_->CreateDirectory(dir)) {
-      LOG(WARNING) << "LzoUploadImpl UploadPath CreateDirectory[" << dir
-                   << "] failed";
+  std::string path;
+  while (compress_queue_.TryPop(&path)) {
+    std::string name = BaseName(path);
+    if (name.empty()) {
+      LOG(WARNING) << "OrcUploadImpl Compress empty path";
       return;
-    } else {
-      res = handle_->Put(file_path, hdfs_path);
     }
+
+    pool_.Enqueue([this](const std::string p) {
+                    this->CompressFile(p);
+                  }, path);
+  }
+}
+
+void OrcUploadImpl::CompressFile(const std::string& path) {
+  if (path.empty() || !IsFile(path)) {
+    LOG(WARNING) << "OrcUploadImpl CompressFile invalid path["
+                 << path << "]";
+    return;
   }
 
-  if (!res) {
-    times++;
-    upload_queue_.Push(file_path + ":" + std::to_string(times));
-  } else {
-    if (!RmFile(file_path)) {
-      LOG(WARNING) << "LzoUploadImpl UploadPath RmFile[" << file_path
-                   << "] failed";
+  std::string old_path;
+  if (!EndsWith(path, ".orc")) {
+    std::string cmd = conf_->compress_orc();
+    cmd.append(" ");
+    cmd.append(path);
+
+    std::string errstr;
+    bool res = ExecuteCommand(cmd, &errstr);
+    if (!res) {
+      LOG(ERROR) << "OrcUploadImpl CompressFile path["
+                 << path << "] failed with errstr["
+                 << errstr << "]";
+      return;
     }
-    handle_->LZOIndex(hdfs_path);
-    LOG(INFO) << "LzoUploadImpl UploadPath[" << file_path << "] to["
-              << hdfs_path << "] success";
+    old_path = path + ".orc";
+  } else {
+    old_path = path;
+  }
+
+  std::string new_path = conf_->upload_dir() + "/" + BaseName(old_path);
+  if (!Rename(old_path, new_path)) {
+    LOG(ERROR) << "OrcUploadImpl CompressFile Rename from[" << old_path
+               << "] to[" << new_path << "] failed with errno[" << errno
+               << "]";
+    return;
+  }
+
+  upload_queue_.Push(new_path);
+}
+
+void OrcUploadImpl::Upload() {
+  std::string path;
+  while (upload_queue_.TryPop(&path)) {
+    pool_.Enqueue([this](const std::string p) {
+                    this->UploadFile(p, false, false);
+                  }, path);
   }
 }
 
@@ -508,51 +550,51 @@ std::unique_ptr<CompressUploadImpl> CompressUploadImpl::Init(
 
   return std::unique_ptr<CompressUploadImpl>(new CompressUploadImpl(
              std::move(conf), std::move(format), std::move(fp_cache),
-             std::move(handle))); 
+             std::move(handle)));
 }
 
 void CompressUploadImpl::Compress() {
-  std::string section = conf_->section();
   std::string mv_path = conf_->compress_mv();
   std::string compress_path = conf_->compress_dir();
   std::string upload_path = conf_->upload_dir();
+
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
     if (name.empty()) {
-      LOG(WARNING) << "CompressUploadImpl Compress invalid path["
-                   << path << "]";
+      LOG(WARNING) << "CompressUploadImpl Compress empty path";
       continue;
     }
 
-    // Rename to upload dir
+    if (EndsWith(name, ".orc"))
+      continue;
+
     std::string new_path = mv_path + "/" + name;
     if (!Rename(path, new_path)) {
-      LOG(WARNING) << "CompressUploadImpl Compress section[" << section
-                   << "Rename from[" << path << "] to[" << new_path
-                   << "] failed with errno[" << errno << "]";
+      LOG(WARNING) << "CompressUploadImpl Compress Rename from[" << path
+                   << "] to[" << new_path << "] failed with errno["
+                   << errno << "]";
       continue;
     }
-
   }
 
   std::vector<std::string> names;
   if (!ScanDir(compress_path, scandir_filter, scandir_compar, &names)) {
-    LOG(WARNING) << "CompressUploadImpl StartInternal ScanDir section["
-                 << section << "] compres_dir[" << compress_path
-                 << "] failed with errno[" << errno << "]";
+    LOG(ERROR) << "CompressUploadImpl StartInternal ScanDir compres_dir["
+               << compress_path << "] failed with errno[" << errno << "]";
     return;
   }
 
   for (auto& name : names) {
     if (!EndsWith(name, ".orc"))
       continue;
+
     std::string old_path = compress_path + "/" + name;
     std::string new_path = upload_path + "/" + name;
     if (!Rename(old_path, new_path)) {
-      LOG(WARNING) << "CompressUploadImpl Compress section[" << section
-                   << "Rename from[" << old_path << "] to[" << new_path
-                   << "] failed with errno[" << errno << "]";
+      LOG(WARNING) << "CompressUploadImpl Compress Rename from[" << old_path
+                   << "] to[" << new_path << "] failed with errno["
+                   << errno << "]";
       continue;
     }
     upload_queue_.Push(new_path);
@@ -563,71 +605,8 @@ void CompressUploadImpl::Upload() {
   std::string path;
   while (upload_queue_.TryPop(&path)) {
     pool_.Enqueue([this](const std::string p) {
-                    this->UploadFile(p);
+                    this->UploadFile(p, false, false);
                   }, path);
-  }
-}
-
-void CompressUploadImpl::UploadFile(const std::string& path) {
-  if (path.empty()) {
-    LOG(WARNING) << "CompressUploadImpl UploadPath empty path";
-    return;
-  }
-
-  size_t found = path.find(":");
-  int times = 0;
-  std::string file_path;
-  if (found != std::string::npos) {
-    times = atoi(path.substr(found + 1).c_str());
-    file_path = path.substr(0, found);
-  } else {
-    file_path = path;
-  }
-
-  if (!IsFile(file_path)) {
-    LOG(WARNING) << "CompressUploadImpl UploadPath invalid path["
-                 << file_path << "]";
-    return;
-  }
-
-  std::string name = BaseName(file_path);
-  std::string hdfs_path;
-  if (!format_->BuildHdfsPath(name, &hdfs_path)) {
-    LOG(WARNING) << "CompressUploadImpl UploadPath BuildHdfsPath[" << file_path
-                 << "] failed";
-    return;
-  }
-
-  if (times > 0) {
-    hdfs_path += "." + std::to_string(times);
-  }
-
-  bool res;
-  if (handle_->Exists(hdfs_path)) {
-    LOG(WARNING) << "CompressUploadImpl UploadPath hdfs path["
-                 << hdfs_path << "] already exists";
-    return;
-  } else {
-    std::string dir = DirName(hdfs_path);
-    if (!handle_->CreateDirectory(dir)) {
-      LOG(WARNING) << "CompressUploadImpl UploadPath CreateDirectory[" << dir
-                   << "] failed";
-      return;
-    } else {
-      res = handle_->Put(file_path, hdfs_path);
-    }
-  }
-
-  if (!res) {
-    times++;
-    upload_queue_.Push(file_path + ":" + std::to_string(times));
-  } else {
-    if (!RmFile(file_path)) {
-      LOG(WARNING) << "CompressUploadImpl UploadPath RmFile[" << file_path
-                   << "] failed";
-    }
-    LOG(INFO) << "CompressUploadImpl UploadPath[" << file_path << "] to["
-              << hdfs_path << "] success";
   }
 }
 
@@ -651,31 +630,27 @@ std::unique_ptr<TextNoUploadImpl> TextNoUploadImpl::Init(
 
   return std::unique_ptr<TextNoUploadImpl>(new TextNoUploadImpl(
              std::move(conf), std::move(format), std::move(fp_cache),
-             std::move(handle))); 
+             std::move(handle)));
 }
 
 void TextNoUploadImpl::Compress() {
-  std::string section = conf_->section();
   std::string upload_path = conf_->upload_dir();
+
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
     if (name.empty()) {
-      LOG(WARNING) << "TextNoUploadImpl Compress invalid path["
-                   << path << "]";
+      LOG(WARNING) << "TextNoUploadImpl Compress empty path";
       continue;
     }
 
-    // Rename to upload dir
     std::string new_path = upload_path + "/" + name;
     if (!Rename(path, new_path)) {
-      LOG(WARNING) << "TextNoUploadImpl Compress section[" << section
-                   << "Rename from[" << path << "] to[" << new_path
-                   << "] failed with errno[" << errno << "]";
+      LOG(WARNING) << "TextNoUploadImpl Compress Rename from[" << path
+                   << "] to[" << new_path << "] failed with errno["
+                   << errno << "]";
       continue;
     }
-
-    upload_queue_.Push(new_path);
   }
 }
 

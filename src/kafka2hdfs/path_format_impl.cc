@@ -134,8 +134,11 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
     return false;
   }
 
-  if (file_size >= maxsize)
+  if (file_size >= maxsize) {
+    LOG(INFO) << "NormalPathFormat WriteFinished filesize[" << file_size
+              << "] large than maxsize[" << maxsize << "]";
     return true;
+  }
 
   // 超过最大未修改时间
   int interval = conf_->complete_interval();
@@ -146,8 +149,11 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
     return false;
   }
 
-  if (time(NULL) - file_ts > interval)
+  if (time(NULL) - file_ts > interval) {
+    LOG(INFO) << "NormalPathFormat WriteFinished filets[" << file_ts
+              << "] large than interval[" << interval << "]";
     return true;
+  }
 
   // 超过最大保留时长 小于60s表示不限制
   int retention = conf_->retention_seconds();
@@ -159,8 +165,11 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
       return false;
     }
 
-    if (time(NULL) - file_atime > retention)
+    if (time(NULL) - file_atime > retention) {
+      LOG(INFO) << "NormalPathFormat WriteFinished file atime[" << file_atime
+                << "] large than retention[" << retention << "]";
       return true;
+    }
   }
 
   return false;

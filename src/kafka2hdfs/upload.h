@@ -25,6 +25,7 @@ class Upload {
   enum Type {
     kText,
     kLzo,
+    kOrc,
     kCompress,
     kTextNoUpload
   };

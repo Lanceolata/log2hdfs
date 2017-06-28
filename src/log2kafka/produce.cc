@@ -233,7 +233,8 @@ void Produce::ProduceAndSave(
   ifs.close();
 
   producer_->PollOutq(msgs_num, timeout);
-  LOG(INFO) << "log sent[" << path << "] line[" << num << "]";
+  LOG(INFO) << "log topic[" << topic << "] sent[" << path << "] line["
+            << num << "]";
 
 }
 

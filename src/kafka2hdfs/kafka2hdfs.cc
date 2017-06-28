@@ -45,6 +45,65 @@ void signals_handler(int sig) {
     stop = true;
     return;
   }
+
+  std::shared_ptr<IniConfigParser> conf = IniConfigParser::Init();
+  if (!conf->Read(conf_path)) {
+    LOG(ERROR) << "signals_handler IniConfigParser Read config file failed";
+    return;
+  }
+
+  for (auto it = conf->Begin(); it != conf->End(); ++it) {
+    const std::string topic = it->first;
+    if (topic == "global" || topic == "kafka" || topic == "default")
+      continue;
+
+    // handle running topic
+    auto it2 = topic_confs.find(topic);
+    if (it2 != topic_confs.end()) {
+      if (!it2->second->UpdateRuntime(it->second)) {
+        LOG(WARNING) << "signals_handler UpdateRuntime topic[" << topic
+                     << "] failed";
+      }
+      continue;
+    }
+
+    // handle new topic
+    std::shared_ptr<TopicConf> topic_conf = TopicConf::Init(topic);
+    if (!topic_conf) {
+      LOG(ERROR) << "signals_handler TopicConf Init topic[" << topic
+                 << "] failed";
+      continue;
+    }
+
+    if (!topic_conf->InitConf(it->second)) {
+      LOG(ERROR) << "signals_handler TopicConf InitConf topic[" << topic
+                 << "] failed";
+      continue;
+    }
+
+    std::shared_ptr<FpCache> cache = FpCache::Init();
+    if (!cache) {
+      LOG(ERROR) << "signals_handler FpCache Init failed";
+      continue;
+    }
+
+    std::shared_ptr<PathFormat> format = PathFormat::Init(topic_conf);
+    if (!format) {
+      LOG(ERROR) << "signals_handler PathFormat Init failed";
+      continue;
+    }
+
+    std::shared_ptr<KafkaConsumeCb> cb = ConsumeCallback::Init(
+        topic_conf, format, cache);
+    if (!cb) {
+      LOG(ERROR) << "signals_handler ConsumeCallback Init failed";
+      continue;
+    }
+
+    
+
+    topic_confs[topic] = std::move(topic_conf);
+  }
   return;
 }
 

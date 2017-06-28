@@ -53,6 +53,8 @@ class UploadImpl : public Upload {
 
   virtual void Upload() = 0;
 
+  virtual void UploadFile(const std::string& path, bool append, bool index);
+
  protected:
   std::shared_ptr<TopicConf> conf_;
   std::shared_ptr<PathFormat> format_;
@@ -88,8 +90,6 @@ class TextUploadImpl : public UploadImpl {
 
   void Upload();
 
-  void UploadFile(const std::string& path);
-
  protected:
   ThreadPool pool_;
 };
@@ -119,7 +119,34 @@ class LzoUploadImpl : public UploadImpl {
 
   void Upload();
 
-  void UploadFile(const std::string& path);
+ protected:
+  ThreadPool pool_;
+};
+
+// ------------------------------------------------------------------
+// OrcUploadImpl
+
+class OrcUploadImpl : public UploadImpl {
+ public:
+  static std::unique_ptr<OrcUploadImpl> Init(
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> fp_cache,
+      std::shared_ptr<HdfsHandle> handle);
+
+  OrcUploadImpl(std::shared_ptr<TopicConf> conf,
+                std::shared_ptr<PathFormat> format,
+                std::shared_ptr<FpCache> fp_cache,
+                std::shared_ptr<HdfsHandle> handle):
+      UploadImpl(std::move(conf), std::move(format),
+                 std::move(fp_cache), std::move(handle)),
+      pool_(conf_->parallel()) {}
+
+  void Compress();
+
+  void CompressFile(const std::string& path);
+
+  void Upload();
 
  protected:
   ThreadPool pool_;
@@ -147,8 +174,6 @@ class CompressUploadImpl : public UploadImpl {
   void Compress();
 
   void Upload();
-
-  void UploadFile(const std::string& path);
 
  protected:
   ThreadPool pool_;
