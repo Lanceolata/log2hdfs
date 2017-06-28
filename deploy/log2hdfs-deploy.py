@@ -12,6 +12,7 @@ env.roledefs = {
     'adp': adp,
     'stats': stats,
     'vt': vt,
+    'imp': imp,
     'sandbox': sandbox
 }
 
@@ -24,22 +25,44 @@ def log2kafka_deploy():
             run('sh download_thirdparty.sh')
             run('sh build_thirdparty.sh')
 
-        run('run build_log2kafka.sh')
+        run('sh build_log2kafka.sh')
 
 
-def copy_conf(name):
+def copy_conf():
     run('mkdir -p log2kafka')
-    run('cp log2hdfs/conf/%s.conf %s-log.conf log2kafka/' % (name, name))
     run('cp log2hdfs/bin/run_log2kafka.sh log2kafka/')
 
 @roles('sandbox')
 def sandbox_deploy():
     log2kafka_deploy()
-    #copy_conf('sandbox')
+    copy_conf()
 
 
 @roles('dsp')
 def dsp_test_deploy():
     log2kafka_deploy()
-    copy_conf('dsp-test')
+    copy_conf()
 
+
+@roles('adp')
+def adp_deploy():
+    log2kafka_deploy()
+    copy_conf()
+
+
+@roles('stats')
+def stats_deploy():
+    log2kafka_deploy()
+    copy_conf()
+
+
+@roles('vt')
+def vt_deploy():
+    log2kafka_deploy()
+    copy_conf()
+
+
+@roles('imp')
+def imp_deploy():
+    log2kafka_deploy()
+    copy_conf()
