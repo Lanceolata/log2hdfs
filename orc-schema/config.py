@@ -197,7 +197,7 @@ creative = [
     (18, 0, 'templateId', 'bigint'),
     (19, 0, 'impProductNumbers', 'string'),
     (20, 0, 'clickProductNumber', 'string'),
-	(21, 5, 'subdivisionBudgetPath', 'string')
+    (21, 5, 'subdivisionBudgetPath', 'string')
 ]
 
 algo = [
@@ -377,6 +377,10 @@ report_base = [
     (93, 0, 'pytags', 'string'),
     (94, 0, 'extags', 'string'),
     (95, 0, 'pyfromextags', 'string'),
+    (96, 0, 'client_id', 'bigint'),
+    (97, 0, 'campaign_division_id', 'bigint'),
+    (98, 0, 'sub_campaign_division_id', 'bigint'),
+    (99, 0, 'exe_campaign_division_id', 'bigint'),
 ]
 
 report_base_day = [

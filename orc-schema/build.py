@@ -78,9 +78,9 @@ def build_flat_schema(struct):
 #print build_nested_schema(click_bid)
 #print build_flat_schema(click_bid)
 #print(build_nested_schema(impression_bid))
-print(build_flat_schema(impression_bid))
+#print(build_flat_schema(impression_bid))
 
-#print build_nested_schema(report_base)
+print build_nested_schema(report_base)
 #print build_nested_schema(report_base_day)
 #print build_nested_schema(report_conversion_click)
 #print build_nested_schema(report_reach_click)

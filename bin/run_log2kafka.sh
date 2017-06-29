@@ -8,7 +8,7 @@ export LD_LIBRARY_PATH="../log2hdfs/thirdparty/installed/lib:$LD_LIBRARY_PATH"
 
 type=$1
 
-array=("adp" "adp-unbid" "dsp" "stats" "stats-cm" "stats-cmo" "imp" "imp-v6" "sandbox")
+array=("adp" "adp-unbid" "dsp" "dsp-aws" "stats" "stats-cm" "stats-cmo" "imp" "imp-v6" "sandbox")
 
 for i in ${array[@]}
 do
