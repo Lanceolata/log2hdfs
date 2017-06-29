@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# crontab
+# * * * * * cd /data/users/data-infra/log2kafka && sh run_log2kafka.sh $type >> run_log2kafka.log 2>&1
+
 ulimit -c unlimited
 export LD_LIBRARY_PATH="../log2hdfs/thirdparty/installed/lib:$LD_LIBRARY_PATH"
 
@@ -21,4 +24,12 @@ then
     exit 1
 fi
 
-echo "../log2hdfs/bin/log2kafka -c $type.conf -l $type-log.conf > $type-stderr.log 2>&1 &"
+
+procs=$(ps -ef | grep 'log2kafka' | grep -v 'grep')
+
+if echo "$procs" | grep -q "$type.conf"
+then
+    exit 0
+fi
+
+../log2hdfs/bin/log2kafka -c $type.conf -l $type-log.conf > $type-stderr.log 2>&1 &
