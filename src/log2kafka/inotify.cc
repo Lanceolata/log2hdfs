@@ -371,7 +371,7 @@ int Inotify::ReadInotify() {
         if ((evp->mask & IN_CREATE) != 0) {
           path.append("/");
           path.append(evp->name);
-          AddWatchPath(topic, path, 0);
+          AddWatchPath(topic, path, -1);
         } else {
           LOG(WARNING) << "Inotify ReadInotify wd[" << wd << "] topic["
                        << topic << "] path[" << path << "] unknown mask["
