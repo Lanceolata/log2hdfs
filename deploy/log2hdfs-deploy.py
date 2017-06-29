@@ -11,7 +11,6 @@ env.roledefs = {
     'dsp': dsp,
     'adp': adp,
     'stats': stats,
-    'vt': vt,
     'imp': imp,
     'sandbox': sandbox
 }
@@ -52,12 +51,6 @@ def adp_deploy():
 
 @roles('stats')
 def stats_deploy():
-    log2kafka_deploy()
-    copy_conf()
-
-
-@roles('vt')
-def vt_deploy():
     log2kafka_deploy()
     copy_conf()
 
