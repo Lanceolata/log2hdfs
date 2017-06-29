@@ -32,4 +32,6 @@ then
     exit 0
 fi
 
+YmdHMs=$(date +%Y%m%d%H%M%S)
+echo "[$YmdHMs]log2kafka $type crashed or aborted"
 ../log2hdfs/bin/log2kafka -c $type.conf -l $type-log.conf > $type-stderr.log 2>&1 &
