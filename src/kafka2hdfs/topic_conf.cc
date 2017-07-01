@@ -11,75 +11,54 @@ namespace log2hdfs {
 
 namespace {
 
-bool ParsePartitions(
-    const std::string& input,
-    const std::vector<std::string>& topics,
-    std::vector<std::vector<int32_t>>* partitions) {
-  std::vector<std::string> vec1 = SplitString(input, ";",
-      kTrimWhitespace, kSplitNonempty);
-  if (vec1.size() != topics.size())
+bool ParsePartitions(const std::string& input,
+                     std::vector<int32_t>* partitions) {
+  if (input.empty() || !partitions)
     return false;
 
-  for (auto& t : vec1) {
-    std::vector<int32_t> tps;
-    std::vector<std::string> vec2 = SplitString(t, ",",
-        kTrimWhitespace, kSplitNonempty);
-    if (vec2.size() == 0)
-      return false;
+  std::vector<std::string> vec = SplitString(input, ",",
+      kTrimWhitespace, kSplitNonempty);
+  for (auto& p : vec) {
+    std::size_t found = p.find("-");
+    if (found == std::string::npos) {
+      int32_t partition = atoi(p.c_str());
+      if (partition < 0)
+        return false;
 
-    for (auto& p : vec2) {
-      std::size_t found = p.find("-");
-      if (found == std::string::npos) {
-        int32_t partition = atoi(p.c_str());
-        if (partition < 0)
-          return false;
+      partitions->push_back(partition);
+    } else {
+      int32_t start = atoi(p.substr(0, found).c_str());
+      int32_t end = atoi(p.substr(found + 1).c_str());
+      if (start < 0 || end < 0 || end < start)
+        return false;
 
-        tps.push_back(partition);
-      } else {
-        int32_t start = atoi(p.substr(0, found).c_str());
-        int32_t end = atoi(p.substr(found + 1).c_str());
-        if (start < 0 || end < 0 || end <= start)
-          return false;
-
-        for (int32_t i = start; i <= end; ++i) {
-          tps.push_back(i);
-        }
+      for (int32_t i = start; i <= end; ++i) {
+        partitions->push_back(i);
       }
     }
-
-    partitions->push_back(std::move(tps));
   }
-
   return true;
 }
 
-bool ParseOffsets(
-    const std::string& input,
-    const std::vector<std::vector<int32_t>>& partitions,
-    std::vector<std::vector<int64_t>>* offsets) {
-  std::vector<std::string> vec1 = SplitString(input, ";",
-      kTrimWhitespace, kSplitNonempty);
-  if (vec1.size() != partitions.size())
+bool ParseOffsets(const std::string& input,
+                  size_t length,
+                  std::vector<int64_t>* offsets) {
+  if (input.empty() || length <= 0 || !offsets)
     return false;
 
-  for (size_t i = 0; i < vec1.size(); ++i) {
-    std::vector<int64_t> tos;
-    std::vector<std::string> vec2 = SplitString(vec1[i], ",",
-        kTrimWhitespace, kSplitNonempty);
-    if (vec2.size() == 0)
-      return false;
+  std::vector<std::string> vec = SplitString(input, ",",
+      kTrimWhitespace, kSplitNonempty);
+  if (vec.size() > length)
+    return false;
 
-    int64_t last;
-    for (auto& o : vec2) {
-      last = atol(o.c_str());
-      tos.push_back(last);
-    }
+  int64_t offset;
+  for (auto& o : vec) {
+    offset = atol(o.c_str());
+    offsets->push_back(offset);
+  }
 
-    for (size_t j = tos.size(); j < partitions[i].size(); ++j) {
-      tos.push_back(last);
-    }
-
-    offsets->push_back(std::move(tos));
+  for (size_t i = vec.size(); i < length; ++i) {
+    offsets->push_back(offset);
   }
   return true;
 }
@@ -96,7 +75,7 @@ TopicConfContents::TopicConfContents():
     path_format_(PathFormat::Type::kNormal),
     consume_type_(ConsumeCallback::Type::kV6),
     upload_type_(Upload::Type::kText),
-    parallel_(3),
+    parallel_(1),
     compress_lzo_(),
     compress_orc_(),
     compress_mv_(),
@@ -297,11 +276,6 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
   option = section->Get("complete.maxsize");
   if (option.valid() && !option.value().empty()) {
     complete_maxsize = atol(option.value().c_str());
-    if (complete_maxsize < 0) {
-      LOG(WARNING) << "TopicConfContents UpdateRuntime invalid "
-                   << "complete_maxsize[" << complete_maxsize << "]";
-      return false;
-    }
   }
 
   int retention_seconds = retention_seconds_.load();
@@ -314,7 +288,7 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
   option = section->Get("upload.interval");
   if (option.valid() && !option.value().empty()) {
     upload_interval = atoi(option.value().c_str());
-    if (upload_interval < 0) {
+    if (upload_interval <= 0) {
       LOG(WARNING) << "TopicConfContents UpdateRuntime invalid "
                    << "upload_interval[" << upload_interval << "]";
       return false;
@@ -364,30 +338,18 @@ bool TopicConf::UpdataDefaultConf(std::shared_ptr<Section> section) {
   return DEFAULT_CONTENTS_.Update(std::move(section));
 }
 
-std::shared_ptr<TopicConf> TopicConf::Init(const std::string& section) {
-  if (section.empty()) {
+std::shared_ptr<TopicConf> TopicConf::Init(const std::string& topic) {
+  if (topic.empty()) {
     LOG(ERROR) << "TopicConf Init invalid parameters";
     return nullptr;
   }
-  return std::make_shared<TopicConf>(section);
+  return std::make_shared<TopicConf>(topic);
 }
 
 bool TopicConf::InitConf(std::shared_ptr<Section> section) {
-  LOG(INFO) << "TopicConf InitConf section[" << section_ << "]";
+  LOG(INFO) << "TopicConf InitConf topic[" << topic_ << "]";
   if (!section) {
     LOG(WARNING) << "TopicConf InitConf invalid parameters";
-    return false;
-  }
-
-  std::string topics = section->Get("topics", "");
-  if (topics.empty()) {
-    LOG(WARNING) << "TopicConf InitConf invalid topics";
-    return false;
-  }
-
-  topics_ = SplitString(topics, ";", kTrimWhitespace, kSplitNonempty);
-  if (topics_.size() == 0) {
-    LOG(WARNING) << "TopicConf InitConf invalid topics[" <<  topics << "]";
     return false;
   }
 
@@ -397,7 +359,7 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
     return false;
   }
 
-  if (!ParsePartitions(partitions, topics_, &partitions_)) {
+  if (!ParsePartitions(partitions, &partitions_)) {
     LOG(WARNING) << "TopicConf InitConf ParsePartitions[" << partitions
                  << "] failed";
     return false;
@@ -408,24 +370,19 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
     LOG(WARNING) << "TopicConf InitConf invalid offsets";
     return false;
   }
-  
-  if (!ParseOffsets(offsets, partitions_, &offsets_)) {
+
+  if (!ParseOffsets(offsets, partitions_.size(), &offsets_)) {
     LOG(WARNING) << "TopicConf InitConf ParseOffsets[" << offsets
                  << "] failed";
     return false;
   }
 
-  for (size_t i = 0; i < topics_.size(); ++i) {
-    const std::string& top = topics_[i];
-    const std::vector<int32_t>& pars = partitions_[i];
-    const std::vector<int64_t>& offs = offsets_[i];
-    std::stringstream stream;
-    for (size_t j = 0; j < pars.size(); ++j) {
-      stream << pars[j] << ":" << offs[j] << ",";
-    }
-    LOG(INFO) << "TopicConf InitConf topic[" << top << "] partitions["
-              << stream.str() << "] success";
+  std::stringstream stream;
+  for (size_t i = 0; i < partitions_.size(); ++i) {
+    stream << partitions_[i] << ":" << offsets_[i] << ",";
   }
+  LOG(INFO) << "TopicConf InitConf partitions[" << stream.str()
+            << "] success";
 
   std::string hdfs_path = section->Get("hdfs.path", "");
   if (hdfs_path.empty()) {
@@ -446,17 +403,20 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
     return false;
   }
 
-  std::string section_dir = contents_.root_dir_ + "/" + section_;
-  if (!MakeDir(section_dir)) {
-    LOG(WARNING) << "TopicConf InitConf MakeDir[" << section_dir
+  std::string topic_dir = contents_.root_dir_ + "/" + topic_;
+  if (!MakeDir(topic_dir)) {
+    LOG(WARNING) << "TopicConf InitConf MakeDir[" << topic_dir
                  << "] failed with errno[" << errno << "]";
     return false;
   }
+  consume_dir_ = topic_dir + "/" + "consume";
+  compress_dir_ = topic_dir + "/" + "compress";
+  upload_dir_ = topic_dir + "/" + "upload";
   return true;
 }
 
 bool TopicConf::UpdateRuntime(std::shared_ptr<Section> section) {
-  LOG(INFO) << "TopicConf UpdateRuntime section[" << section_ << "]";
+  LOG(INFO) << "TopicConf UpdateRuntime topic[" << topic_ << "]";
   if (!section) {
     LOG(WARNING) << "TopicConf UpdateRuntime invalid parameters";
     return false;

@@ -24,11 +24,10 @@ int scandir_compar(const struct dirent **a, const struct dirent **b) {
   return strcmp((*a)->d_name, (*b)->d_name);
 }
 
-void ScandirAndPushQueue(std::string section, std::string dir, Queue<std::string>* que) {
+void ScandirAndPushQueue(const std::string& dir, Queue<std::string>* que) {
   std::vector<std::string> names;
   if (!ScanDir(dir, scandir_filter, scandir_compar, &names)) {
-    LOG(WARNING) << "UploadImpl Remedy ScanDir section[" << section
-                 << "] dir[" << dir << "] failed "
+    LOG(WARNING) << "ScandirAndPushQueue ScanDir[" << dir << "] failed "
                  << "with errno[" << errno << "]";
   } else {
     for (auto& name : names) {
@@ -36,7 +35,7 @@ void ScandirAndPushQueue(std::string section, std::string dir, Queue<std::string
       if (!IsFile(path))
         continue;
 
-      LOG(INFO) << "UploadImpl Remedy file[" << path << "] success";
+      LOG(INFO) << "ScandirAndPushQueue Push file[" << path << "] success";
       que->Push(path);
     }
   }
@@ -118,10 +117,7 @@ std::unique_ptr<Upload> Upload::Init(
 // UploadImpl
 
 void UploadImpl::StartInternal() {
-  std::string section = conf_->section();
-  std::string consume_dir = conf_->consume_dir();
-  std::string compress_dir = conf_->compress_dir();
-  LOG(INFO) << "UploadImpl section[" << section << "] thread created";
+  LOG(INFO) << "UploadImpl topic[" << topic_ << "] thread created";
 
   Remedy();
 
@@ -130,91 +126,70 @@ void UploadImpl::StartInternal() {
     sleep(conf_->upload_interval());
     names.clear();
 
-    if (!ScanDir(consume_dir, scandir_filter, scandir_compar, &names)) {
-      LOG(WARNING) << "UploadImpl StartInternal ScanDir section[" << section
-                   << "] consume_dir[" << consume_dir << "] failed with errno["
-                   << errno << "]";
+    if (!ScanDir(consume_dir_, scandir_filter, scandir_compar, &names)) {
+      LOG(WARNING) << "UploadImpl StartInternal ScanDir[" << consume_dir_
+                   << "] failed with errno[" << errno << "]";
       continue;
     }
 
     for (auto& name : names) {
-      std::string path = consume_dir + "/" + name;
+      std::string path = consume_dir_ + "/" + name;
       if (!IsFile(path))
         continue;
-
+    
       if (format_->WriteFinished(path)) {
         // Get fp cache key
         auto end = name.rfind(".");
         if (end == std::string::npos) {
-          LOG(WARNING) << "UploadImpl StartInternal invalid section["
-                       << section << "] consume_dir[" << consume_dir
-                       << "] name[" << name << "]";
+          LOG(WARNING) << "UploadImpl StartInternal invalid path["
+                       << path << "]";
           continue;
         }
 
         // Remove from fp cache
         FpCache::RemoveResult res = fp_cache_->Remove(name.substr(0, end));
         if (res == FpCache::kRemoveFailed) {
-          LOG(ERROR) << "UploadImpl StartInternal section[" << section
-                     << "] consume_dir[" << consume_dir << "] name["
-                     << name << "] fp_cache_ Remove failed";
+          LOG(ERROR) << "UploadImpl StartInternal fp_cache Remove["
+                     << path << "] failed";
           continue;
         } else if (res == FpCache::kInvalidKey) {
-          LOG(WARNING) << "UploadImpl StartInternal section[" << section
-                       << "] consume_dir[" << consume_dir << "] name["
-                       << name << "] fp_cache_ Remove invalid key";
+          LOG(WARNING) << "UploadImpl StartInternal fp_cache Remove["
+                       << path << "] invalid key";
         } else {
-          LOG(INFO) << "UploadImpl StartInternal section[" << section
-                    << "] consume_dir[" << consume_dir << "] name["
-                    << name << "] fp_cache_ Remove success";
+          LOG(INFO) << "UploadImpl StartInternal fp_cache Remove["
+                    << path << "] success";
         }
 
         // Rename to compress dir
-        std::string new_path = compress_dir + "/" + name;
+        std::string new_path = compress_dir_ + "/" + name;
         if (!Rename(path, new_path)) {
-          LOG(WARNING) << "UploadImpl StartInternal section[" << section
-                       << "Rename from[" << path << "] to[" << new_path
-                       << "] failed with errno[" << errno << "]";
+          LOG(WARNING) << "UploadImpl StartInternal Rename from[" << path
+                       << "] to [" << new_path << "] failed with errno["
+                       << errno << "]";
           continue;
         }
 
         // push new path to compress queue
         compress_queue_.Push(new_path);
       }
+    
     }
 
     Compress();
     Upload();
   }
 
-  LOG(INFO) << "UploadImpl section[" << section << "] thread existing";
+  LOG(INFO) << "UploadImpl topic[" << topic_ << "] thread existing";
 }
 
 void UploadImpl::Remedy() {
-  std::string section = conf_->section();
-  std::string compress_dir = conf_->compress_dir();
-  std::string upload_dir = conf_->upload_dir();
-  std::vector<std::string> names;
-
-  if (!IsDir(compress_dir)) {
-    LOG(WARNING) << "UploadImpl Remedy failed invalid compress dir["
-                 << compress_dir << "]";
-  } else {
-    ScandirAndPushQueue(section, compress_dir, &compress_queue_);
-  }
-
-  if (!IsDir(upload_dir)) {
-    LOG(WARNING) << "UploadImpl Remedy failed invalid upload dir["
-                 << compress_dir << "]";
-  } else {
-    ScandirAndPushQueue(section, upload_dir, &upload_queue_);
-  }
+  ScandirAndPushQueue(compress_dir_, &compress_queue_);
+  ScandirAndPushQueue(upload_dir_, &upload_queue_);
 }
 
 void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
-  std::string section = conf_->section();
   if (path.empty()) {
-    LOG(WARNING) << "UploadImpl UploadPath section[" << section
+    LOG(WARNING) << "UploadImpl UploadPath topic[" << topic_
                  << "] empty path";
     return;
   }
@@ -230,15 +205,14 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
   }
 
   if (!IsFile(file_path)) {
-    LOG(WARNING) << "TextUploadImpl UploadPath invalid path["
-                 << file_path << "]";
+    LOG(WARNING) << "UploadImpl UploadPath invalid path[" << file_path << "]";
     return;
   }
 
   std::string name = BaseName(file_path);
   std::string hdfs_path;
   if (!format_->BuildHdfsPath(name, &hdfs_path)) {
-    LOG(WARNING) << "TextUploadImpl UploadPath BuildHdfsPath[" << file_path
+    LOG(WARNING) << "UploadImpl UploadPath BuildHdfsPath[" << file_path
                  << "] failed";
     return;
   }
@@ -252,8 +226,8 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
     if (append) {
       res = handle_->Append(file_path, hdfs_path);
     } else {
-      LOG(WARNING) << "UploadImpl UploadFile hdfs path["
-                   << hdfs_path << "] already exists";
+      LOG(WARNING) << "UploadImpl UploadFile file_path[" << file_path
+                   << "] hdfs path[" << hdfs_path << "] already exists";
       return;
     }
   } else {
@@ -268,6 +242,8 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
   }
 
   if (!res) {
+    LOG(WARNING) << "UploadImpl UploadPath[" << file_path << "] to["
+                 << hdfs_path << "] failed retry";
     ++times;
     upload_queue_.Push(file_path + ":" + std::to_string(times));
   } else {
@@ -275,6 +251,7 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
       LOG(WARNING) << "UploadImpl UploadPath RmFile[" << file_path
                    << "] failed";
     }
+    
     if (index) {
       handle_->LZOIndex(hdfs_path);
     }
@@ -308,8 +285,6 @@ std::unique_ptr<TextUploadImpl> TextUploadImpl::Init(
 }
 
 void TextUploadImpl::Compress() {
-  std::string upload_path = conf_->upload_dir();
-
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
@@ -319,7 +294,7 @@ void TextUploadImpl::Compress() {
     }
 
     // Rename to upload dir
-    std::string new_path = upload_path + "/" + name;
+    std::string new_path = upload_dir_ + "/" + name;
     if (!Rename(path, new_path)) {
       LOG(WARNING) << "TextUploadImpl Compress Rename from["
                    << path << "] to [" << new_path << "] failed "
@@ -365,13 +340,11 @@ std::unique_ptr<LzoUploadImpl> LzoUploadImpl::Init(
   }
 
   return std::unique_ptr<LzoUploadImpl>(new LzoUploadImpl(
-             std::move(conf), std::move(format), std::move(fp_cache),\
+             std::move(conf), std::move(format), std::move(fp_cache),
              std::move(handle)));
 }
 
 void LzoUploadImpl::Compress() {
-  std::string compress_path = conf_->compress_dir();
-
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
@@ -409,10 +382,10 @@ void LzoUploadImpl::CompressFile(const std::string& path) {
     }
     old_path = path + ".lzo";
   } else {
-    old_path = path;
+    return;
   }
 
-  std::string new_path = conf_->upload_dir() + "/" + BaseName(old_path);
+  std::string new_path = upload_dir_ + "/" + BaseName(old_path);
   if (!Rename(old_path, new_path)) {
     LOG(ERROR) << "LzoUploadImpl CompressFile Rename from[" << old_path
                << "] to[" << new_path << "] failed with errno[" << errno
@@ -462,8 +435,6 @@ std::unique_ptr<OrcUploadImpl> OrcUploadImpl::Init(
 }
 
 void OrcUploadImpl::Compress() {
-  std::string compress_path = conf_->compress_dir();
-
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
@@ -501,10 +472,10 @@ void OrcUploadImpl::CompressFile(const std::string& path) {
     }
     old_path = path + ".orc";
   } else {
-    old_path = path;
+    return;
   }
 
-  std::string new_path = conf_->upload_dir() + "/" + BaseName(old_path);
+  std::string new_path = upload_dir_ + "/" + BaseName(old_path);
   if (!Rename(old_path, new_path)) {
     LOG(ERROR) << "OrcUploadImpl CompressFile Rename from[" << old_path
                << "] to[" << new_path << "] failed with errno[" << errno
@@ -555,8 +526,6 @@ std::unique_ptr<CompressUploadImpl> CompressUploadImpl::Init(
 
 void CompressUploadImpl::Compress() {
   std::string mv_path = conf_->compress_mv();
-  std::string compress_path = conf_->compress_dir();
-  std::string upload_path = conf_->upload_dir();
 
   std::string path;
   while (compress_queue_.TryPop(&path)) {
@@ -579,9 +548,9 @@ void CompressUploadImpl::Compress() {
   }
 
   std::vector<std::string> names;
-  if (!ScanDir(compress_path, scandir_filter, scandir_compar, &names)) {
+  if (!ScanDir(compress_dir_, scandir_filter, scandir_compar, &names)) {
     LOG(ERROR) << "CompressUploadImpl StartInternal ScanDir compres_dir["
-               << compress_path << "] failed with errno[" << errno << "]";
+               << compress_dir_ << "] failed with errno[" << errno << "]";
     return;
   }
 
@@ -589,8 +558,8 @@ void CompressUploadImpl::Compress() {
     if (!EndsWith(name, ".orc"))
       continue;
 
-    std::string old_path = compress_path + "/" + name;
-    std::string new_path = upload_path + "/" + name;
+    std::string old_path = compress_dir_ + "/" + name;
+    std::string new_path = upload_dir_ + "/" + name;
     if (!Rename(old_path, new_path)) {
       LOG(WARNING) << "CompressUploadImpl Compress Rename from[" << old_path
                    << "] to[" << new_path << "] failed with errno["
@@ -634,8 +603,6 @@ std::unique_ptr<TextNoUploadImpl> TextNoUploadImpl::Init(
 }
 
 void TextNoUploadImpl::Compress() {
-  std::string upload_path = conf_->upload_dir();
-
   std::string path;
   while (compress_queue_.TryPop(&path)) {
     std::string name = BaseName(path);
@@ -644,7 +611,7 @@ void TextNoUploadImpl::Compress() {
       continue;
     }
 
-    std::string new_path = upload_path + "/" + name;
+    std::string new_path = upload_dir_ + "/" + name;
     if (!Rename(path, new_path)) {
       LOG(WARNING) << "TextNoUploadImpl Compress Rename from[" << path
                    << "] to[" << new_path << "] failed with errno["

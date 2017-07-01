@@ -61,6 +61,28 @@ std::shared_ptr<KafkaConsumeCb> ConsumeCallback::Init(
   return res;
 }
 
+std::shared_ptr<FILE> ConsumeCallback::GetCacheFp(const KafkaMessage& msg) {
+  std::string filename;
+  if (!format_->BuildLocalFileName(msg, &filename)) {
+    char *payload = static_cast<char *>(msg.Payload());
+    LOG(WARNING) << "ConsumeCallback GetCacheFp BuildLocalFileName topic["
+                 << msg.TopicName() << "] msg[" << payload << "] failed";
+    return nullptr;
+  }
+
+  std::shared_ptr<FILE> fptr = cache_->Get(filename);
+  if (!fptr) {
+    std::string path = dir_ + "/" + filename + "." + std::to_string(time(NULL));
+    fptr = cache_->Get(filename, path);
+    if (!fptr) {
+      LOG(ERROR) << "ConsumeCallback GetCacheFp Get fptr filename["
+                 << filename << "] path[" << path << "] failed";
+      return nullptr;
+    }
+  }
+  return fptr;
+}
+
 // ------------------------------------------------------------------
 // V6ConsumeCallback
 
@@ -74,16 +96,13 @@ std::shared_ptr<V6ConsumeCallback> V6ConsumeCallback::Init(
   }
 
   std::string consume_dir = conf->consume_dir();
-  std::string normal_path = NormalDirPath(consume_dir);
-  if (!IsDir(normal_path)) {
-    if (!MakeDir(normal_path)) {
-      LOG(ERROR) << "V6ConsumeCallback Init MakeDir[" << normal_path
-                 << "] failed";
-      return nullptr;
-    }
+  if (!MakeDir(consume_dir)) {
+    LOG(ERROR) << "V6ConsumeCallback Init MakeDir[" << consume_dir
+               << "] failed";
+    return nullptr;
   }
 
-  return std::make_shared<V6ConsumeCallback>(normal_path,
+  return std::make_shared<V6ConsumeCallback>(consume_dir,
              std::move(format), std::move(cache));
 }
 
@@ -91,23 +110,9 @@ void V6ConsumeCallback::Consume(const KafkaMessage& msg) {
   char *payload = static_cast<char *>(msg.Payload());
   size_t len = msg.Len();
 
-  std::string filename;
-  if (!format_->BuildLocalFileName(msg, &filename)) {
-    LOG(WARNING) << "V6ConsumeCallback Consume BuildLocalFileName topic["
-                 << msg.TopicName() << "] msg[" << payload << "] failed";
+  std::shared_ptr<FILE> fptr = GetCacheFp(msg);
+  if (!fptr)
     return;
-  }
-
-  std::shared_ptr<FILE> fptr = cache_->Get(filename);
-  if (!fptr) {
-    std::string path = dir_ + "/" + filename + "." + std::to_string(time(NULL));
-    fptr = cache_->Get(filename, path);
-    if (!fptr) {
-      LOG(ERROR) << "V6ConsumeCallback Consume Get fptr filename[" << filename
-                 << "] path[" << path << "] failed";
-      return;
-    }
-  }
 
   std::unique_ptr<char[]> temp(new char[len + 1]);
   char *p = temp.get();
@@ -116,9 +121,8 @@ void V6ConsumeCallback::Consume(const KafkaMessage& msg) {
 
   size_t n = fwrite(p, 1, len + 1, fptr.get());
   if (n != len + 1) {
-    LOG(ERROR) << "V6ConsumeCallback Consume fwrite[" << filename
-               << "] might fail written[" << n << "] expected["
-               << len + 1;
+    LOG(ERROR) << "V6ConsumeCallback Consume fwrite might fail written["
+               << n << "] expected[" << len + 1 << "]";
   }
 }
 
@@ -135,12 +139,10 @@ std::shared_ptr<ReportConsumeCallback> ReportConsumeCallback::Init(
   }
 
   std::string consume_dir = conf->consume_dir();
-  if (!IsDir(consume_dir)) {
-    if (!MakeDir(consume_dir)) {
-      LOG(ERROR) << "ReportConsumeCallback Init MakeDir[" << consume_dir
-                 << "] failed";
-      return nullptr;
-    }
+  if (!MakeDir(consume_dir)) {
+    LOG(ERROR) << "ReportConsumeCallback Init MakeDir[" << consume_dir
+               << "] failed";
+    return nullptr;
   }
 
   return std::make_shared<ReportConsumeCallback>(consume_dir,
@@ -151,23 +153,9 @@ void ReportConsumeCallback::Consume(const KafkaMessage& msg) {
   char *payload = static_cast<char *>(msg.Payload());
   size_t len = msg.Len();
 
-  std::string filename;
-  if (!format_->BuildLocalFileName(msg, &filename)) {
-    LOG(WARNING) << "ReportConsumeCallback Consume BuildLocalFileName topic["
-                 << msg.TopicName() << "] msg[" << payload << "] failed";
+  std::shared_ptr<FILE> fptr = GetCacheFp(msg);
+  if (!fptr)
     return;
-  }
-
-  std::shared_ptr<FILE> fptr = cache_->Get(filename);
-  if (!fptr) {
-    std::string path = dir_ + "/" + filename + "." + std::to_string(time(NULL));
-    fptr = cache_->Get(filename, path);
-    if (!fptr) {
-      LOG(ERROR) << "ReportConsumeCallback Consume Get fptr filename["
-                 << filename << "] path[" << path << "] failed";
-      return;
-    }
-  }
 
   char *pt = strchr(payload, '\t') + 1;
   len = len - (pt - payload);
@@ -180,9 +168,8 @@ void ReportConsumeCallback::Consume(const KafkaMessage& msg) {
 
   size_t n = fwrite(p, 1, len + 1, fptr.get());
   if (n != len + 1) {
-    LOG(ERROR) << "ReportConsumeCallback Consume fwrite[" << filename
-               << "] might fail written[" << n << "] expected["
-               << len + 1;
+    LOG(ERROR) << "ReportConsumeCallback Consume fwrite might fail written["
+               << n << "] expected[" << len + 1 << "]";
   }
 }
 
@@ -199,12 +186,10 @@ std::shared_ptr<DebugConsumeCallback> DebugConsumeCallback::Init(
   }
 
   std::string consume_dir = conf->consume_dir();
-  if (!IsDir(consume_dir)) {
-    if (!MakeDir(consume_dir)) {
-      LOG(ERROR) << "DebugConsumeCallback Init MakeDir[" << consume_dir
-                 << "] failed";
-      return nullptr;
-    }
+  if (!MakeDir(consume_dir)) {
+    LOG(ERROR) << "DebugConsumeCallback Init MakeDir[" << consume_dir
+               << "] failed";
+    return nullptr;
   }
 
   return std::make_shared<DebugConsumeCallback>(consume_dir,
@@ -215,23 +200,9 @@ void DebugConsumeCallback::Consume(const KafkaMessage& msg) {
   char *payload = static_cast<char *>(msg.Payload());
   size_t len = msg.Len();
 
-  std::string filename;
-  if (!format_->BuildLocalFileName(msg, &filename)) {
-    LOG(WARNING) << "V6ConsumeCallback Consume BuildLocalFileName topic["
-                 << msg.TopicName() << "] msg[" << payload << "] failed";
+  std::shared_ptr<FILE> fptr = GetCacheFp(msg);
+  if (!fptr)
     return;
-  }
-
-  std::shared_ptr<FILE> fptr = cache_->Get(filename);
-  if (!fptr) {
-    std::string path = dir_ + "/" + filename + "." + std::to_string(time(NULL));
-    fptr = cache_->Get(filename, path);
-    if (!fptr) {
-      LOG(ERROR) << "V6ConsumeCallback Consume Get fptr filename[" << filename
-                 << "] path[" << path << "] failed";
-      return;
-    }
-  }
 
   std::string data = msg.TopicName() + ":" + std::to_string(msg.Offset())
       + ":" + std::string(payload, len) + "\n";
@@ -240,9 +211,8 @@ void DebugConsumeCallback::Consume(const KafkaMessage& msg) {
 
   size_t n = fwrite(p, 1, len + 1, fptr.get());
   if (n != len + 1) {
-    LOG(ERROR) << "V6ConsumeCallback Consume fwrite[" << filename
-               << "] might fail written[" << n << "] expected["
-               << len + 1;
+    LOG(ERROR) << "DebugConsumeCallback Consume fwrite might fail written["
+               << n << "] expected[" << len + 1 << "]";
   }
 }
 

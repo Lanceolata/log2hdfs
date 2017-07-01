@@ -23,14 +23,19 @@ class UploadImpl : public Upload {
              std::shared_ptr<FpCache> fp_cache,
              std::shared_ptr<HdfsHandle> handle):
       conf_(std::move(conf)), format_(std::move(format)),
-      fp_cache_(std::move(fp_cache)), handle_(std::move(handle)) {}
+      fp_cache_(std::move(fp_cache)), handle_(std::move(handle)) {
+    topic_ = conf_->topic();
+    consume_dir_ = conf_->consume_dir();
+    compress_dir_ = conf_->compress_dir();
+    upload_dir_ = conf_->upload_dir();
+  }
 
   ~UploadImpl() {
     Stop();
   }
 
   void Start() {
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!thread_.joinable()) {
       stop_.store(false);
       std::thread t(&UploadImpl::StartInternal, this);
@@ -40,7 +45,7 @@ class UploadImpl : public Upload {
 
   void Stop() {
     stop_.store(true);
-    std::lock_guard<std::mutex> guard(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (thread_.joinable())
       thread_.join();
   }
@@ -60,6 +65,10 @@ class UploadImpl : public Upload {
   std::shared_ptr<PathFormat> format_;
   std::shared_ptr<FpCache> fp_cache_;
   std::shared_ptr<HdfsHandle> handle_;
+  std::string topic_;
+  std::string consume_dir_;
+  std::string compress_dir_;
+  std::string upload_dir_;
   mutable std::mutex mutex_;
   std::thread thread_;
   std::atomic<bool> stop_;

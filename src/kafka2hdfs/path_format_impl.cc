@@ -42,7 +42,7 @@ std::shared_ptr<PathFormat> PathFormat::Init(
       res = NormalPathFormat::Init(std::move(conf));
       break;
     default:
-      res = nullptr;
+      res.reset();
   }
   return res;
 }
@@ -57,9 +57,9 @@ std::shared_ptr<NormalPathFormat> NormalPathFormat::Init(
     return nullptr;
   }
 
-  std::string section = conf->section();
-  if (section.empty()) {
-    LOG(WARNING) << "NormalPathFormat Init invalid section";
+  std::string topic = conf->topic();
+  if (topic.empty()) {
+    LOG(WARNING) << "NormalPathFormat Init invalid topic";
     return nullptr;
   }
 
@@ -69,7 +69,7 @@ std::shared_ptr<NormalPathFormat> NormalPathFormat::Init(
     return nullptr;
   }
 
-  return std::make_shared<NormalPathFormat>(section,
+  return std::make_shared<NormalPathFormat>(topic,
              std::move(format), std::move(conf));
 }
 
@@ -101,7 +101,7 @@ bool NormalPathFormat::BuildLocalFileName(
 
   char local_path[512];
   int n = snprintf(local_path, sizeof(local_path), "%s.%s.%d%02d%02d"
-                   "%02d%02d%02d", section_.c_str(), key.c_str(),
+                   "%02d%02d%02d", topic_.c_str(), key.c_str(),
                    timeinfo.tm_year + 1900, timeinfo.tm_mon + 1,
                    timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
                    timeinfo.tm_sec);
@@ -109,7 +109,7 @@ bool NormalPathFormat::BuildLocalFileName(
     LOG(ERROR) << "NormalPathFormat BuildLocalFileName snprintf failed";
     return false;
   }
-  (*name).assign(local_path);
+  name->assign(local_path);
   return true;
 }
 
@@ -125,33 +125,37 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
     return false;
   }
 
-  // 超过最大大小
+  // 超过最大大小 小于等于0表示不限制
   off_t maxsize = conf_->complete_maxsize();
-  off_t file_size = FileSize(filepath);
-  if (file_size < 0) {
-    LOG(WARNING) << "NormalPathFormat WriteFinished FileSize["
-                 << filepath << "] failed";
-    return false;
-  }
+  if (maxsize > 0) {
+    off_t file_size = FileSize(filepath);
+    if (file_size < 0) {
+      LOG(WARNING) << "NormalPathFormat WriteFinished FileSize["
+                   << filepath << "] failed";
+      return false;
+    }
 
-  if (file_size >= maxsize) {
-    LOG(INFO) << "NormalPathFormat WriteFinished filesize[" << file_size
-              << "] large than maxsize[" << maxsize << "]";
-    return true;
+    if (file_size >= maxsize) {
+      LOG(INFO) << "NormalPathFormat WriteFinished filepath[" << filepath
+                << "] filesize[" << file_size << "] large than maxsize["
+                << maxsize << "]";
+      return true;
+    }
   }
 
   // 超过最大未修改时间
   int interval = conf_->complete_interval();
   time_t file_ts = FileMtime(filepath);
-  if (file_ts < 0) {
+  if (file_ts < 60) {
     LOG(WARNING) << "NormalPathFormat WriteFinished FileMtime["
                  << filepath << "] failed";
     return false;
   }
 
   if (time(NULL) - file_ts > interval) {
-    LOG(INFO) << "NormalPathFormat WriteFinished filets[" << file_ts
-              << "] large than interval[" << interval << "]";
+    LOG(INFO) << "NormalPathFormat WriteFinished filepath[" << filepath
+              << "] file ts[" << file_ts << "] large than interval["
+              << interval << "]";
     return true;
   }
 
@@ -166,12 +170,12 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
     }
 
     if (time(NULL) - file_atime > retention) {
-      LOG(INFO) << "NormalPathFormat WriteFinished file atime[" << file_atime
-                << "] large than retention[" << retention << "]";
+      LOG(INFO) << "NormalPathFormat WriteFinished filepath[" << filepath
+                << "] file atime[" << file_atime << "] large than retention["
+                << retention << "]";
       return true;
     }
   }
-
   return false;
 }
 
@@ -186,7 +190,7 @@ bool NormalPathFormat::BuildHdfsPath(
     return false;
   }
 
-  std::string prefix = section_ + ".";
+  std::string prefix = topic_ + ".";
   if (!StartsWith(name, prefix)) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath invalid name["
                  << name << "]";
@@ -195,7 +199,7 @@ bool NormalPathFormat::BuildHdfsPath(
 
   std::string sub_str = name.substr(prefix.size());
   std::vector<std::string> vec = SplitString(sub_str, ".",
-          kTrimWhitespace, kSplitAll);
+      kTrimWhitespace, kSplitAll);
   if (vec.size() < 3) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath invalid name["
                  << name << "]";
@@ -220,13 +224,16 @@ bool NormalPathFormat::BuildHdfsPath(
   std::ostringstream os;
   auto end = path_format.end();
   for (auto it = path_format.begin(); it != end; ++it) {
-    if (*it == '%') {
+    if (*it != '%') {
+      os << *it;
+    } else {
       ++it;
       if (it == end) {
         LOG(WARNING) << "NormalPathFormat BuildHdfsPath Invalid path_format["
                      << path_format << "]";
         return false;
       }
+
       switch (*it) {
         case 'Y':
           os << 1900 + timeinfo.tm_year;
@@ -246,10 +253,10 @@ bool NormalPathFormat::BuildHdfsPath(
         case 'S':
           os << std::setfill('0') << std::setw(2) << timeinfo.tm_sec;
           break;
-        case 's':
-          os << section_;
-          break;
         case 't':
+          os << topic_;
+          break;
+        case 'T':
           os << vec[2];
           break;
         default:
@@ -262,8 +269,6 @@ bool NormalPathFormat::BuildHdfsPath(
             return false;
           }
       }
-    } else {
-      os << *it;
     }
   }
   path->assign(os.str());

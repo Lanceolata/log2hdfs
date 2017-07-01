@@ -4,7 +4,6 @@
 #define LOG2HDFS_KAFKA2HDFS_TOPIC_CONF_H_
 
 #include <string>
-#include <set>
 #include <vector>
 #include <memory>
 #include <mutex>
@@ -58,7 +57,6 @@ class TopicConfContents {
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
   std::string root_dir_;
-
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
 
   LogFormat::Type log_format_;
@@ -94,13 +92,13 @@ class TopicConf {
   /**
    * Static function create TopicConf shared_ptr.
    */
-  static std::shared_ptr<TopicConf> Init(const std::string& section);
+  static std::shared_ptr<TopicConf> Init(const std::string& topic);
 
   /**
    * Constructor
    */
-  explicit TopicConf(const std::string& section):
-      section_(section), contents_(DEFAULT_CONTENTS_) {}
+  explicit TopicConf(const std::string& topic):
+      topic_(topic), contents_(DEFAULT_CONTENTS_) {}
 
   /**
    * Init topic conf.
@@ -114,24 +112,20 @@ class TopicConf {
    */
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
-  const std::string& section() const {
-    return section_;
-  }
-
-  const std::string consume_dir() const {
-    return contents_.root_dir_ + "/" + section_ + "/consume";
-  }
-
-  const std::string compress_dir() const {
-    return contents_.root_dir_ + "/" + section_ + "/compress";
-  }
-
-  const std::string upload_dir() const {
-    return contents_.root_dir_ + "/" + section_ + "/upload";
-  }
-
-  const std::string& topics() const {
+  const std::string& topic() const {
     return topic_;
+  }
+
+  const std::string& consume_dir() const {
+    return consume_dir_;
+  }
+
+  const std::string& compress_dir() const {
+    return compress_dir_;
+  }
+
+  const std::string& upload_dir() const {
+    return upload_dir_;
   }
 
   const std::vector<int32_t>& partitions() const {
@@ -206,10 +200,12 @@ class TopicConf {
  private:
   static TopicConfContents DEFAULT_CONTENTS_;
 
-  std::string section_;
   std::string topic_;
   std::vector<int32_t> partitions_;
   std::vector<int64_t> offsets_;
+  std::string consume_dir_;
+  std::string compress_dir_;
+  std::string upload_dir_;
   std::string hdfs_path_;
   TopicConfContents contents_;
   mutable std::mutex mutex_;

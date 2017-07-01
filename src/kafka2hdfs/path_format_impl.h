@@ -12,10 +12,10 @@ class NormalPathFormat : public PathFormat {
   static std::shared_ptr<NormalPathFormat> Init(
       std::shared_ptr<TopicConf> conf);
 
-  NormalPathFormat(const std::string& section,
+  NormalPathFormat(const std::string& topic,
                    std::unique_ptr<LogFormat> format,
                    std::shared_ptr<TopicConf> conf):
-      section_(section), format_(std::move(format)),
+      topic_(topic), format_(std::move(format)),
       conf_(std::move(conf)) {}
 
   bool BuildLocalFileName(const KafkaMessage& msg, std::string* name) const;
@@ -25,7 +25,7 @@ class NormalPathFormat : public PathFormat {
   bool BuildHdfsPath(const std::string& name, std::string* path) const;
 
  protected:
-  std::string section_;
+  std::string topic_;
   std::unique_ptr<LogFormat> format_;
   std::shared_ptr<TopicConf> conf_;
 };

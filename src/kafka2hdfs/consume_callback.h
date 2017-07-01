@@ -17,6 +17,9 @@ class TopicConf;
 // ------------------------------------------------------------------
 // ConsumeCallback
 
+/**
+ * 继承KafkaConsumeCb接口，提供静态初始化方法和共用方法
+ */
 class ConsumeCallback : public KafkaConsumeCb {
  public:
   enum Type {
@@ -26,9 +29,15 @@ class ConsumeCallback : public KafkaConsumeCb {
     kDebug
   };
 
+  /**
+   * Convert string to ConsumeCallback type.
+   */
   static Optional<ConsumeCallback::Type> ParseType(
       const std::string& type);
 
+  /**
+   * Static function create KafkaConsumeCb shared_ptr.
+   */
   static std::shared_ptr<KafkaConsumeCb> Init(
       std::shared_ptr<TopicConf> conf,
       std::shared_ptr<PathFormat> format,
@@ -43,13 +52,15 @@ class ConsumeCallback : public KafkaConsumeCb {
 
   virtual void Consume(const KafkaMessage& msg) = 0;
 
+  virtual std::shared_ptr<FILE> GetCacheFp(const KafkaMessage& msg);
+
  protected:
   std::string dir_;
   std::shared_ptr<PathFormat> format_;
   std::shared_ptr<FpCache> cache_;
 };
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // V6ConsumeCallback
 
 class V6ConsumeCallback : public ConsumeCallback {

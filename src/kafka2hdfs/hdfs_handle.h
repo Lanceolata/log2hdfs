@@ -18,8 +18,7 @@ class Section;
 class HdfsHandle {
  public:
   enum Type {
-    kCommand,
-    kApi    /**< TODO */
+    kCommand
   };
 
   /**

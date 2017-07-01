@@ -18,6 +18,7 @@ static bool stop = false;
 // conf file path
 static char *conf_path = NULL;
 
+static std::shared_ptr<KafkaConsumer> consumer;
 static std::shared_ptr<HdfsHandle> handle;
 static std::unordered_map<std::string,
     std::shared_ptr<TopicConf>> topic_confs;
@@ -52,9 +53,11 @@ void signals_handler(int sig) {
     return;
   }
 
+  std::string errstr;
   for (auto it = conf->Begin(); it != conf->End(); ++it) {
     const std::string topic = it->first;
-    if (topic == "global" || topic == "kafka" || topic == "default")
+    if (topic == "global" || topic == "kafka" || topic == "default"
+            || topic == "hdfs")
       continue;
 
     // handle running topic
@@ -100,9 +103,41 @@ void signals_handler(int sig) {
       continue;
     }
 
-    
+    std::unique_ptr<Upload> upload = Upload::Init(topic_conf,
+        format, cache, handle);
+    if (!upload) {
+      LOG(ERROR) << "signals_handler Upload Init failed";
+      continue;
+    }
 
-    topic_confs[topic] = std::move(topic_conf);
+    if (!consumer->CreateTopicConsumer(
+                it->first,
+                topic_conf->kafka_topic_conf().get(),
+                topic_conf->partitions(),
+                topic_conf->offsets(),
+                cb, &errstr)) {
+      LOG(ERROR) << "signals_handler CreateTopicConsumer topic[" << it->first
+                 << "] failed with errstr[" << errstr << "]";
+      continue;
+    }
+
+    consumer->StartTopic(it->first);
+    upload->Start();
+
+    topic_confs[it->first] = std::move(topic_conf);
+    topic_uploads[it->first] = std::move(upload);
+  }
+
+  // remove topic
+  for (auto it = topic_confs.begin(); it != topic_confs.end();) {
+    const std::string topic = it->first;
+    if (conf->HasSection(topic)) {
+      ++it;
+    } else {
+      consumer->StopTopic(topic);
+      topic_uploads.erase(topic);
+      topic_confs.erase(it++);
+    }
   }
   return;
 }
@@ -200,8 +235,7 @@ int main(int argc, char *argv[]) {
   consumer_conf->SetErrorCb(err_cb);
 
   // Init kafka consumer
-  std::shared_ptr<KafkaConsumer> consumer = KafkaConsumer::Init(
-      consumer_conf.get(), &errstr);
+  consumer = KafkaConsumer::Init(consumer_conf.get(), &errstr);
   if (!consumer) {
     LOG(ERROR) << "KafkaConsumer Init failed with error[" << errstr << "]";
     exit(EXIT_FAILURE);
@@ -235,7 +269,6 @@ int main(int argc, char *argv[]) {
       LOG(ERROR) << "TopicConf InitConf topic[" << topic << "] failed";
       exit(EXIT_FAILURE);
     }
-
     topic_confs[topic] = std::move(topic_conf);
   }
 
@@ -260,17 +293,15 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    for (size_t i = 0; i < it->second->topics().size(); ++i) {
-      if (!consumer->CreateTopicConsumer(
-                  it->second->topics()[i],
-                  it->second->kafka_topic_conf().get(),
-                  it->second->partitions()[i],
-                  it->second->offsets()[i],
-                  cb, &errstr)) {
-        LOG(ERROR) << "CreateTopicConsumer topic[" << it->second->topics()[i]
-                   << "] failed with errstr[" << errstr << "]";
-        exit(EXIT_FAILURE);
-      }
+    if (!consumer->CreateTopicConsumer(
+                it->first, 
+                it->second->kafka_topic_conf().get(),
+                it->second->partitions(),
+                it->second->offsets(),
+                cb, &errstr)) {
+      LOG(ERROR) << "CreateTopicConsumer topic[" << it->first
+                 << "] failed with errstr[" << errstr << "]";
+      exit(EXIT_FAILURE);
     }
 
     std::unique_ptr<Upload> upload = Upload::Init(it->second,

@@ -381,6 +381,9 @@ report_base = [
     (97, 0, 'campaign_division_id', 'bigint'),
     (98, 0, 'sub_campaign_division_id', 'bigint'),
     (99, 0, 'exe_campaign_division_id', 'bigint'),
+    (100, 0 , 'sub_platform', 'string'),
+    (101, 0, 'request_day', 'bigint'),
+    (102, 0, 'request_hour', 'bigint'),
 ]
 
 report_base_day = [
@@ -414,6 +417,13 @@ report_base_day = [
     (27, 0, 'click_conversion', 'bigint'),
     (28, 0, 'imp_conversion', 'bigint'),
     (29, 0, 'day', 'int'),
+    (30, 0, 'client_id', 'bigint'),
+    (31, 0, 'campaign_division_id', 'bigint'),
+    (32, 0, 'sub_campaign_division_id', 'bigint'),
+    (33, 0, 'exe_campaign_division_id', 'bigint'),
+    (34, 0 , 'sub_platform', 'string'),
+    (35, 0, 'request_day', 'bigint'),
+    (36, 0, 'request_hour', 'bigint'),
 ]
 
 report_conversion_click = [

@@ -125,8 +125,8 @@ bool KafkaConsumer::StopTopic(const std::string& topic) {
   topics_.erase(it);
   lock.unlock();
 
-  it->second->Stop();
-  it->second->Join();
+  ktc->Stop();
+  ktc->Join();
   return true;
 }
 
