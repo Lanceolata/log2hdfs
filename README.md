@@ -8,7 +8,7 @@ log2hdfs is a c++ application to aggregator log files to hdfs.
 
 - The GNU toolchain
 - GNU make
-- cmake
+- cmake (optional)
 - pthreads
 - zlib (optional, for gzip compression support)
 - libssl-dev (optional, for SSL and SASL SCRAM support)
