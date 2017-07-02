@@ -421,7 +421,24 @@ bool TopicConf::UpdateRuntime(std::shared_ptr<Section> section) {
     LOG(WARNING) << "TopicConf UpdateRuntime invalid parameters";
     return false;
   }
-  return contents_.UpdateRuntime(std::move(section));
+  std::string hdfs_path = section->Get("hdfs.path", "");
+  if (hdfs_path.empty()) {
+    LOG(WARNING) << "TopicConf UpdateRuntime hdfs_path invalid";
+    return false;
+  }
+
+  if (!contents_.UpdateRuntime(std::move(section))) {
+    LOG(WARNING) << "TopicConf UpdateRuntime contents_ failed";
+    return false;
+  }
+
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (hdfs_path_ != hdfs_path) {
+    hdfs_path_ = hdfs_path;
+    LOG(INFO) << "TopicConf UpdateRuntime hdfs_path[" << hdfs_path << "]";
+  }
+
+  return true;
 }
 
 }   // namespace log2hdfs
