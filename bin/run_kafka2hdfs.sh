@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# crontab
+# * * * * * cd /data/users/data-infra/kafka2hdfs && sh run_kafka2hdfs.sh $type >> run_kafka2hdfs.log 2>&1
+
 concat_jar_paths()
 {
     str=$1
@@ -21,4 +24,32 @@ export CLASSPATH=$classpaths
 export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=/usr/hdp/2.4.0.0-169/hadoop/lib/native -Djava.library.path=/usr/hdp/2.4.0.0-169/hadoop/lib"
 export HADOOP_COMMON_LIB_NATIVE_DIR=/usr/hdp/2.4.0.0-169/hadoop/lib/native
 
-../log2hdfs/bin/kafka2hdfs -c kafka2hdfs.conf -l log2kafka-log.conf >> stderr.log 2>&1 &
+type=$1
+
+array=("v6" "report")
+
+for i in ${array[@]}
+do
+    if [ "$type" == "$i" ]
+    then
+        valid=1
+    fi
+done
+
+if [ ! -n "$valid" ]
+then
+    echo "unknown type:$type"
+    exit 1
+fi
+
+procs=$(ps -ef | grep 'kafka2hdfs' | grep -v 'grep')
+
+if echo "$procs" | grep -q "$type.conf"
+then
+    exit 0
+fi
+
+YmdHMs=$(date +%Y%m%d%H%M%S)
+echo "[$YmdHMs]kafka2hdfs $type crashed or aborted"
+
+../log2hdfs/bin/kafka2hdfs -c $type.conf -l $type-log.conf >> $type-stderr.log 2>&1 &

@@ -111,21 +111,21 @@ void signals_handler(int sig) {
     }
 
     if (!consumer->CreateTopicConsumer(
-                it->first,
+                topic,
                 topic_conf->kafka_topic_conf().get(),
                 topic_conf->partitions(),
                 topic_conf->offsets(),
                 cb, &errstr)) {
-      LOG(ERROR) << "signals_handler CreateTopicConsumer topic[" << it->first
+      LOG(ERROR) << "signals_handler CreateTopicConsumer topic[" << topic
                  << "] failed with errstr[" << errstr << "]";
       continue;
     }
 
-    consumer->StartTopic(it->first);
+    consumer->StartTopic(topic);
     upload->Start();
 
-    topic_confs[it->first] = std::move(topic_conf);
-    topic_uploads[it->first] = std::move(upload);
+    topic_confs[topic] = std::move(topic_conf);
+    topic_uploads[topic] = std::move(upload);
   }
 
   // remove topic
@@ -135,8 +135,9 @@ void signals_handler(int sig) {
       ++it;
     } else {
       consumer->StopTopic(topic);
-      topic_uploads.erase(topic);
       topic_confs.erase(it++);
+      topic_uploads[topic]->Stop();
+      topic_uploads.erase(topic);
     }
   }
   return;
@@ -269,48 +270,46 @@ int main(int argc, char *argv[]) {
       LOG(ERROR) << "TopicConf InitConf topic[" << topic << "] failed";
       exit(EXIT_FAILURE);
     }
-    topic_confs[topic] = std::move(topic_conf);
-  }
 
-  // Init topic consumers
-  for (auto it = topic_confs.begin(); it != topic_confs.end(); ++it) {
     std::shared_ptr<FpCache> cache = FpCache::Init();
     if (!cache) {
       LOG(ERROR) << "FpCache Init failed";
       exit(EXIT_FAILURE);
     }
 
-    std::shared_ptr<PathFormat> format = PathFormat::Init(it->second);
+    std::shared_ptr<PathFormat> format = PathFormat::Init(topic_conf);
     if (!format) {
       LOG(ERROR) << "PathFormat Init failed";
       exit(EXIT_FAILURE);
     }
 
     std::shared_ptr<KafkaConsumeCb> cb = ConsumeCallback::Init(
-        it->second, format, cache);
+        topic_conf, format, cache);
     if (!cb) {
       LOG(ERROR) << "ConsumeCallback Init failed";
       exit(EXIT_FAILURE);
     }
 
-    if (!consumer->CreateTopicConsumer(
-                it->first, 
-                it->second->kafka_topic_conf().get(),
-                it->second->partitions(),
-                it->second->offsets(),
-                cb, &errstr)) {
-      LOG(ERROR) << "CreateTopicConsumer topic[" << it->first
-                 << "] failed with errstr[" << errstr << "]";
-      exit(EXIT_FAILURE);
-    }
-
-    std::unique_ptr<Upload> upload = Upload::Init(it->second,
+    std::unique_ptr<Upload> upload = Upload::Init(topic_conf,
         format, cache, handle);
     if (!upload) {
       LOG(ERROR) << "Upload Init failed";
       exit(EXIT_FAILURE);
     }
-    topic_uploads[it->first] = std::move(upload);
+
+    if (!consumer->CreateTopicConsumer(
+                topic,
+                topic_conf->kafka_topic_conf().get(),
+                topic_conf->partitions(),
+                topic_conf->offsets(),
+                cb, &errstr)) {
+      LOG(ERROR) << "CreateTopicConsumer topic[" << topic
+                 << "] failed with errstr[" << errstr << "]";
+      exit(EXIT_FAILURE);
+    }
+
+    topic_confs[topic] = std::move(topic_conf);
+    topic_uploads[topic] = std::move(upload);
   }
 
   set_signal_handlers();
@@ -325,6 +324,9 @@ int main(int argc, char *argv[]) {
   }
 
   consumer->StopAllTopic();
+  for (auto it = topic_uploads.begin(); it != topic_uploads.end(); ++it) {
+    it->second->Stop();
+  }
   el::Helpers::uninstallPreRollOutCallback();
   return 0;
 }
