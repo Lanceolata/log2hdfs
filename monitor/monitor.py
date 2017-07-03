@@ -55,7 +55,11 @@ def ParseLogFile(conf, section, record):
                     AddLog(logformat.msg, excludes, err_log)
             except Exception, e:
                 print(e)
-
+        
+        new_offset = fp.tell()
+        if offset == new_offset:
+            msg = "Section[%s] no new log" % section
+            err_log[msg] = 1
         record.set(section, 'offset', fp.tell())
 
 
