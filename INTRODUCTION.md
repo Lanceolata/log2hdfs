@@ -17,11 +17,6 @@ log2hdfs由4个模块组成(详细代码建src目录下)：
 4. errmsg_handle：处理发送失败和time out的数据信息，按不同topic写到本地文件，根据interval配置更新本地文件，根据handle.remedy配置决定本地文件是否重新提交队列发送。(注:进程重启后本地的失败文件不再生效，即使配置handle.remedy = true也不会提交队列)
 
 
-```
-    graph TD
-    A-->B
-```
-
 ## kafka2hdfs
 
 消费kafka数据，按业务时间归档，压缩并上传到hdfs指定路径。
@@ -30,7 +25,7 @@ log2hdfs由4个模块组成(详细代码建src目录下)：
 
 1. log_format：日志格式接口，便于扩展处理的日志格式
 
-2. path_format：路径格式化接口，构造本地路径、hdfs路径等
+2. path_format：路径格式化接口，构造本地路径、hdfs路径和判断文件是否已修改完毕等
 
 3. consume_callback：kafka consume callback接口，处理consume message
 

@@ -13,10 +13,10 @@ namespace log2hdfs {
 
 TopicConfContents::TopicConfContents():
     kafka_topic_conf_(KafkaTopicConf::Init()),
-    remedy_(-1),
+    remedy_(0),
     batch_num_(100),
     poll_timeout_(200),
-    poll_messages_(2000) {}
+    poll_messages_(500) {}
 
 TopicConfContents::TopicConfContents(const TopicConfContents& other):
     kafka_topic_conf_(other.kafka_topic_conf_->Copy()),
