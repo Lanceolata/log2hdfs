@@ -1,4 +1,4 @@
-log2hdfs由4个模块组成：
+log2hdfs由4个模块组成(详细代码建src目录下)：
 
 ## log2kafka
 
@@ -6,15 +6,21 @@ log2hdfs由4个模块组成：
 
 主要由四个部分组成：
 
-1. inotify：调用Linux inotify监控日志生成目录，处理新日志的生成、新目录的建立和监控、新增目录递归监控，目录移除。对于新生成日志文件，会通过队列给produce处理(topic:path:offset)。
-为实现目录的递归监控，对于新建立的目录，等待目录3秒内不再修改，监控目录，记录监控事件，处理目录下的文件及目录。
+1. inotify：调用Linux inotify监控日志生成目录，处理新日志的生成、新目录的建立和监控、新增目录递归监控，目录移除。对于新生成日志文件，会通过队列给produce处理(格式为topic:path:offset)。
 
-2. produce：读取队列信息，将文件内容发送到指定topic，并根据配置更新offset_table中对应的offset信息。
+    为实现目录的递归监控，对于新建立的目录，等待目录3秒内不再修改，监控目录，记录监控事件，处理目录下的文件及目录。
 
-3. offset_table：offset信息根据interval配置写入到本地文件。
+2. produce：读取队列信息，将文件内容发送到指定topic，并更新offset_table中对应的offset信息。
 
-4. errmsg_handle：处理发送失败和time out的数据信息，按不同topic写到本地文件，根据interval配置更新本地文件，根据remedy配置决定本地文件是否写入队列。
+3. offset_table：offset信息根据interval配置写入到本地文件，便于程序重启后恢复。
 
+4. errmsg_handle：处理发送失败和time out的数据信息，按不同topic写到本地文件，根据interval配置更新本地文件，根据handle.remedy配置决定本地文件是否重新提交队列发送。(注:进程重启后本地的失败文件不再生效，即使配置handle.remedy = true也不会提交队列)
+
+
+```
+    graph TD
+    A-->B
+```
 
 ## kafka2hdfs
 

@@ -35,7 +35,6 @@ Update versions.sh to change thirdparty version.
 
 ```
 sh build_log2kafka.sh
-
 ```
 
 ##### build kafka2hdfs
@@ -59,7 +58,3 @@ Configuration properties are documented in CONFIGURATION.md
 Example configuration files are documented in conf/ sub-directory.
 
 For a log2hdfs introduction, see INTRODUCTION.md
-
-### Tests
-
-See the test/ sub-directory.
