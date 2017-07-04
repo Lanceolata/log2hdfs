@@ -116,6 +116,24 @@ class EfIcLogFormat : public LogFormat {
 };
 
 // ------------------------------------------------------------------
+// EfIcAwsLogFormat
+
+class EfIcAwsLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfIcAwsLogFormat> Init();
+
+  EfIcAwsLogFormat() {}
+
+  ~EfIcAwsLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
+// ------------------------------------------------------------------
 // EfImpLogFormat
 
 class EfImpLogFormat : public LogFormat {

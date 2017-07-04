@@ -60,6 +60,8 @@ Optional<LogFormat::Type> LogFormat::ParseType(const std::string &type) {
     return Optional<LogFormat::Type>(kReport);
   } else if (type == "efic") {
     return Optional<LogFormat::Type>(kEfIc);
+  } else if (type == "eficaws") {
+    return Optional<LogFormat::Type>(kEfIcAws);
   } else if (type == "efimp") {
     return Optional<LogFormat::Type>(kEfImp);
   } else if (type == "efstats") {
@@ -85,6 +87,8 @@ std::unique_ptr<LogFormat> LogFormat::Init(LogFormat::Type type) {
       return ReportLogFormat::Init();
     case kEfIc:
       return EfIcLogFormat::Init();
+    case kEfIcAws:
+      return EfIcAwsLogFormat::Init();
     case kEfImp:
       return EfImpLogFormat::Init();
     case kEfStats:
@@ -411,6 +415,88 @@ bool EfIcLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
 }
 
 bool EfIcLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (key.empty() || !m)
+    return false;
+
+  if (key == "click") {
+    (*m)['k'] = "click";
+  } else if (key == "imp_pc") {
+    (*m)['k'] = "imp_pc";
+  } else if (key == "imp_mobile") {
+    (*m)['k'] = "imp_mobile";
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// ------------------------------------------------------------------
+// EfIcAwsLogFormat
+
+std::unique_ptr<EfIcAwsLogFormat> EfIcAwsLogFormat::Init() {
+  return std::unique_ptr<EfIcAwsLogFormat>(new EfIcAwsLogFormat());
+}
+
+#define ACTION_INDEX 2
+
+bool EfIcAwsLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+    std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+  *ts = time_stamp;
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              ACTION_INDEX, &begin, &end)) {
+    return false;
+  }
+  
+  if (begin == end) {
+    return false;
+  }
+
+  int type = atoi(begin);
+  
+  if (type == 2) {
+    key->assign("click");
+    return true;
+  } else if (type != 1) {
+    return false;
+  }
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              DEVICE_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string device;
+  if (begin == end) {
+    key->assign("imp_pc");
+  } else {
+    if (strncmp(begin, "General", 2) == 0 || strncmp(begin, "Na", 2) == 0) {
+      key->assign("imp_pc");
+    } else {
+      key->assign("imp_mobile");
+    }
+  }
+
+  return true;
+}
+
+bool EfIcAwsLogFormat::ParseKey(const std::string& key,
     std::map<char, std::string>* m) const {
   if (key.empty() || !m)
     return false;

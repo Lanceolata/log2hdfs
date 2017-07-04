@@ -56,6 +56,21 @@ class TopicConfContents {
    */
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
+  std::string GetCompressLzo() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return compress_lzo_;
+  }
+
+  std::string GetCompressOrc() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return compress_orc_;
+  }
+
+  std::string GetCompressMv() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return compress_mv_;
+  }
+
   std::string root_dir_;
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
 
@@ -64,16 +79,19 @@ class TopicConfContents {
   ConsumeCallback::Type consume_type_;
   Upload::Type upload_type_;
   size_t parallel_;
+
+  // flow variable thread safe
   std::string compress_lzo_;
   std::string compress_orc_;
   std::string compress_mv_;
 
-  // flow variable thread safe
   std::atomic<int> consume_interval_;
   std::atomic<int> complete_interval_;
   std::atomic<long> complete_maxsize_;
   std::atomic<int> retention_seconds_;
   std::atomic<int> upload_interval_;
+
+  mutable std::mutex mutex_;
 };
 
 class TopicConf {
@@ -166,15 +184,15 @@ class TopicConf {
   }
 
   const std::string& compress_lzo() const {
-    return contents_.compress_lzo_;
+    return contents_.GetCompressLzo();
   }
 
   const std::string& compress_orc() const {
-    return contents_.compress_orc_;
+    return contents_.GetCompressOrc();
   }
 
   const std::string& compress_mv() const {
-    return contents_.compress_mv_;
+    return contents_.GetCompressMv();
   }
 
   int consume_interval() const {

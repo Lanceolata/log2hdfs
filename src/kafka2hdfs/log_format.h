@@ -24,6 +24,7 @@ class LogFormat {
     kEf,
     kEfDevice,
     kEfIc,
+    kEfIcAws,
     kEfImp,
     kEfStats,
     kPub,

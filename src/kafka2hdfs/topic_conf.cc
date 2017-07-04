@@ -198,27 +198,7 @@ bool TopicConfContents::Update(std::shared_ptr<Section> section) {
   }
   LOG(INFO) << "TopicConfContents Update parallel[" << parallel_ << "]";
 
-  option = section->Get("compress.lzo");
-  if (option.valid()) {
-    compress_lzo_ = option.value();
-  }
-  LOG(INFO) << "TopicConfContents Update compress_lzo["
-            << compress_lzo_ << "]";
-
-  option = section->Get("compress.orc");
-  if (option.valid()) {
-    compress_orc_ = option.value();
-  }
-  LOG(INFO) << "TopicConfContents Update compress_orc[" << compress_orc_
-            << "]";
-
-  option = section->Get("compress.mv");
-  if (option.valid()) {
-    compress_mv_ = option.value();
-  }
-  LOG(INFO) << "TopicConfContents Update compress_mv[" << compress_mv_
-            << "]";
-
+  
   std::string errstr;
   for (auto it = section->Begin(); it != section->End(); ++it) {
     if (StartsWith(it->first, KAFKA_PREFIX)) {
@@ -324,6 +304,33 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
     LOG(INFO) << "TopicConfContents UpdateRuntime update upload_interval["
               << upload_interval << "] success";
   }
+
+
+  std::lock_guard<std::mutex> lock(mutex_);
+  option = section->Get("compress.lzo");
+  if (option.valid() && !option.value().empty() &&
+          compress_lzo_ != option.value()) {
+    compress_lzo_ = option.value();
+    LOG(INFO) << "TopicConfContents UpdateRuntime compress_lzo["
+              << compress_lzo_ << "]";
+  }
+
+  option = section->Get("compress.orc");
+  if (option.valid() && !option.value().empty() &&
+          compress_orc_ != option.value()) {
+    compress_orc_ = option.value();
+    LOG(INFO) << "TopicConfContents UpdateRuntime compress_orc["
+              << compress_orc_ << "]";
+  }
+
+  option = section->Get("compress.mv");
+  if (option.valid() && !option.value().empty() &&
+          compress_mv_ != option.value()) {
+    compress_mv_ = option.value();
+    LOG(INFO) << "TopicConfContents UpdateRuntime compress_mv["
+              << compress_mv_ << "]";
+  }
+
   return true;
 }
 
