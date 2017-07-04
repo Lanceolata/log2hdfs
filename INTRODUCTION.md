@@ -19,11 +19,11 @@ log2hdfs由4个模块组成(详细代码建src目录下)：
 
 ## kafka2hdfs
 
-消费kafka数据，按业务时间归档，压缩并上传到hdfs指定路径。
+消费kafka数据，按设置时间归档，压缩并上传到hdfs指定路径。
 
 主要由5个部分组成：
 
-1. log_format：日志格式接口，便于扩展处理的日志格式
+1. log_format：日志格式接口，便于扩展处理的日志格式，需要实现Extract
 
 2. path_format：路径格式化接口，构造本地路径、hdfs路径和判断文件是否已修改完毕等
 
@@ -31,7 +31,7 @@ log2hdfs由4个模块组成(详细代码建src目录下)：
 
 4. upload：压缩和上传接口，根据文件格式匹配不同的压缩和上传规则
 
-5. hdfs_handle：hdfs client 接口
+5. hdfs_handle：hdfs client 接口，实现hdfs的基本操作
 
 
 ## kafka
