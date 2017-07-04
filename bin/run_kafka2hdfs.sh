@@ -26,7 +26,7 @@ export HADOOP_COMMON_LIB_NATIVE_DIR=/usr/hdp/2.4.0.0-169/hadoop/lib/native
 
 type=$1
 
-array=("v6" "report")
+array=("v6" "report" "ef")
 
 for i in ${array[@]}
 do

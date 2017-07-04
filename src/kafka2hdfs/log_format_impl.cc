@@ -1,7 +1,7 @@
 // Copyright (c) 2017 Lanceolata
 
 #include "kafka2hdfs/log_format_impl.h"
-#include "string.h"
+#include <string.h>
 #include "util/system_utils.h"
 
 namespace log2hdfs {
@@ -58,6 +58,14 @@ Optional<LogFormat::Type> LogFormat::ParseType(const std::string &type) {
     return Optional<LogFormat::Type>(kEfDevice);
   } else if (type == "report") {
     return Optional<LogFormat::Type>(kReport);
+  } else if (type == "efic") {
+    return Optional<LogFormat::Type>(kEfIc);
+  } else if (type == "efimp") {
+    return Optional<LogFormat::Type>(kEfImp);
+  } else if (type == "efstats") {
+    return Optional<LogFormat::Type>(kEfStats);
+  } else if (type == "pub") {
+    return Optional<LogFormat::Type>(kPub);
   } else {
     return Optional<LogFormat::Type>::Invalid();
   }
@@ -75,6 +83,14 @@ std::unique_ptr<LogFormat> LogFormat::Init(LogFormat::Type type) {
       return EfDeviceLogFormat::Init();
     case kReport:
       return ReportLogFormat::Init();
+    case kEfIc:
+      return EfIcLogFormat::Init();
+    case kEfImp:
+      return EfImpLogFormat::Init();
+    case kEfStats:
+      return EfStatsLogFormat::Init();
+    case kPub:
+      return EfPubLogFormat::Init();
     default:
       return nullptr;
   }
@@ -97,7 +113,7 @@ std::unique_ptr<V6LogFormat> V6LogFormat::Init() {
 #define DEVICE_OPTION_INDEX 0
 
 bool V6LogFormat::ExtractKeyAndTs(const char* payload, size_t len,
-                                  std::string* key, time_t* ts) const {
+    std::string* key, time_t* ts) const {
   if (!payload || !key || !ts || len <= 0)
     return false;
 
@@ -123,7 +139,7 @@ bool V6LogFormat::ExtractKeyAndTs(const char* payload, size_t len,
 }
 
 bool V6LogFormat::ParseKey(const std::string& key,
-                           std::map<char, std::string>* m) const {
+    std::map<char, std::string>* m) const {
   if (!m)
     return false;
 
@@ -139,7 +155,7 @@ std::unique_ptr<V6DeviceLogFormat> V6DeviceLogFormat::Init() {
 }
 
 bool V6DeviceLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
-                                        std::string* key, time_t* ts) const {
+    std::string* key, time_t* ts) const {
   if (!payload || !key || !ts || len <= 0)
     return false;
 
@@ -212,7 +228,7 @@ std::unique_ptr<EfLogFormat> EfLogFormat::Init() {
 #define TIME_LENGTH 12
 
 bool EfLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
-                                  std::string* key, time_t* ts) const {
+    std::string* key, time_t* ts) const {
   if (!payload || !key || !ts || len <= 0)
     return false;
 
@@ -250,7 +266,7 @@ std::unique_ptr<EfDeviceLogFormat> EfDeviceLogFormat::Init() {
 }
 
 bool EfDeviceLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
-                                        std::string* key, time_t* ts) const {
+    std::string* key, time_t* ts) const {
   if (!payload || !key || !ts || len <= 0)
     return false;
 
@@ -307,7 +323,7 @@ std::unique_ptr<ReportLogFormat> ReportLogFormat::Init() {
 }
 
 bool ReportLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
-                                        std::string* key, time_t* ts) const {
+    std::string* key, time_t* ts) const {
   if (!payload || !key || !ts || len <= 0)
     return false;
 
@@ -323,7 +339,261 @@ bool ReportLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
 
 bool ReportLogFormat::ParseKey(const std::string& key,
     std::map<char, std::string>* m) const {
-  if (!m || key.empty())
+  if (!m)
+    return false;
+
+  m->clear();
+  return true;
+}
+
+// ------------------------------------------------------------------
+// EfIcLogFormat
+
+std::unique_ptr<EfIcLogFormat> EfIcLogFormat::Init() {
+  return std::unique_ptr<EfIcLogFormat>(new EfIcLogFormat());
+}
+
+#define ACTION_INDEX 2
+
+bool EfIcLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+    std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+  *ts = time_stamp;
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              ACTION_INDEX, &begin, &end)) {
+    return false;
+  }
+  
+  if (begin == end) {
+    return false;
+  }
+
+  int type = atoi(begin);
+  
+  if (type == 2) {
+    key->assign("click");
+    return true;
+  } else if (type != 1) {
+    return false;
+  }
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              DEVICE_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string device;
+  if (begin == end) {
+    key->assign("imp_pc");
+  } else {
+    if (strncmp(begin, "General", 2) == 0 || strncmp(begin, "Na", 2) == 0) {
+      key->assign("imp_pc");
+    } else {
+      key->assign("imp_mobile");
+    }
+  }
+
+  return true;
+}
+
+bool EfIcLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (key.empty() || !m)
+    return false;
+
+  if (key == "click") {
+    (*m)['D'] = "";
+    (*m)['A'] = "click";
+  } else if (key == "imp_pc") {
+    (*m)['D'] = "pc";
+    (*m)['A'] = "imp";
+  } else if (key == "imp_mobile") {
+    (*m)['D'] = "mobile";
+    (*m)['A'] = "imp";
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// ------------------------------------------------------------------
+// EfImpLogFormat
+
+std::unique_ptr<EfImpLogFormat> EfImpLogFormat::Init() {
+  return std::unique_ptr<EfImpLogFormat>(new EfImpLogFormat());
+}
+
+
+bool EfImpLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+    std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+  *ts = time_stamp;
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              ACTION_INDEX, &begin, &end)) {
+    return false;
+  }
+  
+  if (begin == end) {
+    return false;
+  }
+
+  int type = atoi(begin);
+  
+  if (type == 1) {
+    key->assign("imp");
+  } else if (type == 2) {
+    key->assign("click");
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+bool EfImpLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (key.empty() || !m)
+    return false;
+
+  if (key == "click") {
+    (*m)['A'] = "click";
+  } else if (key == "imp") {
+    (*m)['A'] = "imp";
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// ------------------------------------------------------------------
+// EfStatsLogFormat
+
+std::unique_ptr<EfStatsLogFormat> EfStatsLogFormat::Init() {
+  return std::unique_ptr<EfStatsLogFormat>(new EfStatsLogFormat());
+}
+
+bool EfStatsLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+    std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+  *ts = time_stamp;
+
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              ACTION_INDEX, &begin, &end)) {
+    return false;
+  }
+  
+  if (begin == end) {
+    return false;
+  }
+
+  int type = atoi(begin);
+  
+  if (type == 11) {
+    key->assign("imp");
+  } else if (type == 12) {
+    key->assign("click");
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+bool EfStatsLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (key.empty() || !m)
+    return false;
+
+  if (key == "click") {
+    (*m)['A'] = "click";
+    (*m)['p'] = "click";
+  } else if (key == "imp") {
+    (*m)['A'] = "imp";
+    (*m)['p'] = "impression";
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// ------------------------------------------------------------------
+// EfPubLogFormat
+
+std::unique_ptr<EfPubLogFormat> EfPubLogFormat::Init() {
+  return std::unique_ptr<EfPubLogFormat>(new EfPubLogFormat());
+}
+
+#define TIME_INDEX_PUB 11
+
+bool EfPubLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+    std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, EF_DELIMITER,
+              TIME_INDEX_PUB, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+
+  *ts = time_stamp;
+  *key = "";
+  return true;
+}
+
+bool EfPubLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (!m)
     return false;
 
   m->clear();

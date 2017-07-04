@@ -97,6 +97,78 @@ class ReportLogFormat : public LogFormat {
                 std::map<char, std::string>* m) const;
 };
 
+// ------------------------------------------------------------------
+// EfIcLogFormat
+
+class EfIcLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfIcLogFormat> Init();
+
+  EfIcLogFormat() {}
+
+  ~EfIcLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
+// ------------------------------------------------------------------
+// EfImpLogFormat
+
+class EfImpLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfImpLogFormat> Init();
+
+  EfImpLogFormat() {}
+
+  ~EfImpLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
+// ------------------------------------------------------------------
+// EfStatsLogFormat
+
+class EfStatsLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfStatsLogFormat> Init();
+
+  EfStatsLogFormat() {}
+
+  ~EfStatsLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
+// ------------------------------------------------------------------
+// EfPubLogFormat
+
+class EfPubLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<EfPubLogFormat> Init();
+
+  EfPubLogFormat() {}
+
+  ~EfPubLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
 }   // namespace log2hdfs
 
 #endif  // LOG2HDFS_KAFKA2HDFS_LOG_FORMAT_IMPL_H_
