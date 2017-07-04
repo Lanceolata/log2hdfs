@@ -56,17 +56,17 @@ class TopicConfContents {
    */
   bool UpdateRuntime(std::shared_ptr<Section> section);
 
-  std::string GetCompressLzo() {
+  std::string GetCompressLzo() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return compress_lzo_;
   }
 
-  std::string GetCompressOrc() {
+  std::string GetCompressOrc() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return compress_orc_;
   }
 
-  std::string GetCompressMv() {
+  std::string GetCompressMv() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return compress_mv_;
   }
