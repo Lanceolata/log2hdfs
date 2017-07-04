@@ -38,7 +38,7 @@ def sandbox_deploy():
 
 
 @roles('dsp')
-def dsp_test_deploy():
+def dsp_deploy():
     log2kafka_deploy()
     copy_conf()
 

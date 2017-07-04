@@ -23,6 +23,10 @@ class LogFormat {
     kV6Device,
     kEf,
     kEfDevice,
+    kEfIc,
+    kEfImp,
+    kEfStats,
+    kPub,
     kReport
   };
 
