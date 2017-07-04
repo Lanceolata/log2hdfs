@@ -183,15 +183,15 @@ class TopicConf {
     return contents_.parallel_;
   }
 
-  const std::string& compress_lzo() const {
+  std::string compress_lzo() const {
     return contents_.GetCompressLzo();
   }
 
-  const std::string& compress_orc() const {
+  std::string compress_orc() const {
     return contents_.GetCompressOrc();
   }
 
-  const std::string& compress_mv() const {
+  std::string compress_mv() const {
     return contents_.GetCompressMv();
   }
 
