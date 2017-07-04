@@ -94,7 +94,7 @@ std::unique_ptr<LogFormat> LogFormat::Init(LogFormat::Type type) {
     case kEfStats:
       return EfStatsLogFormat::Init();
     case kPub:
-      return EfPubLogFormat::Init();
+      return PubLogFormat::Init();
     default:
       return nullptr;
   }
@@ -649,13 +649,13 @@ bool EfStatsLogFormat::ParseKey(const std::string& key,
 // ------------------------------------------------------------------
 // EfPubLogFormat
 
-std::unique_ptr<EfPubLogFormat> EfPubLogFormat::Init() {
-  return std::unique_ptr<EfPubLogFormat>(new EfPubLogFormat());
+std::unique_ptr<PubLogFormat> PubLogFormat::Init() {
+  return std::unique_ptr<PubLogFormat>(new PubLogFormat());
 }
 
 #define TIME_INDEX_PUB 11
 
-bool EfPubLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+bool PubLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
     std::string* key, time_t* ts) const {
   if (!payload || !key || !ts || len <= 0)
     return false;
@@ -677,7 +677,7 @@ bool EfPubLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
   return true;
 }
 
-bool EfPubLogFormat::ParseKey(const std::string& key,
+bool PubLogFormat::ParseKey(const std::string& key,
     std::map<char, std::string>* m) const {
   if (!m)
     return false;

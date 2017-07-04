@@ -172,13 +172,13 @@ class EfStatsLogFormat : public LogFormat {
 // ------------------------------------------------------------------
 // EfPubLogFormat
 
-class EfPubLogFormat : public LogFormat {
+class PubLogFormat : public LogFormat {
  public:
-  static std::unique_ptr<EfPubLogFormat> Init();
+  static std::unique_ptr<PubLogFormat> Init();
 
-  EfPubLogFormat() {}
+  PubLogFormat() {}
 
-  ~EfPubLogFormat() {}
+  ~PubLogFormat() {}
 
   bool ExtractKeyAndTs(const char* payload, size_t len,
                        std::string* key, time_t* ts) const;
