@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
+# old
 HDFS_INCLUDE="/usr/hdp/2.4.0.0-169/usr/include/"
-HDFS_LIB="/usr/hdp/2.4.0.0-169/usr/lib"
-JAVA_LIB="/usr/java/jdk1.8.0_77/jre/lib/amd64/server"
+HDFS_LIB="/usr/lib/hadoop/lib/native"
+JAVA_LIB="/usr/jdk64/jdk1.7.0_45/jre/lib/amd64/server"
+
+# new
+#HDFS_INCLUDE="/usr/hdp/2.4.0.0-169/usr/include/"
+#HDFS_LIB="/usr/hdp/2.4.0.0-169/usr/lib"
+#JAVA_LIB="/usr/java/jdk1.8.0_77/jre/lib/amd64/server"
 
 g++ -g  -std=c++11 \
 -I src \
