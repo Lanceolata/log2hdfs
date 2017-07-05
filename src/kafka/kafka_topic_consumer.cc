@@ -128,8 +128,8 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
         if (++times > TRY_TIMES)
           break;
       }
-      //LOG(INFO) << "KafkaTopicConsumer StartInternal topic[" << topic
-      //          << "] partition" << partition << "] no new message";
+      LOG(INFO) << "KafkaTopicConsumer StartInternal topic[" << topic
+                << "] partition" << partition << "] no new message";
       continue;
     }
 
