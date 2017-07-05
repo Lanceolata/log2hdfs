@@ -31,7 +31,7 @@ class UploadImpl : public Upload {
   }
 
   ~UploadImpl() {
-    Stop();
+    Join();
   }
 
   void Start() {
@@ -44,6 +44,10 @@ class UploadImpl : public Upload {
   }
 
   void Stop() {
+    stop_.store(true);
+  }
+
+  void Join() {
     stop_.store(true);
     std::lock_guard<std::mutex> lock(mutex_);
     if (thread_.joinable())

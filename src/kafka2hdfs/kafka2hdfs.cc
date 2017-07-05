@@ -136,7 +136,7 @@ void signals_handler(int sig) {
     } else {
       consumer->StopTopic(topic);
       topic_confs.erase(it++);
-      topic_uploads[topic]->Stop();
+      topic_uploads[topic]->Join();
       topic_uploads.erase(topic);
     }
   }
@@ -326,6 +326,9 @@ int main(int argc, char *argv[]) {
   consumer->StopAllTopic();
   for (auto it = topic_uploads.begin(); it != topic_uploads.end(); ++it) {
     it->second->Stop();
+  }
+  for (auto it = topic_uploads.begin(); it != topic_uploads.end(); ++it) {
+    it->second->Join();
   }
   el::Helpers::uninstallPreRollOutCallback();
   return 0;

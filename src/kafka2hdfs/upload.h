@@ -55,6 +55,11 @@ class Upload {
    * Uplaod thread stop.
    */
   virtual void Stop() = 0;
+
+  /**
+   * Upload thread join.
+   */
+  virtual void Join() = 0;
 };
 
 }   // namespace log2hdfs
