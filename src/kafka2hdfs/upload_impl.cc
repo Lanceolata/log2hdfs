@@ -219,7 +219,14 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
   }
 
   if (times > 0) {
-    hdfs_path +=  "." + std::to_string(times);
+    auto ind = hdfs_path.rfind('.');
+    if (ind == std::string::npos) {
+      hdfs_path += "." + std::to_string(times);
+    } else {
+      std::string temp_path = hdfs_path.substr(0, ind) +
+          std::to_string(times) + hdfs_path.substr(ind);
+      hdfs_path = std::move(temp_path);
+    }
   }
 
   bool res;
