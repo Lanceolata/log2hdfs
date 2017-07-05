@@ -34,3 +34,4 @@ thirdparty/installed
 .idea/
 
 compress/target/
+compress/out/
