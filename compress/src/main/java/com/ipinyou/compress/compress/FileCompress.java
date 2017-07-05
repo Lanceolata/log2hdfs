@@ -44,8 +44,8 @@ public class FileCompress {
             return false;
         }
 
-        String dirPath = FileUtils.getDir(inPath);
-        String fileName = FileUtils.getFileName(inPath);
+        String dirPath = FileUtils.getDir(outPath);
+        String fileName = FileUtils.getFileName(outPath);
         String crcPath = dirPath + "/." + fileName + ".crc";
 
         try {
@@ -89,7 +89,7 @@ public class FileCompress {
                         outPath, System.currentTimeMillis() - startTime);
 
             if (fileProperty.getBackupDir() != null) {
-                String backPath = fileProperty.getBackupDir() + "/" + fileName;
+                String backPath = fileProperty.getBackupDir() + "/" + FileUtils.getFileName(inPath);
                 backPath = FileUtils.renameFileWithTimestamp(inPath, backPath);
                 if (backPath == null) {
                     logger.error("renameFileWithTimestamp from[{}] to[{}] failed", inPath, fileProperty.getBackupDir());
