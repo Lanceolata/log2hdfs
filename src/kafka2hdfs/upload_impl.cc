@@ -147,7 +147,8 @@ void UploadImpl::StartInternal() {
         }
 
         // Remove from fp cache
-        FpCache::RemoveResult res = fp_cache_->Remove(name.substr(0, end));
+        FpCache::RemoveResult res = fp_cache_->Remove(
+            name.substr(0, end), path);
         if (res == FpCache::kRemoveFailed) {
           LOG(ERROR) << "UploadImpl StartInternal fp_cache Remove["
                      << path << "] failed";

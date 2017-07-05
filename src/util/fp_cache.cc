@@ -65,13 +65,14 @@ std::shared_ptr<FILE> FpCache::Get(
 
 #define RETRY_TIMES 3
 
-FpCache::RemoveResult FpCache::Remove(const std::string& key) {
+FpCache::RemoveResult FpCache::Remove(const std::string& key,
+                                      const std::string& path) {
   std::shared_ptr<FILE> fptr;
 
   pthread_rwlock_wrlock(&lock_);
 
   auto it = cache_.find(key);
-  if (it != cache_.end()) {
+  if (it != cache_.end() && paths_[key] == path) {
     fptr = std::move(it->second);
     cache_.erase(it);
     paths_.erase(key);

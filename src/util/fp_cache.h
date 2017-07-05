@@ -84,7 +84,8 @@ class FpCache {
    * 
    * @returns RemoveResult. @see RemoveResult
    */
-  FpCache::RemoveResult Remove(const std::string& key);
+  FpCache::RemoveResult Remove(const std::string& key,
+                               const std::string& path);
 
   /**
    * Erase all fp cache and return cache fp paths.
