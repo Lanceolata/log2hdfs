@@ -20,6 +20,8 @@ public class FlatLocalOrcWriterCompat extends FlatLocalOrcWriter {
     }
 
     protected boolean checkNull(String col, String fieldType) {
+        if (col == null)
+            return true;
         return false;
     }
 

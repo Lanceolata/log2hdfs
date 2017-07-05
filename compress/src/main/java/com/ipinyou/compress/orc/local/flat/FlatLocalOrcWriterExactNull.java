@@ -19,7 +19,7 @@ public class FlatLocalOrcWriterExactNull extends FlatLocalOrcWriterExact {
     }
 
     protected boolean checkNull(String col, String fieldType) {
-        if(col == null || "".equals(col)) {
+        if ("null".equalsIgnoreCase(col)) {
             return true;
         }
         return false;

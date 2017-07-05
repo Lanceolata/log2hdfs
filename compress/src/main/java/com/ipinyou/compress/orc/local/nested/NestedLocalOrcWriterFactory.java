@@ -13,45 +13,64 @@ import java.io.IOException;
  */
 public class NestedLocalOrcWriterFactory {
 
-    public static OrcWriter create(String type, String filePath, TypeDescription schema,
+    public static OrcWriter create(NestedLocalOrcWriterType type, String filePath, TypeDescription schema,
                                    OrcWriterOptions options, TypeDescription rawSchema,
                                    Indexs indexsRoot, Delimiter delimiterRoot)
             throws IOException, IllegalArgumentException {
-        if ("nested.exact".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterExact(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else if ("nested.exactnull".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterExactNull(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else if ("nested.exactnullisnull".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterExactNullIsNull(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else if ("nested.exactisnull".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterExactIsNull(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else if ("nested.compat".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterCompat(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else if ("nested.compatnull".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterCompatNull(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else if ("nested.compatnullisnull".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterCompatNullIsNull(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } if ("nested.compatisnull".equalsIgnoreCase(type)) {
-            return new NestedLocalOrcWriterCompatIsNull(filePath, schema, options, rawSchema,
-                    indexsRoot, delimiterRoot);
-        } else {
-            throw new IllegalArgumentException("Unknown type " + type);
+
+        switch (type) {
+            case nested_exact:
+                return new NestedLocalOrcWriterExact(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_exact_blank:
+                return new NestedLocalOrcWriterExactBlank(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_exact_null:
+                return new NestedLocalOrcWriterExactNull(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_exact_blanknull:
+                return new NestedLocalOrcWriterExactBlankNull(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_compat:
+                return new NestedLocalOrcWriterCompat(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_compat_blank:
+                return new NestedLocalOrcWriterCompatBlank(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_compat_null:
+                return new NestedLocalOrcWriterCompatNull(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            case nested_compat_blanknull:
+                return new NestedLocalOrcWriterCompatBlankNull(filePath, schema, options, rawSchema,
+                        indexsRoot, delimiterRoot);
+            default:
+                throw new IllegalArgumentException("Unknown type " + type);
         }
     }
 
-    protected static String[] types = {"nested.exact", "nested.exactnull", "nested.exactnullisnull", "nested.exactisnull",
-                                       "nested.compat", "nested.compatnull", "nested.compatnullisnull", "nested.compatisnull"};
+    public enum NestedLocalOrcWriterType {
+        nested_exact,             // 严格限制列长度，并且不会设置为null
+        nested_exact_blank,       // 严格限制列长度，""设置为null
+        nested_exact_null,        // 严格限制列长度，"null"设置为null
+        nested_exact_blanknull,   // 严格限制列长度，"null"和""设置为null
+        nested_compat,            // 兼容列长度，多出列舍弃，少列填为null，null设置为null
+        nested_compat_blank,      // 兼容列长度，多出列舍弃，少列填为null，""和null设置为null
+        nested_compat_null,       // 兼容列长度，多出列舍弃，少列填为null，"null"和null设置为null
+        nested_compat_blanknull,  // 兼容列长度，多出列舍弃，少列填为null，"null" ""和null设置为null
+    }
+
+    public static NestedLocalOrcWriterType getType(String type) {
+        for (NestedLocalOrcWriterType nestedType : NestedLocalOrcWriterType.values()) {
+            if (nestedType.name().equals(type)) {
+                return nestedType;
+            }
+        }
+        return null;
+    }
 
     public static boolean checkType(String type) {
-        for(String t : types) {
-            if(t.equalsIgnoreCase(type)) {
+        for (NestedLocalOrcWriterType nestedType : NestedLocalOrcWriterType.values()) {
+            if (nestedType.name().equals(type)) {
                 return true;
             }
         }

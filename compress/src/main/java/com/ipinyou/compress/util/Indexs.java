@@ -11,8 +11,6 @@ import java.util.List;
  */
 public class Indexs {
 
-    private static final Logger logger = LoggerFactory.getLogger(Indexs.class);
-
     private int rawLength;
     private int[] indexs;
     private Indexs[] children;
@@ -20,7 +18,7 @@ public class Indexs {
     public Indexs(int rawLength, int[] indexs, Indexs[] children) {
         if (rawLength <= 0 || indexs == null || indexs.length <= 0
                 || children == null || children.length <= 0) {
-            throw new IllegalArgumentException("Invalid rawSchema or schema");
+            throw new IllegalArgumentException("Invalid indexs arguments");
         }
 
         this.rawLength = rawLength;
@@ -67,30 +65,21 @@ public class Indexs {
         for (int i = 0; i < subs.size(); ++i) {
             String type = subs.get(i).getCategory().getName();
             int index = getIndexFromSchema(rawSchema, names.get(i), type);
+            if (index < 0) {
+                return null;
+            }
             indexs[i] = index;
-            if (index >= 0 && "struct".equalsIgnoreCase(type)) {
-                children[i] = buildIndexs(rawSchema.getChildren().get(index), subs.get(i));
+            if ("struct".equalsIgnoreCase(type)) {
+                Indexs child = buildIndexs(rawSchema.getChildren().get(index), subs.get(i));
+                if (child == null) {
+                    return null;
+                }
+                children[i] = child;
             } else {
                 children[i] = null;
             }
         }
         return new Indexs(rawLength, indexs, children);
-    }
-
-    public static Indexs buildIndexsWithNULL(TypeDescription schema) {
-        List<TypeDescription> subs = schema.getChildren();
-        int[] indexs = new int[subs.size()];
-        Indexs[] children = new Indexs[subs.size()];
-        for (int i = 0; i < subs.size(); ++i) {
-            String type = subs.get(i).getCategory().getName();
-            indexs[i] = -1;
-            if ("struct".equalsIgnoreCase(type)) {
-                children[i] = buildIndexsWithNULL(subs.get(i));
-            } else {
-                children[i] = null;
-            }
-        }
-        return new Indexs(0, indexs, children);
     }
 
     private static int getIndexFromSchema(TypeDescription rawSchema, String name, String type) {
