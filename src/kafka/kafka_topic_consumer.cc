@@ -152,7 +152,7 @@ void KafkaTopicConsumer::StartInternal(int32_t partition) {
                        << messages[i]->err << "]";
       }
     }
-    handle_->Poll(300);
+    handle_->Poll(0);
   }
 
   free(messages);
