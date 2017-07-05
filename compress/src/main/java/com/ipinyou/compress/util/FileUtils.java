@@ -59,4 +59,12 @@ public class FileUtils {
         }
         return res;
     }
+
+    public static String getAbsPath(String path) {
+        if(path == null || "".equals(path))
+            return null;
+
+        File f = new File(path);
+        return f.getAbsolutePath();
+    }
 }

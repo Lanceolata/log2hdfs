@@ -4,6 +4,7 @@ import com.ipinyou.compress.orc.OrcWriterOptions;
 import com.ipinyou.compress.orc.local.flat.FlatLocalOrcWriterFactory;
 import com.ipinyou.compress.orc.local.nested.NestedLocalOrcWriterFactory;
 import com.ipinyou.compress.util.Delimiter;
+import com.ipinyou.compress.util.FileUtils;
 import com.ipinyou.compress.util.Indexs;
 import com.ipinyou.compress.util.SchemaUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -100,6 +101,7 @@ public class FileProperty {
         logger.info("FileProperty indexs[{}]", this.indexs.toString());
 
         if (backup != null && !"".equals(backup)) {
+            backup = FileUtils.getAbsPath(backup);
             if (!createDir(backup)) {
                 throw new IllegalArgumentException("invalid backup dir");
             } else {

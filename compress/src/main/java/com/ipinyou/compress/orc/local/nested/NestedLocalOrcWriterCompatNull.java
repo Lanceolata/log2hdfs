@@ -19,7 +19,7 @@ public class NestedLocalOrcWriterCompatNull extends NestedLocalOrcWriterCompat {
     }
 
     protected boolean checkNull(String col, String fieldType) {
-        if ("null".equalsIgnoreCase(col)) {
+        if (col == null || "null".equalsIgnoreCase(col)) {
             return true;
         }
         return false;

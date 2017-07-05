@@ -26,8 +26,8 @@ public class FileCompress {
             throw new IllegalArgumentException("FileCompress invalid arguments");
         }
 
-        this.inPath = inPath;
-        this.outPath = outPath;
+        this.inPath = FileUtils.getAbsPath(inPath);
+        this.outPath = FileUtils.getAbsPath(outPath);
         this.fileProperty = fileProperty;
     }
 
@@ -106,5 +106,15 @@ public class FileCompress {
         }
 
         return true;
+    }
+
+    public static void main(String[] args) {
+        String inPath = "fsdfafafafa";
+        String dirPath = FileUtils.getDir(inPath);
+        String fileName = FileUtils.getFileName(inPath);
+        String crcPath = dirPath + "/." + fileName + ".crc";
+        System.out.println(dirPath);
+        System.out.println(fileName);
+        System.out.println(crcPath);
     }
 }
