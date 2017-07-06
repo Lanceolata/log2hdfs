@@ -19,9 +19,7 @@ classpaths=$(hadoop classpath)
 classpaths=$(concat_jar_paths $classpaths)
 
 ulimit -c unlimited
-# old
-#export LD_LIBRARY_PATH="../../log2hdfs/thirdparty/installed/lib:/usr/jdk64/jdk1.7.0_45/jre/lib/amd64/server:/usr/lib/hadoop/lib/native:$LD_LIBRARY_PATH"
-# new
+
 export LD_LIBRARY_PATH="../../log2hdfs/thirdparty/installed/lib:/usr/java/jdk1.8.0_77/jre/lib/amd64/server:/usr/jdk64/jdk1.7.0_45/jre/lib/amd64/server:/usr/hdp/2.4.0.0-169/usr/lib:/usr/hdp/2.4.0.0-169/hadoop/lib/native:/usr/lib/hadoop/lib/native:$LD_LIBRARY_PATH"
 export CLASSPATH=$classpaths
 export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=/usr/hdp/2.4.0.0-169/usr/lib/native -Djava.library.path=/usr/hdp/2.4.0.0-169/usr/lib -Djava.library.path=/usr/lib/hadoop/lib/native -Djava.library.path=/usr/lib/hadoop/lib"
