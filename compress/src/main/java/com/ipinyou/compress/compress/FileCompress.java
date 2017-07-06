@@ -33,7 +33,7 @@ public class FileCompress {
 
     public boolean compress() {
         long startTime = System.currentTimeMillis();
-
+        logger.info("Start compress from[{}] to[{}]", inPath, outPath);
         if (!FileUtils.isFile(inPath)) {
             logger.error("Invalid inpath[{}] not file", inPath);
             return false;
@@ -106,15 +106,5 @@ public class FileCompress {
         }
 
         return true;
-    }
-
-    public static void main(String[] args) {
-        String inPath = "fsdfafafafa";
-        String dirPath = FileUtils.getDir(inPath);
-        String fileName = FileUtils.getFileName(inPath);
-        String crcPath = dirPath + "/." + fileName + ".crc";
-        System.out.println(dirPath);
-        System.out.println(fileName);
-        System.out.println(crcPath);
     }
 }

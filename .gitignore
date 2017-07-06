@@ -35,3 +35,6 @@ thirdparty/installed
 
 compress/target/
 compress/out/
+
+appendcvt/target/
+appendcvt/out/
