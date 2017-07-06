@@ -261,7 +261,7 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
     }
     
     if (index) {
-      sleep(10);
+      sleep(3);
       handle_->LZOIndex(hdfs_path);
     }
 
