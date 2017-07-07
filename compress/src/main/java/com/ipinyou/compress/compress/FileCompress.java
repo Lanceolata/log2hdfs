@@ -96,6 +96,11 @@ public class FileCompress {
                 } else {
                     logger.info("renameFileWithTimestamp from[{}] to[{}] success", inPath, backPath);
                 }
+            } else {
+                if (!FileUtils.deleteFileIfExists(outPath)) {
+                    logger.error("Delete exists file[{}] failed", inPath);
+                    return false;
+                }
             }
         } catch (IOException e) {
             logger.error(e.getMessage());
