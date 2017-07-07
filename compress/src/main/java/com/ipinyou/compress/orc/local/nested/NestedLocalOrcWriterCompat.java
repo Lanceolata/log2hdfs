@@ -26,17 +26,25 @@ public class NestedLocalOrcWriterCompat extends NestedLocalOrcWriter {
     }
 
     protected String[] splitByDelimiter(String col, String separator, int expectLength) {
-        String[] cols = StringUtils.splitByWholeSeparatorPreserveAllTokens(col, separator);
-        if (cols.length < expectLength) {
-            String[] res = new String[expectLength];
-            int i = 0;
-            for (; i < cols.length; i++) {
-                res[i] = cols[i];
+        String[] cols = null;
+        if (col == null) {
+            cols = new String[expectLength];
+            for (int i = 0; i < expectLength; ++i) {
+                cols[i] = null;
             }
-            for (; i < expectLength; i++) {
-                res[i] = null;
+        } else {
+            cols = StringUtils.splitByWholeSeparatorPreserveAllTokens(col, separator);
+            if (cols.length < expectLength) {
+                String[] res = new String[expectLength];
+                int i = 0;
+                for (; i < cols.length; i++) {
+                    res[i] = cols[i];
+                }
+                for (; i < expectLength; i++) {
+                    res[i] = null;
+                }
+                return res;
             }
-            return res;
         }
         return cols;
     }
