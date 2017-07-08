@@ -183,8 +183,8 @@ bool NormalPathFormat::WriteFinished(const std::string& filepath) const {
 #define YMDHMS_SIZE 14
 #define TIMESTAMP_SIZE 10
 
-bool NormalPathFormat::BuildHdfsPath(
-    const std::string& name, std::string* path) const {
+bool NormalPathFormat::BuildHdfsPath(const std::string& name,
+    std::string* path, bool delay) const {
   if (name.empty() || !path) {
     LOG(WARNING) << "NormalPathFormat BuildHdfsPath invalid parameters";
     return false;
@@ -220,7 +220,17 @@ bool NormalPathFormat::BuildHdfsPath(
     return false;
   }
 
-  std::string path_format = conf_->hdfs_path();
+  std::string path_format;
+  if (delay) {
+    path_format = conf_->hdfs_path_delay();
+  } else {
+    path_format = conf_->hdfs_path();
+  }
+  if (path_format.empty()) {
+    LOG(WARNING) << "NormalPathFormat BuildHdfsPath empty path_format";
+    return false;
+  }
+
   std::ostringstream os;
   auto end = path_format.end();
   for (auto it = path_format.begin(); it != end; ++it) {

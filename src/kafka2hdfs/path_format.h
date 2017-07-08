@@ -66,7 +66,8 @@ class PathFormat {
    * @returns True if build hdfs path success, false otherwise.
    */
   virtual bool BuildHdfsPath(const std::string& name,
-                             std::string* path) const = 0;
+                             std::string* path,
+                             bool delay = false) const = 0;
 };
 
 }   // namespace log2hdfs

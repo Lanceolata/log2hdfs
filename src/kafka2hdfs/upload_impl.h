@@ -62,7 +62,8 @@ class UploadImpl : public Upload {
 
   virtual void Upload() = 0;
 
-  virtual void UploadFile(const std::string& path, bool append, bool index);
+  virtual void UploadFile(const std::string& path, bool append,
+                          bool index, bool delay = false);
 
  protected:
   std::shared_ptr<TopicConf> conf_;
@@ -185,6 +186,37 @@ class CompressUploadImpl : public UploadImpl {
       pool_(conf_->parallel()) {}
 
   void Compress();
+
+  void Upload();
+
+ protected:
+  ThreadPool pool_;
+};
+
+// ------------------------------------------------------------------
+// AppendCvtUploadImpl
+
+class AppendCvtUploadImpl : public UploadImpl {
+ public:
+  static std::unique_ptr<AppendCvtUploadImpl> Init(
+      std::shared_ptr<TopicConf> conf,
+      std::shared_ptr<PathFormat> format,
+      std::shared_ptr<FpCache> fp_cache,
+      std::shared_ptr<HdfsHandle> handle);
+
+  AppendCvtUploadImpl(std::shared_ptr<TopicConf> conf,
+                      std::shared_ptr<PathFormat> format,
+                      std::shared_ptr<FpCache> fp_cache,
+                      std::shared_ptr<HdfsHandle> handle):
+      UploadImpl(std::move(conf), std::move(format),
+                 std::move(fp_cache), std::move(handle)),
+      pool_(1) {}
+
+  void Compress();
+
+  void CompressFile(const std::string& path);
+
+  bool IsDelay(const std::string& name);
 
   void Upload();
 

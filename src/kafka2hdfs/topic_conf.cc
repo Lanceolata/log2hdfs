@@ -79,6 +79,7 @@ TopicConfContents::TopicConfContents():
     compress_lzo_(),
     compress_orc_(),
     compress_mv_(),
+    compress_appendcvt_(),
     consume_interval_(900),
     complete_interval_(120),
     complete_maxsize_(21474836480),
@@ -96,6 +97,7 @@ TopicConfContents::TopicConfContents(const TopicConfContents& other):
     compress_lzo_(other.compress_lzo_),
     compress_orc_(other.compress_orc_),
     compress_mv_(other.compress_mv_),
+    compress_appendcvt_(other.compress_appendcvt_),
     consume_interval_(other.consume_interval_.load()),
     complete_interval_(other.complete_interval_.load()),
     complete_maxsize_(other.complete_maxsize_.load()),
@@ -331,6 +333,14 @@ bool TopicConfContents::UpdateRuntime(std::shared_ptr<Section> section) {
               << compress_mv_ << "]";
   }
 
+  option = section->Get("compress.appendcvt");
+  if (option.valid() && !option.value().empty() &&
+          compress_appendcvt_ != option.value()) {
+    compress_appendcvt_ = option.value();
+    LOG(INFO) << "TopicConfContents UpdateRuntime compress_appendcvt["
+              << compress_appendcvt_ << "]";
+  }
+
   return true;
 }
 
@@ -443,6 +453,13 @@ bool TopicConf::UpdateRuntime(std::shared_ptr<Section> section) {
   if (hdfs_path_ != hdfs_path) {
     hdfs_path_ = hdfs_path;
     LOG(INFO) << "TopicConf UpdateRuntime hdfs_path[" << hdfs_path << "]";
+  }
+
+  std::string hdfs_path_delay = section->Get("hdfs.path.delay", "");
+  if (!hdfs_path_delay.empty()) {
+    hdfs_path_delay_ = hdfs_path_delay;
+    LOG(INFO) << "TopicConf UpdateRuntime hdfs_path_delay["
+              << hdfs_path_delay_ << "]";
   }
 
   return true;

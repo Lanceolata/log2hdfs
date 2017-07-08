@@ -22,7 +22,9 @@ class NormalPathFormat : public PathFormat {
 
   bool WriteFinished(const std::string& filepath) const;
 
-  bool BuildHdfsPath(const std::string& name, std::string* path) const;
+  bool BuildHdfsPath(const std::string& name,
+                     std::string* path,
+                     bool delay = false) const;
 
  protected:
   std::string topic_;

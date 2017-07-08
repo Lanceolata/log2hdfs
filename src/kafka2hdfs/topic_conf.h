@@ -71,6 +71,11 @@ class TopicConfContents {
     return compress_mv_;
   }
 
+  std::string GetCompressAppendCvt() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return compress_appendcvt_;
+  }
+
   std::string root_dir_;
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf_;
 
@@ -84,6 +89,7 @@ class TopicConfContents {
   std::string compress_lzo_;
   std::string compress_orc_;
   std::string compress_mv_;
+  std::string compress_appendcvt_;
 
   std::atomic<int> consume_interval_;
   std::atomic<int> complete_interval_;
@@ -159,6 +165,11 @@ class TopicConf {
     return hdfs_path_;
   }
 
+  std::string hdfs_path_delay() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return hdfs_path_delay_;
+  }
+
   std::unique_ptr<KafkaTopicConf> kafka_topic_conf() const {
     return contents_.kafka_topic_conf_->Copy();
   }
@@ -195,6 +206,10 @@ class TopicConf {
     return contents_.GetCompressMv();
   }
 
+  std::string compress_appendcvt() const {
+    return contents_.GetCompressAppendCvt();
+  }
+
   int consume_interval() const {
     return contents_.consume_interval_.load();
   }
@@ -225,6 +240,7 @@ class TopicConf {
   std::string compress_dir_;
   std::string upload_dir_;
   std::string hdfs_path_;
+  std::string hdfs_path_delay_;
   TopicConfContents contents_;
   mutable std::mutex mutex_;
 };

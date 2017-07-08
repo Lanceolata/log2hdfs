@@ -27,6 +27,7 @@ class Upload {
     kLzo,
     kOrc,
     kCompress,
+    kAppendCvt,
     kTextNoUpload
   };
 

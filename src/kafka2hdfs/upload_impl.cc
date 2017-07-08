@@ -24,6 +24,15 @@ int scandir_compar(const struct dirent **a, const struct dirent **b) {
   return strcmp((*a)->d_name, (*b)->d_name);
 }
 
+time_t GetZeroTs(time_t ts) {
+  struct tm tm;
+  localtime_r(&ts, &tm);
+  tm.tm_sec = 0;
+  tm.tm_min = 0;
+  tm.tm_hour = 0;
+  return mktime(&tm);
+}
+
 void ScandirAndPushQueue(const std::string& dir, Queue<std::string>* que) {
   std::vector<std::string> names;
   if (!ScanDir(dir, scandir_filter, scandir_compar, &names)) {
@@ -79,6 +88,8 @@ Optional<Upload::Type> Upload::ParseType(const std::string& type) {
     return Optional<Upload::Type>(kOrc);
   } else if (type == "compress") {
     return Optional<Upload::Type>(kCompress);
+  } else if (type == "appendcvt") {
+    return Optional<Upload::Type>(kAppendCvt);
   } else if (type == "textnoupload") {
     return Optional<Upload::Type>(kTextNoUpload);
   } else {
@@ -104,6 +115,9 @@ std::unique_ptr<Upload> Upload::Init(
                  std::move(fp_cache), std::move(handle));
     case kCompress:
       return CompressUploadImpl::Init(std::move(conf), std::move(format),
+                 std::move(fp_cache), std::move(handle));
+    case kAppendCvt:
+      return AppendCvtUploadImpl::Init(std::move(conf), std::move(format),
                  std::move(fp_cache), std::move(handle));
     case kTextNoUpload:
       return TextNoUploadImpl::Init(std::move(conf), std::move(format),
@@ -188,7 +202,8 @@ void UploadImpl::Remedy() {
   ScandirAndPushQueue(upload_dir_, &upload_queue_);
 }
 
-void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
+void UploadImpl::UploadFile(const std::string& path, bool append,
+                            bool index, bool delay) {
   if (path.empty()) {
     LOG(WARNING) << "UploadImpl UploadPath topic[" << topic_
                  << "] empty path";
@@ -212,19 +227,19 @@ void UploadImpl::UploadFile(const std::string& path, bool append, bool index) {
 
   std::string name = BaseName(file_path);
   std::string hdfs_path;
-  if (!format_->BuildHdfsPath(name, &hdfs_path)) {
+  if (!format_->BuildHdfsPath(name, &hdfs_path, delay)) {
     LOG(WARNING) << "UploadImpl UploadPath BuildHdfsPath[" << file_path
                  << "] failed";
     return;
   }
 
   if (times > 0) {
-    auto ind = hdfs_path.rfind('.');
-    if (ind == std::string::npos) {
+    auto end = hdfs_path.rfind('.');
+    if (end == std::string::npos) {
       hdfs_path += "." + std::to_string(times);
     } else {
-      std::string temp_path = hdfs_path.substr(0, ind) +
-          std::to_string(times) + hdfs_path.substr(ind);
+      std::string temp_path = hdfs_path.substr(0, end) +
+          std::to_string(times) + hdfs_path.substr(end);
       hdfs_path = std::move(temp_path);
     }
   }
@@ -449,7 +464,7 @@ void OrcUploadImpl::Compress() {
     std::string name = BaseName(path);
     if (name.empty()) {
       LOG(WARNING) << "OrcUploadImpl Compress empty path";
-      return;
+      continue;
     }
 
     pool_.Enqueue([this](const std::string p) {
@@ -585,6 +600,148 @@ void CompressUploadImpl::Upload() {
     pool_.Enqueue([this](const std::string p) {
                     this->UploadFile(p, false, false);
                   }, path);
+  }
+}
+
+// ------------------------------------------------------------------
+// AppendCvtUploadImpl
+
+std::unique_ptr<AppendCvtUploadImpl> AppendCvtUploadImpl::Init(
+    std::shared_ptr<TopicConf> conf,
+    std::shared_ptr<PathFormat> format,
+    std::shared_ptr<FpCache> fp_cache,
+    std::shared_ptr<HdfsHandle> handle) {
+  if (!conf || !format || !fp_cache || !handle) {
+    LOG(ERROR) << "AppendCvtUploadImpl Init invalid parameters";
+    return nullptr;
+  }
+
+  if (!DirParametersCheck("AppendCvtUploadImpl", conf)) {
+    LOG(ERROR) << "AppendCvtUploadImpl Init DirParametersCheck failed";
+    return nullptr;
+  }
+
+  std::string append = conf->compress_appendcvt();
+  if (append.empty()) {
+    LOG(ERROR) << "AppendCvtUploadImpl Init invalid append";
+    return nullptr;
+  }
+
+  std::string delay = conf->hdfs_path_delay();
+  if (delay.empty()) {
+    LOG(ERROR) << "AppendCvtUploadImpl Init invalid delay path";
+    return nullptr;
+  }
+
+  return std::unique_ptr<AppendCvtUploadImpl>(new AppendCvtUploadImpl(
+             std::move(conf), std::move(format), std::move(fp_cache),
+             std::move(handle)));
+}
+
+bool AppendCvtUploadImpl::IsDelay(const std::string& name) {
+  if (name.empty() || !StartsWith(name, "cvt..")) {
+    LOG(WARNING) << "AppendCvtUploadImpl IsDelay invalid name[" << name << "]";
+    return false;
+  }
+
+  std::string time_str = name.substr(5, 14);
+  time_t time_stamp = StrToTs(time_str, "%Y%m%d%H%M%S");
+  if (time_stamp <= 0) {
+    LOG(WARNING) << "AppendCvtUploadImpl IsDelay name[" << name << "] "
+                 << "StrToTs[" << time_str << "] failed";
+    return false;
+  }
+
+  time_t max_ts = GetZeroTs(time_stamp) + 97200;
+  if (time(NULL) > max_ts) {
+    LOG(INFO) << "AppendCvtUploadImpl IsDelay Name[" << name << "] is delay";
+    return true;
+  }
+  return false;
+}
+
+void AppendCvtUploadImpl::Compress() {
+  time_t ts = time(NULL);
+  time_t zero_ts = GetZeroTs(ts);
+  time_t diff_ts = ts - zero_ts;
+  if (diff_ts < 10860 && diff_ts > 10680) {
+    LOG(INFO) << "AppendCvtUploadImpl Compress sleep 200s start";
+    sleep(200);
+    LOG(INFO) << "AppendCvtUploadImpl Compress sleep 200s end";
+  }
+
+  std::string path;
+  while (compress_queue_.TryPop(&path)) {
+    std::string name = BaseName(path);
+    if (name.empty()) {
+      LOG(WARNING) << "AppendCvtUploadImpl Compress empty path";
+      continue;
+    }
+
+    if (IsDelay(name)) {
+      pool_.Enqueue([this](const std::string p) {
+                      this->CompressFile(p);
+                    }, path);
+    } else {
+      std::string new_path = upload_dir_ + "/" + name;
+      if (!Rename(path, new_path)) {
+        LOG(WARNING) << "AppendCvtUploadImpl Compress Rename from["
+                     << path << "] to [" << new_path << "] failed "
+                     << "with errno[" << errno << "]";
+        continue;
+      }
+
+      upload_queue_.Push(new_path);
+    }
+  }
+}
+
+void AppendCvtUploadImpl::CompressFile(const std::string& path) {
+  if (path.empty() || !IsFile(path)) {
+    LOG(WARNING) << "AppendCvtUploadImpl CompressFile invalid path["
+                 << path << "]";
+    return;
+  }
+  std::string old_path;
+  if (!EndsWith(path, ".append")) {
+    std::string cmd = conf_->compress_appendcvt();
+    cmd.append(" ");
+    cmd.append(path);
+
+    std::string errstr;
+    bool res = ExecuteCommand(cmd, &errstr);
+    if (!res) {
+      LOG(ERROR) << "AppendCvtUploadImpl CompressFile path["
+                 << path << "] failed with errstr["
+                 << errstr << "]";
+    }
+    old_path = path + ".append";
+  } else {
+    return;
+  }
+
+  std::string new_path = upload_dir_ + "/" + BaseName(old_path);
+  if (!Rename(old_path, new_path)) {
+    LOG(ERROR) << "AppendCvtUploadImpl CompressFile Rename from[" << old_path
+               << "] to[" << new_path << "] failed with errno[" << errno
+               << "]";
+  }
+
+  upload_queue_.Push(new_path);
+}
+
+void AppendCvtUploadImpl::Upload() {
+  std::string path;
+  while (upload_queue_.TryPop(&path)) {
+    if (EndsWith(path, ".append")) {
+      pool_.Enqueue([this](const std::string p) {
+                      this->UploadFile(p, true, false, true);
+                    }, path);
+    } else {
+      pool_.Enqueue([this](const std::string p) {
+                      this->UploadFile(p, true, false);
+                    }, path);
+    }
   }
 }
 
