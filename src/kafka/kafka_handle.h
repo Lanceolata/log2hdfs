@@ -45,8 +45,8 @@ class KafkaHandle {
    * If rk_ valid, destory rk_.
    */
   ~KafkaHandle() {
-    if (rk_)
-      rd_kafka_destroy(rk_);
+    //if (rk_)
+    //  rd_kafka_destroy(rk_);
   }
 
   KafkaHandle(const KafkaHandle& other) = delete;

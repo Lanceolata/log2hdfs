@@ -409,6 +409,11 @@ bool TopicConf::InitConf(std::shared_ptr<Section> section) {
   hdfs_path_ = hdfs_path;
   LOG(INFO) << "TopicConf InitConf hdfs_path[" << hdfs_path << "]";
 
+  std::string hdfs_path_delay = section->Get("hdfs.path.delay", "");
+  hdfs_path_delay_ = hdfs_path_delay;
+  LOG(INFO) << "TopicConf InitConf hdfs_path_delay["
+              << hdfs_path_delay_ << "]";
+
   if (!contents_.Update(std::move(section))) {
     return false;
   }
@@ -444,6 +449,8 @@ bool TopicConf::UpdateRuntime(std::shared_ptr<Section> section) {
     return false;
   }
 
+  std::string hdfs_path_delay = section->Get("hdfs.path.delay", ""); 
+
   if (!contents_.UpdateRuntime(std::move(section))) {
     LOG(WARNING) << "TopicConf UpdateRuntime contents_ failed";
     return false;
@@ -455,8 +462,7 @@ bool TopicConf::UpdateRuntime(std::shared_ptr<Section> section) {
     LOG(INFO) << "TopicConf UpdateRuntime hdfs_path[" << hdfs_path << "]";
   }
 
-  std::string hdfs_path_delay = section->Get("hdfs.path.delay", "");
-  if (!hdfs_path_delay.empty()) {
+  if (hdfs_path_delay_ != hdfs_path_delay) {
     hdfs_path_delay_ = hdfs_path_delay;
     LOG(INFO) << "TopicConf UpdateRuntime hdfs_path_delay["
               << hdfs_path_delay_ << "]";
