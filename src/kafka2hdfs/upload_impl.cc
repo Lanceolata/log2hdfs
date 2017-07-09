@@ -727,7 +727,15 @@ void AppendCvtUploadImpl::CompressFile(const std::string& path) {
                << "]";
   }
 
+  std::string new_path2 = upload_dir_ + "/" + BaseName(path);
+  if (!Rename(path, new_path2)) {
+    LOG(ERROR) << "AppendCvtUploadImpl CompressFile Rename from[" << path
+               << "] to[" << new_path2 << "] failed with errno[" << errno
+               << "]";
+  }
+
   upload_queue_.Push(new_path);
+  upload_queue_.Push(new_path2);
 }
 
 void AppendCvtUploadImpl::Upload() {
