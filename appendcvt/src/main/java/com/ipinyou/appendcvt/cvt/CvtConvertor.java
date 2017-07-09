@@ -14,16 +14,14 @@ public class CvtConvertor {
 
     private String inPath;
     private String outPath;
-    private String backupDir = null;
 
-    public CvtConvertor(String inPath, String outPath, String backupDir) {
+    public CvtConvertor(String inPath, String outPath) {
         if (inPath == null || "".equals(inPath) ||
                 outPath == null || "".equals(outPath)) {
             throw new IllegalArgumentException("invalid Arguments");
         }
         this.inPath = FileUtils.getAbsPath(inPath);
         this.outPath = FileUtils.getAbsPath(outPath);
-        this.backupDir = backupDir;
     }
 
     public boolean convert() {
@@ -53,21 +51,6 @@ public class CvtConvertor {
             }
             writer.close();
             br.close();
-
-            if (backupDir != null) {
-                String backPath = backupDir + "/" + FileUtils.getFileName(inPath);
-                backPath = FileUtils.renameFileWithTimestamp(inPath, backPath);
-                if (backPath == null) {
-                    logger.error("renameFileWithTimestamp from[{}] to[{}] failed", inPath, backupDir);
-                } else {
-                    logger.info("renameFileWithTimestamp from[{}] to[{}] success", inPath, backPath);
-                }
-            } else {
-                if (!FileUtils.deleteFileIfExists(inPath)) {
-                    logger.error("Delete exists file[{}] failed", inPath);
-                    return false;
-                }
-            }
             return true;
         } catch (IOException e) {
             logger.error(e.getMessage());

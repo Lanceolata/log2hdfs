@@ -18,7 +18,6 @@ public class Convert {
 
     public static void main(String[] args) {
         Options opt = new Options();
-        opt.addOption("b", "backup", true, "config file path");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cl = null;
@@ -30,14 +29,6 @@ public class Convert {
             System.exit(2);
         }
 
-        String backup = null;
-        if (cl.hasOption("b")) {
-            backup = FileUtils.getAbsPath(cl.getOptionValue("b"));
-            if (!createDir(backup)) {
-                throw new IllegalArgumentException("invalid backup dir");
-            }
-        }
-
         String[] filePaths = cl.getArgs();
         if (filePaths.length != 1) {
             logger.error("invalid command line arguments[{}]", Arrays.toString(args));
@@ -45,7 +36,7 @@ public class Convert {
         }
 
         String filePath = filePaths[0];
-        CvtConvertor convert = new CvtConvertor(filePath, filePath + ".append", backup);
+        CvtConvertor convert = new CvtConvertor(filePath, filePath + ".append");
         if (!convert.convert()) {
             logger.error("file convert failed");
             System.exit(2);
