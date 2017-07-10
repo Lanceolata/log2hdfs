@@ -1,12 +1,12 @@
 # log2kafka
 
-### kafka configuration properties
+## kafka configuration properties
 
 see librdkafka configuration properties
 
 注：老版kafka为0.8版本需要配置broker.version.fallback = 0.8.2(模板中已配好)
 
-### Global configuration properties
+## Global configuration properties
 
 Property | type | Range | Default | Description
 ---|---|---|---|---
@@ -16,7 +16,7 @@ handle.remedy | bool | true，false | false | errmsg_handle是否重新发送到
 table.path | string | | offset_table | offset持久化文件
 table.interval | 1 - 2147483647 | 30 | offset持久化到文件的时间间隔
 
-### Default configuration properties
+## Default configuration properties
 
 Default配置对所有topic生效，可以在topic中覆盖default中的配置
 
@@ -34,7 +34,9 @@ poll.messages | int | 1 - 2147483647 | 500 | kafka client队列满后，需要�
 注:重新启动时，log2kafka会根据remedy配置，过滤掉与当前时间相比，超过过期时间的文件，然后参会根据offset信息进一步过滤。
 第一次启动时，如果不需要处理历史文件，建议配置为0(不处理历史文件)，如果需要处理所有历史文件，设置为-1(永不过期)，但不建议处理大量历史文件，配置remedy也不宜过大。
 
-### Topic configuration properties
+## Topic configuration properties
+
+目前不支持重复topic，为防止重复填写，topic的名称需要写在配置文件段名中，例如：[bid-deal]，多次填写会被覆盖。
 
 Property | type | Range | Default | Description
 ---|---|---|---|---
@@ -55,65 +57,104 @@ kill -s SIGUSR1 $PID
 
 # kafka2hdfs
 
-### hdfs configuration properties
-Property | Range | Default | Description
----|---|---|---
-type | command | command | hdfs client 类型
-namenode | | | namenode地址
-port | | | namenode端口
-user | | | hdfs 用户
-put | | | put命令
-append | | | append命令
-lzo.index | | | lzo索引命令
+## kafka configuration properties
 
-### Default configuration properties
-Property | Range | Default | Description
----|---|---|---
-log.format | v6 v6device ef efdevice | v6 | 日志类型，对应v6及ef日志
-path.format | normal | normal | 路径格式类型
-consume.type | report v6 ef debug | | consume callback类型:report类型会去吊日志的第一个时间字段，v6 ef为相同日志类型，debug会写入调试信息
-file.format | orc lzo text compress | text | 文件格式：text文件文件，hdfs文件存在会追加；orc通过命令压缩为orc文件，hdfs文件存在会删除；lzo通过命令压缩为lzo文件，hdfs文件存在会删除，会生成index；compress移动给其他程序压缩，hdfs文件存在会删除。
-parallel | 1-24 | | 线程池数量，text格式为防止多个进程append同一文件，强制为1；压缩和上传共用线程池
-compress.lzo | | | lzo压缩命令
-compress.orc | | | orc压缩命令
-compress.mv | | | 移动目录
-consume.interval | 60-2147483647 | 900 | 文件归档时间间隔
-complete.interval | 60-2147483647 | 120 | 文件完成的时间间隔，超过时间会停止写入
-complete.maxsize | 0-2147483647 | 21474836480 | 文件的最大大小，超过大小会停止写入
-complete.maxseconds | -1-2147483647 | -1 | 文件的最大保留时间，超过会停止写入(根据atime判断)
-upload.interval | 0-2147483647 | 20 | 上传文件扫描间隔
+see librdkafka configuration properties
 
-可以配置librdkafka configuration properties，需要在配置前上'kafka.'
+注：老版kafka为0.8版本需要配置broker.version.fallback = 0.8.2(模板中已配好)
 
-### Topic configuration properties
+kafka.auto.offset.reset = smallest表明在offset文件不存在的情况下，会将offset设置为最小值，可以利用他实现补数(消费最老数据)，目前该项未配置或注释掉。
 
-Property | Range | Default | Description
----|---|---|---
-topics | | | topics，可以配置多个，通过';'间隔
-partitions | | | partitions，topic之间用';'间隔，支持范围格式(‘1-2’)
-offsets | -2，-1，-1000 | | partition对应的offset，topic之间用';'间隔  -2：begginning；-1：end；-1000：stored；
-hdfs.path | | | hdfs路径format，支持年(%Y) 月(%m) 日(%d) 时(%H) 分(%M) 秒(%S) section(%s) device(%D) type(%T) time stamp(%t)，及logformat的自定义类型(需要扩展实现)
-log.format | v6 v6device ef efdevice | v6 | 日志类型，对应v6及ef日志
-path.format | normal | normal | 路径格式类型
-consume.type | report v6 ef debug | | consume callback类型:report类型会去吊日志的第一个时间字段，v6 ef为相同日志类型，debug会写入调试信息
-file.format | orc lzo text compress | text | 文件格式：text文件文件，hdfs文件存在会追加；orc通过命令压缩为orc文件，hdfs文件存在会删除；lzo通过命令压缩为lzo文件，hdfs文件存在会删除，会生成index；compress移动给其他程序压缩，hdfs文件存在会删除。
-parallel | 1-50 | | 线程池数量，text格式为防止多个进程append同一文件，强制为1；压缩和上传共用线程池
-compress.lzo | | | lzo压缩命令
-compress.orc | | | orc压缩命令
-compress.mv | | | 移动目录
-consume.interval | 60-2147483647 | 900 | 文件归档时间间隔
-complete.interval | 60-2147483647 | 120 | 文件完成的时间间隔，超过时间会停止写入
-complete.maxsize | 0-2147483647 | 21474836480 | 文件的最大大小，超过大小会停止写入
-complete.maxseconds | -1-2147483647 | 0 | 文件的最大保留时间，超过会停止写入(根据atime判断) 小于等于0表示无限制
-upload.interval | 0-2147483647 | 20 | 上传文件扫描间隔
+## hdfs configuration properties
+Property | type | Range | Default | Description
+---|---|---|---|---
+type | string | command | | hdfs client 类型，目前仅支持command类型
+namenode | string | | | namenode地址
+port | int |  | | namenode端口
+user | string | | | hdfs 用户
+put | string | | hadoop fs -put | hdfs put命令
+append | string | | hadoop fs -appendToFile | hdfs append命令
+lzo.index | string | | hadoop jar /usr/hdp/2.4.0.0-169/hadoop/lib/hadoop-lzo-0.6.0.2.4.0.0-169.jar com.hadoop.compression.lzo.LzoIndexer | hdfs lzo索引命令
+
+## Default configuration properties
+
+default的配置会对所有topic生效，topic中可以覆盖default配置。
+
+Property | type | Range | Default | Description
+---|---|---|---|---
+root.dir | string | | .(表示当前工作目录) | 消费的messages写入的本地文件，会自动在该目录下创建topic子目录
+log.format | string |  | v6 | 具体信息见下方log.format
+path.format | string | normal | normal | 格式化hdfs路径方式，目前仅支持normal
+consume.type | string | | v6 | 具体信息见下方consume.type
+upload.type | string |  | text | 具体信息见下方upload.type
+parallel | int | 1-24 | 1 | 线程池数量，压缩和上传共用线程池，upload.type=text时，为防止多个进程append同一文件，强制为1
+compress.lzo | string | | | lzo压缩命令，当upload.type=lzo时必须填写
+compress.orc | string | | | orc压缩命令，当upload.type=orc时必须填写
+compress.mv | string | | | 移动目录命令，已弃用
+compress.appendcvt | string | | | appendcvt命令，当upload=appendcvt时必须填写
+consume.interval | int |60-2147483647 | 900 | 文件归档时间间隔，单位秒，即900s内的数据会归档到同一文件内
+complete.interval | int | 60-2147483647 | 120 | 文件完成的时间间隔，超过时间会停止写入，认为文件已写完，执行后续压缩和上传操作
+complete.maxsize | long | | 21474836480 | 文件大小限制，超过大小会停止写入，小于等于0表示无限制
+retention.seconds | int | -1-2147483647 | 0 | 文件的最大保留时间，超过会停止写入(根据atime判断),小于等于0表示无限制
+upload.interval | int | 1-2147483647 | 20 | 压缩上传进程执行的时间间隔
 
 可以配置librdkafka configuration properties，需要在配置前上'kafka.'
 
-hdfs.path consume.interval complete.interval complete.maxsize complete.maxseconds upload.interval可以在运行时修改：
+注:文件是否写完，执行后续压缩和上传由complete.interval，complete.maxsize和retention.seconds三个参数决定，超过任意一个都会停止写入。
+
+## Topic configuration properties
+
+partitions，offsets，hdfs.path和hdfs.path.delay是topic中的配置，其partitions，offsets，hdfs.path必须填写，hdfs.path.delay在upload.type=appendcvt时必须填写，其他配置如未设置会继承default中的配置，如配置会覆盖default中的配置。
+
+目前不支持重复topic，为防止重复填写，topic的名称需要写在配置文件段名中，例如：[bid-deal]，多次填写会被覆盖。
+
+Property | type | Range | Default | Description
+---|---|---|---|---
+partitions | int array | | | 消费的partitions，支持范围格式(‘1-2’)，支持','分隔
+offsets | int array | -2，-1，-1000 | | partition对应的offset，partition之间使用','分隔，未填写的offset会拷贝配置的最后一个offset(-2：begginning；-1：end；-1000：stored)
+hdfs.path | string | | | hdfs路径format，具体支持字段见hdfs.path
+hdfs.path.delay | string | | | 当upload=appendcvt时必须填写
+root.dir | string | | default property | 消费的messages写入的本地文件，会自动在该目录下创建topic子目录
+log.format | string |  | default property | 具体信息见下方log.format
+path.format | string | normal | default property | 格式化hdfs路径方式，目前仅支持normal
+consume.type | string | | default property | 具体信息见下方consume.type
+upload.type | string |  | default property | 具体信息见下方upload.type
+parallel | int | 1-24 | default property | 线程池数量，压缩和上传共用线程池，upload.type=text时，为防止多个进程append同一文件，强制为1
+compress.lzo | string | | default property | lzo压缩命令，当upload.type=lzo时必须填写
+compress.orc | string | | default property | orc压缩命令，当upload.type=orc时必须填写
+compress.mv | string | | default property | 移动目录命令，已弃用
+compress.appendcvt | string | | default property | appendcvt命令，当upload=appendcvt时必须填写
+consume.interval | int |60-2147483647 | default property | 文件归档时间间隔，单位秒，即900s内的数据会归档到同一文件内
+complete.interval | int | 60-2147483647 | default property | 文件完成的时间间隔，超过时间会停止写入，认为文件已写完，执行后续压缩和上传操作
+complete.maxsize | long | | default property | 文件大小限制，超过大小会停止写入，小于等于0表示无限制
+retention.seconds | int | -1-2147483647 | default property | 文件的最大保留时间，超过会停止写入(根据atime判断),小于等于0表示无限制
+upload.interval | int | 1-2147483647 | default property | 压缩上传进程执行的时间间隔
+
+可以配置librdkafka configuration properties，需要在配置前上'kafka.'
+
+hdfs.path hdfs.path.delay compress.lzo compress.orc compress.appendcvt consume.interval complete.interval complete.maxsize retention.seconds upload.interval可以在运行时修改：
+
+修改配置文件后执行命令：
 ```
 kill -s SIGUSR1 $PID
 ```
 
-### kafka configuration properties
+## hdfs.path
 
-see librdkafka configuration properties
+公共支持字段：
+
+Section | Description
+---|---
+
+
+
+扩展支持字段见log.format
+
+## log.format
+
+
+## consume.type
+
+consume callback类型:report类型会去吊日志的第一个时间字段，v6 ef为相同日志类型，debug会写入调试信息
+
+## upload.type
