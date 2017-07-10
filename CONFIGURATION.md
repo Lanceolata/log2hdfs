@@ -145,12 +145,20 @@ kill -s SIGUSR1 $PID
 
 Section | Description
 ---|---
-
-
+%Y | 年
+%m | 月
+%d | 日
+%H | 时
+%M | 分
+%S | 秒
+%t | topic
+%T |　时间戳
 
 扩展支持字段见log.format
 
 ## log.format
+
+Type | Extract Log Field | Extend Field | Description
 
 
 ## consume.type
