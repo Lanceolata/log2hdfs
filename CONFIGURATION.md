@@ -158,7 +158,7 @@ Section | Description
 
 ## log.format
 
-Type | Extract Log Field | Extend Field | Description
+Type | Log Format | Extract Log Field | Extend Field | Description
 
 
 ## consume.type
