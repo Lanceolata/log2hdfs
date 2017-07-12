@@ -132,3 +132,11 @@ report.second_jump | report.second_jump
 report.pdb_analysis | report.pdb_analysis
 report.stats_service | report.stats_service
 report.rpt_effect_pdb_return_reason | report.rpt_effect_pdb_return_reason
+
+## compress
+
+当upload为orc格式时，需要设置外部命令，进行orc压缩，具体配置及命令见compress子项目
+
+## appendcvt
+
+当upload为appendcvt时，需要设置外部命令，将cvt转换为其他来源转化格式，具体配置及命令见appendcvt子项目
