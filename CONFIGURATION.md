@@ -158,11 +158,37 @@ Section | Description
 
 ## log.format
 
-Type | Log Format | Extract Log Field | Extend Field | Description
+log format为增加抽取效率，仅抽取必要字段，如需增加抽取字段需要相应增加类型
 
+Type | Log Format | Extract Log Field | Extend Field | Description
+---|---|---|---|---
+v6 | v6日志格式 | 1.10 requestTime | | impression impression_bid click click_bid使用
+v6device | v6日志格式 | 1.10 requestTime 6.0 deviceType | %D device type(pc or mobile) | bid-deal bid-nodeal unbid-deal unbid-nodeal使用
+ef | ef日志格式 | 6 ActionRequestTime | | 是用ef格式的topic较多，在此不列举，详细可见配置文件模板
+efdevice | ef日志格式 | 6 ActionRequestTime 41 DeviceType | %D device type(pc or mobile) | bid unbid bid_aws unbid_aws使用
+efic | ef日志格式，ic使用 | 2 ActionType 6 ActionRequestTime 41 DeviceType | %k(click imp_pc和imp_mobile) | ic使用，ic日志区分为click和impression，impression区分pc和mobile
+eficaws| ef日志格式 icaws使用 | 2 ActionType 6 ActionRequestTime 41 DeviceType | %D device type(pc or mobile) %A action type(click or imp) | icaws使用，icaws日志区分为click和impression，impression区分pc和mobile，icaws将device和action分开
+efimp | ef日志格式，imp使用 | 2 ActionType 6 ActionRequestTime | %A action type(click or imp) | imp使用
+efstats | ef日志格式，stats使用 | 2 ActionType 6 ActionRequestTime | %A action type(click or imp) %p prefix(click or impression) | stats使用，需要根据action type匹配不同路径
+pub | pub日志格式 | 11 RequestTime | | pub使用
+report | 报表日志格式 | 0 RequestTime | | report使用
 
 ## consume.type
 
-consume callback类型:report类型会去吊日志的第一个时间字段，v6 ef为相同日志类型，debug会写入调试信息
+Type | Description
+---|---
+v6 | kafka message写入文件
+ef | 与v6相同，仅为便于区分
+report | report类型会去掉日志的第一个时间字段
+debug | 写入offset partition等调试信息，用于log2hdfs内部调试使用
 
 ## upload.type
+
+Type | Description
+---|---
+text | text格式文件，为防止多线程追加同一文件，强制线程池线程数为1
+lzo | lzo格式，对文件使用lzop压缩，上传后对文件创建索引
+orc | orc格式，调用外部命令压缩为orc
+compress | 移动到外部目录，外部程序压缩后移动回原目录，弃用
+appendcvt | 对于延迟的cvt日志，除写入cvt日志外，还需要转化为固定格式，写入其他来源转化目录
+textnoupload | 仅消费messages，不压缩，不上传hdfs
