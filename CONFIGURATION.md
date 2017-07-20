@@ -172,6 +172,7 @@ efimp | ef日志格式，imp使用 | 2 ActionType 6 ActionRequestTime | %A actio
 efstats | ef日志格式，stats使用 | 2 ActionType 6 ActionRequestTime | %A action type(click or imp) %p prefix(click or impression) | stats使用，需要根据action type匹配不同路径
 pub | pub日志格式 | 11 RequestTime | | pub使用
 report | 报表日志格式 | 0 RequestTime | | report使用
+prebid | pre_bid_rec格式日志 | 1 RequestTime | | pre_bid_rec使用
 
 ## consume.type
 

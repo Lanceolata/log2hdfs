@@ -187,6 +187,24 @@ class PubLogFormat : public LogFormat {
                 std::map<char, std::string>* m) const;
 };
 
+// ------------------------------------------------------------------
+// PreBidLogFormat
+
+class PreBidLogFormat : public LogFormat {
+ public:
+  static std::unique_ptr<PreBidLogFormat> Init();
+
+  PreBidLogFormat() {}
+
+  ~PreBidLogFormat() {}
+
+  bool ExtractKeyAndTs(const char* payload, size_t len,
+                       std::string* key, time_t* ts) const;
+
+  bool ParseKey(const std::string& key,
+                std::map<char, std::string>* m) const;
+};
+
 }   // namespace log2hdfs
 
 #endif  // LOG2HDFS_KAFKA2HDFS_LOG_FORMAT_IMPL_H_

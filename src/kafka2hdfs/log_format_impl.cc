@@ -68,6 +68,8 @@ Optional<LogFormat::Type> LogFormat::ParseType(const std::string &type) {
     return Optional<LogFormat::Type>(kEfStats);
   } else if (type == "pub") {
     return Optional<LogFormat::Type>(kPub);
+  } else if (type == "prebid") {
+    return Optional<LogFormat::Type>(kPreBid);
   } else {
     return Optional<LogFormat::Type>::Invalid();
   }
@@ -95,6 +97,8 @@ std::unique_ptr<LogFormat> LogFormat::Init(LogFormat::Type type) {
       return EfStatsLogFormat::Init();
     case kPub:
       return PubLogFormat::Init();
+    case kPreBid:
+      return PreBidLogFormat::Init();
     default:
       return nullptr;
   }
@@ -678,6 +682,49 @@ bool PubLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
 }
 
 bool PubLogFormat::ParseKey(const std::string& key,
+    std::map<char, std::string>* m) const {
+  if (!m)
+    return false;
+
+  m->clear();
+  return true;
+}
+
+// ------------------------------------------------------------------
+// PreBidLogFormat
+
+std::unique_ptr<PreBidLogFormat> PreBidLogFormat::Init() {
+  return std::unique_ptr<PreBidLogFormat>(new PreBidLogFormat());
+}
+
+#define PREBID_DELIMITER '\t'
+#define PREBID_TIME_INDEX 1
+#define PREBID_TIME_FORMAT "%Y%m%d%H%M"
+#define PREBID_TIME_LENGTH 12
+
+bool PreBidLogFormat::ExtractKeyAndTs(const char* payload, size_t len,
+    std::string* key, time_t* ts) const {
+  if (!payload || !key || !ts || len <= 0)
+    return false;
+
+  const char *begin, *end;
+  if (!ExtractString(payload, payload + len, PREBID_DELIMITER,
+              PREBID_TIME_INDEX, &begin, &end)) {
+    return false;
+  }
+
+  std::string time_str(begin, PREBID_TIME_LENGTH);
+  time_t time_stamp = StrToTs(time_str, PREBID_TIME_FORMAT);
+  if (time_stamp <= 0) {
+    return false;
+  }
+
+  *ts = time_stamp;
+  *key = "";
+  return true;
+}
+
+bool PreBidLogFormat::ParseKey(const std::string& key,
     std::map<char, std::string>* m) const {
   if (!m)
     return false;

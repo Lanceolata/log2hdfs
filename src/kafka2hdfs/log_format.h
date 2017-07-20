@@ -28,7 +28,8 @@ class LogFormat {
     kEfImp,
     kEfStats,
     kPub,
-    kReport
+    kReport,
+    kPreBid
   };
 
   /**
